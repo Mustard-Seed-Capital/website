@@ -579,6 +579,10 @@ button:focus-visible,input:focus-visible+span{outline:2px solid var(--brass);out
 .thr button{display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 2px 7px;border-radius:12px;border:1px solid var(--panel-line);background:rgba(255,255,255,.05);color:inherit;font:600 10.5px/1.1 var(--f-ui);cursor:pointer}
 .thr button span{font-size:26px;line-height:1}.thr button.cant{opacity:.45}
 .thr em,.thrc{font-style:normal;display:inline-flex;align-items:center;gap:3px;font-weight:800}.thr em svg,.thrc svg{width:13px;height:13px}.thrc{float:right;font-size:12px}
+.gpick{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:4px 0 12px}
+.gpick button{display:grid;justify-items:center;gap:2px;padding:10px 4px;border-radius:14px;border:1px solid var(--panel-line);background:rgba(255,255,255,.04);color:inherit;font:600 13px var(--f-ui);cursor:pointer}
+.gpick button.on{border-color:var(--brass);background:rgba(240,199,94,.14);box-shadow:0 0 0 2px rgba(240,199,94,.25)}
+.gpick small{opacity:.65;font-size:11px}.gav{width:52px;height:52px;border-radius:50%;overflow:hidden;background:var(--chip);margin-bottom:4px}.gav svg{width:100%;height:100%;display:block}
 .recap{margin:10px 0 4px}.rbooks{display:flex;flex-wrap:wrap;gap:6px}.rbooks span{padding:4px 9px;border-radius:999px;background:rgba(255,255,255,.07);font-size:12.5px}.rbooks span.top{background:rgba(240,199,94,.22)}
 .series{margin:10px 0;padding:10px 12px;border-radius:12px;background:rgba(240,199,94,.14);border:1px solid rgba(240,199,94,.35);font-weight:700;text-align:center}.series small{display:block;font-weight:500;opacity:.7;font-size:11.5px;margin-top:2px}
 #specTag{position:absolute;left:50%;top:8px;transform:translateX(-50%);z-index:20;padding:5px 12px;border-radius:999px;background:rgba(0,0,0,.55);font:700 12px var(--f-ui);white-space:nowrap}
@@ -715,6 +719,7 @@ button:focus-visible,input:focus-visible+span{outline:2px solid var(--brass);out
     <div class="team us"><b id="scUs">0</b><span class="lbl" id="lbUs">Us</span><span class="det" id="dtUs">0 bags</span></div>
     <div class="tools">
       <button id="bTrack" aria-label="Card tracker"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="7" height="10" rx="1.5"/><rect x="14" y="4" width="7" height="10" rx="1.5"/><path d="M4 19h16"/></svg></button>
+      <button id="bGift" aria-label="Throw something"><svg viewBox="0 0 24 24"><rect x="3.5" y="9" width="17" height="11.5" rx="1.5"/><path d="M3.5 13h17M12 9v11.5M12 9C10 5 6.5 4.8 6.5 7S9.5 9 12 9s5.5-.2 5.5-2S14 5 12 9"/></svg></button>
       <button id="bChat" aria-label="Trash talk"><svg viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/></svg></button>
       <button id="bMenu" aria-label="Menu"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
     </div>
@@ -1936,7 +1941,7 @@ function menuSheet(){
 [0,1,2,3].forEach(p=>document.querySelector(`#seat${p} .av`).insertAdjacentHTML('beforeend',`<svg class="ring" id="ring${p}" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="46" pathLength="100"/></svg>`));
 $('#meAv').onclick=()=>playerSheet(); $('#meAv').onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();playerSheet();}};
 renderMe();
-$('#bTrack').onclick=trackerSheet; $('#bChat').onclick=chatSheet; $('#bMenu').onclick=menuSheet;
+$('#bGift').onclick=()=>giftSheet(); $('#bTrack').onclick=trackerSheet; $('#bChat').onclick=chatSheet; $('#bMenu').onclick=menuSheet;
 function relayout(){
   renderHand(); sizeTable();
   trickEls.forEach(d=>{if(d.style.opacity==='0')return; d.style.transition='none'; place(d,slotPt(+d.dataset.p),+d.dataset.rot,1);});
@@ -1991,6 +1996,33 @@ const SHOP=[
 ];
 const THROWS=[{k:'tomato',e:'🍅',n:'Tomato',c:10},{k:'salt',e:'🧂',n:'Salty',c:10},{k:'fire',e:'🔥',n:'On fire',c:15},{k:'rain',e:'💸',n:'Make it rain',c:25},{k:'crown',e:'👑',n:'Crown',c:40}];
 const THROW_BACK={tomato:['Oh you got jokes 😂','Keep that energy at the table','Wipe that off and watch your books'],salt:['Salty? I’m just winning 😂','Pass the pepper too'],fire:['I know I’m hot 🔥','Too hot to handle'],rain:['Make it rain! 💸','Big spender over here'],crown:['Bow down 👑','Royalty at the table']};
+function doThrow(p,k,v){
+  const t=THROWS.find(x=>x.k===k), now=Date.now();
+  if(!G||G.phase==='idle'){toast('Start a game first.');return;}
+  if(now-(throwAt.last||0)<3000){toast('Easy, one at a time 😂');return;}
+  if(PROFILE.coins<t.c){toast(`You need ${t.c} coins for that. Grab more in the Shop.`,2600);return;}
+  PROFILE.coins-=t.c; saveProfile(); refreshMeta(); throwAt.last=now; if(v) v.remove(); audio();
+  throwAt(0,p,t.k);
+  if(ONL.on) post('t.'+now.toString(36)+Math.random().toString(36).slice(2,6),{s:ONL.me,to:toA(p),k:t.k});
+  else later(()=>say(p,pick(THROW_BACK[t.k]||THROW_BACK.tomato),2400),900);
+}
+/* the gift button on the table: pick a player, then what to throw */
+function giftSheet(to){
+  if(!G||G.phase==='idle'){toast('Start a game first.');return;}
+  if(ONL.spec){toast('You’re watching, so you can’t throw.');return;}
+  to=to||1;
+  const v=sheet('<div id="gift"></div>',{mid:true});
+  const draw=()=>{
+    v.querySelector('#gift').innerHTML=`<h2>Throw something</h2>
+      <p class="lede">Pick who it’s for, then what to throw. Everyone at the table sees it. You have <span class="coin-pill">${coinIcon()}${fmt(PROFILE.coins)}</span></p>
+      <div class="gpick">${[1,2,3].map(p=>`<button data-p="${p}" class="${to===p?'on':''}"><div class="gav">${$('#pic'+p).innerHTML}</div><b>${esc(nmOf(p))}</b><small>${isPartner(p)?'Partner':(partnersOn()?'Opponent':'Rival')}</small></button>`).join('')}</div>
+      <div class="thr">${THROWS.map(t=>`<button data-k="${t.k}" ${PROFILE.coins<t.c?'class="cant"':''}><span>${t.e}</span><small>${t.n}</small><em>${coinIcon()}${t.c}</em></button>`).join('')}</div>
+      <p class="fine">Tip: you can also tap anyone’s picture at the table.</p>`;
+    v.querySelectorAll('.gpick button').forEach(b=>b.onclick=()=>{to=+b.dataset.p; draw();});
+    v.querySelectorAll('.thr button').forEach(b=>b.onclick=()=>doThrow(to,b.dataset.k,v));
+  };
+  draw();
+}
 function throwAt(a,b,k){
   const t=THROWS.find(x=>x.k===k); if(!t||!G) return;
   const A=seatPt(a), B=seatPt(b), el=document.createElement('div'); el.className='throwfx'; el.textContent=t.e; stage.appendChild(el);
@@ -2299,15 +2331,7 @@ function playerActions(p){
       <div class="rr">${['Hate speech or slurs','Harassment or threats','Cheating or teaming up','Inappropriate name or avatar','Something else'].map((r,i)=>`<label><input type="radio" name="rr" value="${i}" ${i===0?'checked':''}><span>${r}</span></label>`).join('')}</div>
       <button class="btn" id="pSend">Send report</button>
     </div>`,{mid:true});
-  v.querySelectorAll('.thr button').forEach(b=>b.onclick=()=>{
-    const t=THROWS.find(x=>x.k===b.dataset.k), now=Date.now();
-    if(now-(throwAt.last||0)<3000){toast('Easy, one at a time 😂');return;}
-    if(PROFILE.coins<t.c){toast(`You need ${t.c} coins for that. Grab more in the Shop.`,2600);return;}
-    PROFILE.coins-=t.c; saveProfile(); refreshMeta(); throwAt.last=now; v.remove(); audio();
-    throwAt(0,p,t.k);
-    if(ONL.on) post('t.'+now.toString(36)+Math.random().toString(36).slice(2,6),{s:ONL.me,to:toA(p),k:t.k});
-    else later(()=>say(p,pick(THROW_BACK[t.k]||THROW_BACK.tomato),2400),900);
-  });
+  v.querySelectorAll('.thr button').forEach(b=>b.onclick=()=>doThrow(p,b.dataset.k,v));
   v.querySelector('#pMute').onclick=()=>{if(muted)MUTED.delete(p);else MUTED.add(p);toast(muted?`${name} unmuted`:`${name} muted. You won’t see their chat.`);v.remove();};
   v.querySelector('#pBlock').onclick=()=>{let b=PROFILE.blocked||[]; b=blocked?b.filter(n=>n!==name):b.concat(name); PROFILE.blocked=b; saveProfile();
     toast(blocked?`${name} unblocked`:`${name} blocked. You won’t be seated with them online.`);v.remove();};
