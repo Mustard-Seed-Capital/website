@@ -1471,7 +1471,7 @@ function userClock(){
   if(!G||G.turn!==0||busy) return;
   if(document.querySelector('.veil')) return;
   const lb=document.getElementById('lobby'); if(lb&&!lb.hidden) return;
-  if(G.phase==='bid'&&!$('#bidPanel').hidden) startClock(0,()=>{toast("Time's up. Coach bid for you.");submitBid(teamBidding()?(G.bids[2]===0?Math.max(1,suggestBid(0)):teamSuggest(0)):suggestBid(0));});
+  if(G.phase==='bid'&&!$('#bidPanel').hidden) startClock(0,()=>{toast("Time's up. Coach bid for you.");submitBid(suggestBid(0));});
   else if(G.phase==='play') startClock(0,()=>{toast("Time's up. Played a card for you.");sel=null;playMine(botChoose(0));},G.trick.length?'Your play':'Your lead');
 }
 const loseAt=()=>opts.target===100?-100:-200;
@@ -1587,14 +1587,23 @@ function setTeamBid(t,v){
   const ms=members(t).filter(p=>G.bids[p]===null);
   if(ms.length===1) G.bids[ms[0]]=v; else {const hi=Math.ceil(v/2); G.bids[ms[0]]=hi; G.bids[ms[1]]=(v-hi)||0.5;}
 }
+const teamOrder=()=>[1,3,2,0].map(k=>(G.dealer+k)%4);
+const teamSum=t=>members(t).reduce((a,q)=>a+(G.bids[q]||0),0);
+function teamCall(p){ /* once both partners have called, say the combined number */
+  const m=partnerOf(p); if(G.bids[m]===null) return;
+  const sum=teamSum(teamOf(p)); later(()=>say(p, sum?`That’s ${sum} for us.`:'Double nil, let’s go.',1800), 700);
+}
 function nextTeamBid(){
-  const first=teamOf((G.dealer+1)%4), order=[first,1-first];
-  const t=order.find(x=>members(x).some(p=>G.bids[p]===null));
-  if(t===undefined) return startPlay();
-  renderSeats();
-  if(t===0){ G.turn=0; renderSeats(); showBid(); userClock(); return; }
-  const lead=members(t)[0]; G.turn=lead; status(`${NAMES[members(t)[0]]} & ${NAMES[members(t)[1]]} are bidding…`); startClock(lead);
-  later(()=>{stopClock(); const v=teamSuggest(t); setTeamBid(t,v); say(lead,`We got ${v}.`,1800); snap(0.25,1500); renderSeats(); later(nextTeamBid,reduce?50:650);}, reduce?80:1200+Math.random()*500);
+  const p=teamOrder().find(q=>G.bids[q]===null);
+  if(p===undefined) return later(startPlay, 900);
+  G.turn=p; renderSeats();
+  if(p===0){showBid(); userClock(); return;}
+  status(NAMES[p]+' is calling books…'); startClock(p);
+  later(()=>{
+    stopClock(); const b=suggestBid(p); G.bids[p]=b; say(p, b===0?'Nil.':`I got ${b}.`, 1600); snap(0.25,1500);
+    if(b===0&&isPartner(p)) later(()=>say(oppSeat(),pick(LINES.nilBid)),900);
+    teamCall(p); renderSeats(); later(nextTeamBid, reduce?50:(G.bids[partnerOf(p)]!==null?1500:700));
+  }, reduce?80:800+Math.random()*400);
 }
 function nextBid(){
   if(teamBidding()) return nextTeamBid();
@@ -1615,14 +1624,10 @@ function nextBid(){
 function showBid(){
   status('');
   const panel=$('#bidPanel'), grid=$('#bidGrid'), pb=G.bids[2];
-  if(teamBidding()){
-    const mate=G.bids[2]===0?null:Math.max(1,suggestBid(2)), oppT=G.teamBid&&G.teamBid[1]!=null?G.teamBid[1]:null;
-    $('#bidSub').textContent=`Team bid: you and ${NAMES[2]} bid together.${mate?` ${NAMES[2]} says about ${mate}.`:` ${NAMES[2]} went blind nil, so this is your bid.`}${oppT!=null?` They bid ${oppT}.`:' You bid first since they dealt.'}`;
-    const sug=G.bids[2]===0?Math.max(1,suggestBid(0)):teamSuggest(0), grid=$('#bidGrid'); grid.innerHTML='';
-    for(let i=1;i<=13;i++){const b=document.createElement('button');b.textContent=String(i);if(i===sug)b.classList.add('sug');b.onclick=()=>submitBid(i);grid.appendChild(b);}
-    $('#coach').innerHTML=`Coach counts about <b>${sug}</b> for your team.`; $('#bidPanel').hidden=false; return;
-  }
   $('#bidSub').textContent = !partnersOn()? `Every player bids for themself. ${[1,2,3].filter(q=>G.bids[q]!==null).map(q=>NAMES[q]+' '+bidTxt(q)).join(', ')||'You bid first.'}` : (pb===null? 'You bid before your partner.' : `${NAMES[2]} bid ${pb===0?'Nil':pb}.`);
+  if(teamBidding()){ const pb2=G.bids[2], ob=[1,3].filter(q=>G.bids[q]!==null);
+    $('#bidSub').textContent=(pb2===null?`Team bidding: call your books first, then ${NAMES[2]} calls theirs. Your numbers add up.`:`${NAMES[2]} called ${bidTxt(2)}. Add your books to it.`)
+      +(ob.length===2?` They have ${teamSum(1)} together.`:' They bid after you.'); }
   const sug=suggestBid(0);
   grid.innerHTML='';
   const mk=(v,lab,cls)=>{const b=document.createElement('button');b.textContent=lab;if(cls)b.className=cls;if(v===sug)b.classList.add('sug');
@@ -1694,10 +1699,11 @@ function blindOffer(cb){
 }
 function submitBid(v){
   if(!G||G.phase!=='bid'||G.turn!==0) return;
-  if(teamBidding()?(G.teamBid&&G.teamBid[0]!=null):G.bids[0]!==null) return;
+  if(G.bids[0]!==null) return;
   if(ONL.on) return onlineBid(v);
-  if(teamBidding()){ stopClock(); $('#bidPanel').hidden=true; setTeamBid(0,v); say(0,`We got ${v}.`,1600); snap(0.3,1500);
-    later(()=>say(2,pick(['Bet, I got you','That’s us','Let’s work'])),700); renderSeats(); later(nextTeamBid,600); return; }
+  if(teamBidding()){ stopClock(); $('#bidPanel').hidden=true; G.bids[0]=v; say(0,v===0?'Nil.':`I got ${v}.`,1600); snap(0.3,1500);
+    if(v===0) later(()=>say(oppSeat(),pick(LINES.nilBid)),800);
+    teamCall(0); renderSeats(); later(nextTeamBid, G.bids[2]!==null?1500:600); return; }
   stopClock(); $('#bidPanel').hidden=true;
   G.bids[0]=v; say(0,v===0?'Nil.':`I got ${v}.`,1600); snap(0.3,1500);
   if(v===0) later(()=>say(oppSeat(),pick(LINES.nilBid)),800);
@@ -1944,7 +1950,6 @@ function endHand(){
 
 function recapHtml(){
   const rc=(G.recap||[]).slice();
-  [0,1,2,3].forEach(q=>{if(G.bids[q]===0&&!G.tricks[q]) rc.push(`${nmOf(q)} made ${G.blind[q]?'blind ':''}nil 🔥`);});
   const top=[0,1,2,3].reduce((a,b)=>G.tricks[b]>G.tricks[a]?b:a,0);
   const fair=G.start&&!ONL.on?`<button class="btn ghost" id="seeHands" style="margin-top:8px">🔍 See all 4 starting hands</button>`:'';
   return `<div class="recap"><h4>Hand recap${G.dealNo?` <span class="dealno">🔒 Fair deal #${G.dealNo}</span>`:''}</h4><div class="rbooks">${[0,1,2,3].map(q=>`<span class="${q===top?'top':''}">${esc(nmOf(q))} <b>${G.tricks[q]}</b></span>`).join('')}</div>
@@ -1979,7 +1984,7 @@ function rulesSheet(after){
     ${optRow('oN','Nil bids','Bid zero books for +100, or lose 100.',opts.nil)}
     ${optRow('oB','10-bag penalty','Every 10 overtricks costs 100 points.',opts.bags)}
     ${optRow('oT','15-second turn clock','Run out of time and the game plays for you.',opts.timer)}
-    ${optRow('oTB','Team bidding','The team that didn’t deal bids first, together, then the dealing team. You and your partner pick one number for your side. (Games with bots for now.)',opts.teamBid)}
+    ${optRow('oTB','Team bidding','The team that didn’t deal calls first: you call your books, your partner calls theirs, and they add up. Then the dealing team does the same. (Games with bots for now.)',opts.teamBid)}
     ${optRow('oBN','Blind nil (table votes)','The table votes at the start of each game. If 3 of 4 allow it, anyone can bid nil before seeing their cards. +200 or −200.',opts.blind)}
     </div>
     <button class="btn" id="go">Save rules</button>`,{noClose:true});
