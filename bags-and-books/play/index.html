@@ -56,6 +56,7 @@
   color-scheme:dark;
 }
 html,body{height:100%}
+@supports (height:100svh){html,body{height:100svh}}
 body{
   background:var(--page);
   background-image:var(--noise), radial-gradient(ellipse at 50% 0%, var(--page-hi) 0%, var(--page) 70%);
@@ -2560,8 +2561,9 @@ const mySeatInfo=()=>({uid:FB.uid,name:String(PROFILE.name||'Player').slice(0,14
 async function post(id,data){
   if(!FB||!ONL.code||ONL.spec) return false;
   const {F,db}=FB, ref=F.doc(db,'tables',ONL.code,'ev',id);
-  try{ await F.runTransaction(db,async tx=>{const s=await tx.get(ref); if(s.exists()) return; tx.set(ref,Object.assign({by:FB.uid,at:F.serverTimestamp()},data));}); return true; }
-  catch(e){ console.warn('post',id,e); return false; }
+  try{ await F.setDoc(ref,Object.assign({by:FB.uid,at:F.serverTimestamp()},data)); return true; }
+  catch(e){ if(e&&e.code==='permission-denied'&&ONL.ev[id]&&ONL.ev[id].by!==FB.uid) return true; /* someone beat us to it; theirs stands */
+    console.warn('post',id,e); return false; }
 }
 function waitFor(id,cb){
   const tok=ONL.tok; ONL.wait=null;
@@ -2913,7 +2915,10 @@ function beginOnline(){
     snap.forEach(x=>{ONL.myHands[x.id]=x.data().cards;}); if(ONL.handWait) ONL.handWait();
   },e=>console.warn(e)));
   ONL.unsubs.push(F.onSnapshot(F.collection(db,'tables',ONL.code,'ev'),snap=>{
-    snap.docChanges().forEach(ch=>{if(ch.type!=='added') return; const id=ch.doc.id, x=ch.doc.data(); if(ONL.ev[id]) return; ONL.ev[id]=x; onEv(id,x);});
+    snap.docChanges().forEach(ch=>{const id=ch.doc.id;
+      /* rare: two phones sent the same move at once and the server kept the other one; reload to catch up exactly */
+      if(ch.type==='removed'&&ONL.ev[id]&&ONL.ev[id].by===FB.uid){toast('Syncing with the table…',1500); setTimeout(()=>location.reload(),700); return;}
+      if(ch.type!=='added') return; const x=ch.doc.data(); if(ONL.ev[id]) return; ONL.ev[id]=x; onEv(id,x);});
   },e=>{console.warn(e); toast('Lost the connection to the table.',3000);}));
   const lb=document.getElementById('lobby'); if(lb) lb.hidden=true;
   renderMe(); onlineNewGame(); specTag();
@@ -2938,6 +2943,7 @@ function onlineLeave(announce){
   document.querySelectorAll('.veil').forEach(v=>v.remove());
   G=newGameState(); dealHand(); G.phase='idle'; setOpps(0); renderSeats(); renderHand(); status('');
 }
+setTimeout(()=>{const b=`https://www.gstatic.com/firebasejs/${FBV}/`; ['firebase-app.js','firebase-auth.js','firebase-firestore.js'].forEach(f=>import(b+f).catch(()=>{}));}, /[?&]t=/.test(location.search)?0:2500);
 /* invite links: ?t=CODE opens the join screen */
 /* and if you were mid-game when the page closed, you go right back to your seat */
 {const qc=(new URLSearchParams(location.search).get('t')||'').toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,5);
