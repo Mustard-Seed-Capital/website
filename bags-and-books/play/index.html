@@ -1327,16 +1327,21 @@ function visFelt(){
 }
 function slotPt(p){
   const c=visFelt(), w=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--tcw'))||58, h=w*1.4;
-  const land=LAND.matches, dx=w*(land?1.2:0.8), dy=h*(land?0.36:0.48);
+  const land=LAND.matches, dx=w*(land?1.25:0.8), dy=h*(land?0.22:0.48);
   if(land){const f=felt.getBoundingClientRect(), st=stage.getBoundingClientRect(); c.y=f.top-st.top+midY();}
   return [{x:c.x,y:c.y+dy},{x:c.x-dx,y:c.y},{x:c.x,y:c.y-dy},{x:c.x+dx,y:c.y}][p];
 }
 function place(d,pt,rot,sc){const w=d.offsetWidth,h=d.offsetHeight;d.style.transform=`translate(${pt.x-w/2}px,${pt.y-h/2}px) rotate(${rot}deg) scale(${sc})`;}
 function sizeTable(){
   const v=visFelt();
-  const tcw=Math.round(Math.max(44,LAND.matches?Math.min(84,v.w/6.4,v.h/3.7):Math.min(74,v.w/6.2,v.h/5.6)));
+  const tcw=Math.round(Math.max(44,LAND.matches?Math.min(66,v.w/8,midGap()/2.3):Math.min(74,v.w/6.2,v.h/5.6)));
   document.documentElement.style.setProperty('--tcw',tcw+'px');
   felt.style.setProperty('--cy',midY()+'px');
+}
+/* room between the bottom of your partner's seat and the top of yours, so played cards never cover anyone */
+function midGap(){
+  const a=document.querySelector('#seat2').getBoundingClientRect(), b=document.querySelector('#seat0 .av').getBoundingClientRect();
+  return Math.max(80,b.top-a.bottom);
 }
 /* halfway between your partner's picture and yours, so all four players sit evenly around the table */
 function midY(){
@@ -1351,10 +1356,10 @@ function renderHand(animate,offset=0){
   handEl.innerHTML='';
   const h=G.hands[0], W=handEl.clientWidth;
   const land=LAND.matches;
-  const cw=Math.round(Math.max(48,Math.min(land?98:80,W/(land?6.2:5.1),land?innerHeight*0.28:999)));
-  const ov=land?Math.round(cw*0.5):0;
+  const cw=Math.round(Math.max(48,Math.min(80,W/(land?6.6:5.1),land?innerHeight*0.21:999)));
+  const ov=land?Math.round(cw*0.45):0;
   handEl.style.marginTop=(land?-ov:4)+'px'; stage.style.setProperty('--ov',ov+'px');
-  handEl.style.setProperty('--cw',cw+'px'); handEl.style.height=(land?Math.round(cw*1.4*0.7+16):cw*1.4+20)+'px';
+  handEl.style.setProperty('--cw',cw+'px'); handEl.style.height=(land?Math.round(cw*1.4*0.82+16):cw*1.4+20)+'px';
   const n=h.length, step=n>1?Math.min(cw*0.62,(W-cw)/(n-1)):0, x0=(W-(cw+step*(n-1)))/2;
   const myTurn=G.phase==='play'&&G.turn===0&&!busy;
   const ok=myTurn?new Set(legal(0).map(c=>c.id)):null;
