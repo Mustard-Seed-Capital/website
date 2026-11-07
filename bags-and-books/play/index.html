@@ -539,7 +539,8 @@ button:focus-visible,input:focus-visible+span{outline:2px solid var(--brass);out
 .tinfo small{display:block;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
 .tinfo b{font-size:14.5px;font-weight:600}
 .seg.tseg{display:inline-flex}
-.joinrow{display:flex;gap:8px}.joinrow input{flex:1;min-width:0;font:800 22px/1 var(--f-ui);letter-spacing:.3em;text-align:center;text-transform:uppercase;padding:10px;border-radius:12px;border:1px solid var(--panel-line);background:rgba(0,0,0,.25);color:inherit}
+.joinrow{display:flex;gap:8px}.nameIn{display:block;width:100%;box-sizing:border-box;font:700 17px/1.2 var(--f-ui);padding:11px 12px;border-radius:12px;border:1px solid var(--panel-line);background:rgba(0,0,0,.25);color:inherit}
+.joinrow input{flex:1;min-width:0;font:800 22px/1 var(--f-ui);letter-spacing:.3em;text-align:center;text-transform:uppercase;padding:10px;border-radius:12px;border:1px solid var(--panel-line);background:rgba(0,0,0,.25);color:inherit}
 .joinrow .btn{width:auto;margin:0;padding:0 22px}
 .code-box{display:grid;justify-items:center;gap:2px;margin:6px 0 10px;padding:10px;border-radius:14px;background:rgba(0,0,0,.25);border:1px dashed var(--brass)}
 .code-box small{color:var(--muted);font-size:12px}.code-box b{font:800 34px/1 var(--f-ui);letter-spacing:.28em;color:var(--brass);padding-left:.28em}
@@ -2381,10 +2382,11 @@ function onlineNewGame(){
   if(opts.blind&&opts.nil) later(()=>onlineVote(startHand),reduce?50:600); else later(startHand,400);
 }
 function onlineNames(){
-  const bn=['Dre','Nae','Big Ray'], ba=[BOT_AV[1],BOT_AV[2],BOT_AV[3]]; let bi=0;
+  const bn=['Dre','Nae','Big Ray'], ba=[BOT_AV[1],BOT_AV[2],BOT_AV[3]];
+  const botSeats=[0,1,2,3].filter(a=>!ONL.seats[a]||ONL.gone.has(a)); // same order on every phone
   for(let p=1;p<4;p++){const a=toA(p), s=ONL.seats[a];
     if(s&&!ONL.gone.has(a)){NAMES[p]=s.name; $('#pic'+p).innerHTML=avatarSVG(s.av);}
-    else {NAMES[p]=bn[bi]+' 🤖'; $('#pic'+p).innerHTML=avatarSVG(ba[bi]); bi++;}}
+    else {const bi=botSeats.indexOf(a)%3; NAMES[p]=bn[bi]+' 🤖'; $('#pic'+p).innerHTML=avatarSVG(ba[bi]);}}
   if(G) renderSeats();
 }
 function onlineDeal(){
@@ -2492,12 +2494,14 @@ function onlineResults(v,over){
 
 /* ---------- create, join, waiting room ---------- */
 function crewSheet(prefill){
-  let mode='classic', target=300;
+  let mode='classic', target=300, nmv=PROFILE.name&&PROFILE.name!=='You'?PROFILE.name:'';
   const v=sheet('<div id="crew"></div>',{mid:true});
   const draw=()=>{
     v.querySelector('#crew').innerHTML=`
       <h2>Play with your crew</h2>
       <p class="lede">Start a private table and text the code to your friends. Empty seats get bots, so you can start with just two of you.</p>
+      <h4>Your name at the table</h4>
+      <input id="cName" class="nameIn" maxlength="14" placeholder="Your name" autocomplete="nickname" value="${esc(nmv)}" aria-label="Your name">
       <h4>Join a friend’s table</h4>
       <div class="joinrow"><input id="cCode" maxlength="5" placeholder="CODE" autocomplete="off" autocapitalize="characters" spellcheck="false" value="${esc(prefill||'')}" aria-label="Table code"><button class="btn" id="cJoin">Join</button></div>
       <h4>Or start a new table</h4>
@@ -2507,10 +2511,12 @@ function crewSheet(prefill){
       <p class="fine">Your house rules from the Rules screen apply. Online tables are free and you still earn XP and coins.</p>`;
     v.querySelectorAll('input[name="cm"]').forEach(i=>i.onchange=()=>{mode=i.value;draw();});
     v.querySelectorAll('input[name="ct"]').forEach(i=>i.onchange=()=>{target=+i.value;});
+    const nm=v.querySelector('#cName'); nm.oninput=()=>{nmv=nm.value;};
+    const named=()=>{const n=nm.value.trim().replace(/\s+/g,' '); if(!n){toast('Add your name so friends know who’s who.');nm.focus();return false;} PROFILE.name=n.slice(0,14); saveProfile(); renderMe(); return true;};
     const code=v.querySelector('#cCode'); code.oninput=()=>{code.value=code.value.toUpperCase().replace(/[^A-Z0-9]/g,'');};
-    v.querySelector('#cJoin').onclick=async e=>{const c=code.value.trim(); if(c.length!==5){toast('Codes are 5 letters and numbers.');return;}
+    v.querySelector('#cJoin').onclick=async e=>{const c=code.value.trim(); if(c.length!==5){toast('Codes are 5 letters and numbers.');return;} if(!named()) return;
       e.target.disabled=true; e.target.textContent='Joining…'; const ok=await joinTable(c); if(ok) v.remove(); else {e.target.disabled=false;e.target.textContent='Join';}};
-    v.querySelector('#cNew').onclick=async e=>{e.target.disabled=true; e.target.textContent='Creating…';
+    v.querySelector('#cNew').onclick=async e=>{if(!named()) return; e.target.disabled=true; e.target.textContent='Creating…';
       const ok=await createTable(mode,mode==='ffa'?100:target); if(ok) v.remove(); else {e.target.disabled=false;e.target.textContent='Create table';}};
   };
   draw();
