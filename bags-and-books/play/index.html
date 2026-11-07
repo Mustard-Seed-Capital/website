@@ -2867,6 +2867,7 @@ function onEv(id,d){
   if(d&&typeof d.ms==='number'&&typeof d.s==='number'&&d.s!==ONL.me&&!FF){ LAG.seat[d.s]=d.ms; }
   if(!FF&&/\.p51$/.test(id)) setTimeout(sendLag,1500);
   if(ONL.host&&typeof d.s==='number'&&ONL.seats[d.s]&&d.by===ONL.seats[d.s].uid) ONL.miss[d.s]=0;
+  if(typeof d.s==='number'&&ONL.seats&&ONL.seats[d.s]&&d.by===ONL.seats[d.s].uid&&d.at&&d.at.toMillis){ ONL.heard=ONL.heard||{}; ONL.heard[d.s]=Math.max(ONL.heard[d.s]||0,d.at.toMillis()); }
   if(id.startsWith('c.')) return chatIn(d);
   if(id.startsWith('t.')) return throwIn(d);
   ONL.lastEv=Date.now();
@@ -3293,7 +3294,7 @@ function beginOnline(){
   const d=ONL.table, {F,db}=FB;
   if(ONL.room){ONL.room.remove(); ONL.room=null;}
   ONL.saved=Object.assign({},opts); Object.assign(opts,{teamBid:false},d.rules||{},{mode:d.mode,target:d.target});
-  ONL.on=true; ONL.srv=!!d.srv; LAG.seat={}; LAG.dn=[]; ONL.g=d.g||0; ONL.ev={}; ONL.myHands={}; ONL.gone=new Set(); ONL.miss={}; ONL.advanced=null; ONL.leftN={}; ONL.backN={}; ONL.goneG={}; ONL.bye=new Set(); if(!FF) ONL.evReady=true; ONL.dropped=false; ONL.lastEv=Date.now();
+  ONL.on=true; ONL.srv=!!d.srv; LAG.seat={}; LAG.dn=[]; ONL.heard={}; ONL.g=d.g||0; ONL.ev={}; ONL.myHands={}; ONL.gone=new Set(); ONL.miss={}; ONL.advanced=null; ONL.leftN={}; ONL.backN={}; ONL.goneG={}; ONL.bye=new Set(); if(!FF) ONL.evReady=true; ONL.dropped=false; ONL.lastEv=Date.now();
   ONL.botOrder=(d.bots||[]).slice(); ONL.seatDocs=ONL.seats.slice();
   (d.bots||[]).forEach(a=>{ONL.seats[a]=null;});
   if(!ONL.spec||ONL.joinSeat>=0) onlRemember();
@@ -3659,7 +3660,10 @@ function gameLive(){return !!(ONL.on&&!ONL.spec&&G&&!G.over&&(G.phase==='bid'||G
 function stalled(){return !ONL.srv&&Date.now()-(ONL.lastEv||Date.now())>45e3;}
 function partnerGone(){return partnersOn()&&ONL.gone.has((ONL.me+2)%4);}
 function aloneNow(){return ![0,1,2,3].some(a=>a!==ONL.me&&ONL.seats[a]&&!ONL.gone.has(a));}
-function quitCounts(){return gameLive()&&!stalled()&&!partnerGone()&&!aloneNow();}
+/* another real player has made a move (or loaded in) in the last 90 seconds */
+function othersActive(){ const now=Date.now()+(ONL.skew||0);
+  return [0,1,2,3].some(a=>a!==ONL.me&&ONL.seats[a]&&!ONL.gone.has(a)&&now-((ONL.heard||{})[a]||0)<90e3); }
+function quitCounts(){return gameLive()&&!stalled()&&!partnerGone()&&!aloneNow()&&othersActive();}
 function leaveGame(){
   if(!quitCounts()){ onlineLeave(true,false); openLobby(); return; }
   const t=quitTimeoutFor(Date.now(),1);
@@ -3672,14 +3676,17 @@ function leaveGame(){
 }
 function noteQuit(){const q=(PROFILE.quits||[]).filter(t=>Date.now()-t<864e5); q.push(Date.now()); PROFILE.quits=q.slice(-10); saveProfile();}
 const QUIT_STEPS=[5,15,60]; // minutes: 1st, 2nd, 3rd+ quit in 24 hours
+/* quits before this moment came from tables stuck by an old version; they don't count */
+const QUIT_AMNESTY=Date.UTC(2026,10,7,21,20);
+const liveQuits=()=>(PROFILE.quits||[]).filter(t=>t>QUIT_AMNESTY);
 function quitTimeoutFor(now,extra){
-  const n=(PROFILE.quits||[]).filter(t=>now-t<864e5).length+(extra||0);
+  const n=liveQuits().filter(t=>now-t<864e5).length+(extra||0);
   return n?QUIT_STEPS[Math.min(n,QUIT_STEPS.length)-1]*60e3:0;
 }
 function quitWait(r){
   const now=Date.now();
   (r&&r.qAt||[]).forEach(t=>{if(!(PROFILE.quits||[]).some(x=>Math.abs(x-t)<5*60e3)) PROFILE.quits=(PROFILE.quits||[]).concat(t);});
-  const q=(PROFILE.quits||[]).filter(t=>now-t<864e5).sort((a,b)=>a-b); if(!q.length) return 0;
+  const q=liveQuits().filter(t=>now-t<864e5).sort((a,b)=>a-b); if(!q.length) return 0;
   const dur=QUIT_STEPS[Math.min(q.length,QUIT_STEPS.length)-1]*60e3;
   return Math.max(0,q[q.length-1]+dur-now);
 }
