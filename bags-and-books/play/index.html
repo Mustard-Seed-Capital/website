@@ -527,6 +527,12 @@ button:focus-visible,input:focus-visible+span{outline:2px solid var(--brass);out
 .mc-tourney{background:radial-gradient(ellipse at 50% 20%,#6b5218,#16110a 80%);border-color:#c9a24a}
 .mc-random{background:radial-gradient(ellipse at 50% 25%,#7446ae,#22103d 80%)}
 .mc-crew{background:linear-gradient(160deg,#2d3138,#141619)}
+.onl{display:inline-flex;align-items:center;gap:6px;color:#7fe0a3;font-weight:700;font-size:12.5px}
+.onl i,.frn .dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#3ddc84;box-shadow:0 0 0 3px rgba(61,220,132,.2);animation:onlp 2s ease-in-out infinite}
+.frn .dot{margin-right:6px;vertical-align:1px}
+@keyframes onlp{50%{box-shadow:0 0 0 6px rgba(61,220,132,0)}}
+@media (prefers-reduced-motion:reduce){.onl i,.frn .dot{animation:none}}
+#rOnl{margin:-4px 0 8px}
 .mc-rnd{background:radial-gradient(ellipse at 50% 20%,#1d6b8f,#0b2233 80%)}
 .crew.rnd{opacity:.9}.crew .mini-av.q{display:grid;place-items:center;font:800 20px var(--f-ui);color:#bfe6ff;background:rgba(255,255,255,.08);border-style:dashed}
 .onb-hero{display:grid;place-items:center;margin:-4px auto 6px;width:64px;height:64px;border-radius:18px;background:linear-gradient(160deg,#1f5a3d,#0c2a1c);border:1px solid var(--brass);box-shadow:0 6px 18px rgba(0,0,0,.35)}
@@ -2388,7 +2394,8 @@ function openLobby(){
 function closeLobby(){const el=document.getElementById('lobby'); if(el) el.hidden=true; userClock();}
 function refreshMeta(){renderMe(); if(lobbyOpen()) renderLobby();}
 
-function renderLobby(){
+function renderLobby(){ renderLobby0(); try{paintOnline();}catch(e){} }
+function renderLobby0(){
   const el=document.getElementById('lobby'), li=lvlInfo(PROFILE.xp), ri=rankOf(PROFILE.rp), R=RANKS[ri];
   const inGame=G&&(G.phase==='bid'||G.phase==='play'||G.phase==='between')&&!G.over;
   const keep=el.querySelector('.modes'), sx=keep?keep.scrollLeft:0;
@@ -2863,7 +2870,7 @@ function onlineNewGame(){
 }
 function onlineNames(){
   const bn=['Dre','Nae','Big Ray'], ba=[BOT_AV[1],BOT_AV[2],BOT_AV[3]];
-  const botSeats=[0,1,2,3].filter(a=>!ONL.seats[a]); // same order on every phone
+  const botSeats=(ONL.botOrder&&ONL.botOrder.length?ONL.botOrder:[0,1,2,3].filter(a=>!ONL.seats[a])); // same order on every phone
   for(let p=1;p<4;p++){const a=toA(p), s=ONL.seats[a];
     if(s){NAMES[p]=s.name+(ONL.gone.has(a)?' 🤖':''); $('#pic'+p).innerHTML=avatarSVG(s.av);}
     else {const bi=botSeats.indexOf(a)%3; NAMES[p]=bn[bi]+' 🤖'; $('#pic'+p).innerHTML=avatarSVG(ba[bi]);}}
@@ -2886,7 +2893,12 @@ function onlineDeal(){
     if(tok!==ONL.tok) return true;
     const ev=ONL.ev[did], key=a=>`${ONL.g}-${H}-${a}`;
     if(!ev) return false;
-    const need=ONL.spec?[]:[ONL.me].concat(ONL.host&&!ONL.srv?[0,1,2,3].filter(a=>a!==ONL.me&&oBot(a)):[]);
+    (ev.join||[]).forEach(a=>{ if(!ONL.seats[a]&&ONL.seatDocs&&ONL.seatDocs[a]){ ONL.seats[a]=ONL.seatDocs[a]; if(!FF&&a!==ONL.joinSeat) toast(`${ONL.seatDocs[a].name} joined and takes over this seat.`,2600); }
+      if(a===ONL.joinSeat){ ONL.spec=false; ONL.joinSeat=-1; specTag(); if(!FF) toast('You’re in. This hand is yours. Good luck!',2600); } });
+    if(ev.join&&ev.join.length) onlineNames();
+    /* rejoining after taking over a bot's seat: hands before that were the bot's */
+    const lateJoin=!ONL.spec&&Object.keys(ONL.ev).some(k=>{const m=k.match(/^(\d+)\.(\d+)\.deal$/); return m&&+m[1]===ONL.g&&+m[2]>H&&(ONL.ev[k].join||[]).includes(ONL.me);});
+    const need=ONL.spec||lateJoin?[]:[ONL.me].concat(ONL.host&&!ONL.srv?[0,1,2,3].filter(a=>a!==ONL.me&&oBot(a)):[]);
     if(need.some(a=>!ONL.myHands[key(a)])) return false;
     ONL.handWait=null;
     G.deck=makeDeck(); const byId=Object.fromEntries(G.deck.map(c=>[c.id,c]));
@@ -3070,7 +3082,7 @@ function enterRoom(quiet){
   ONL.unsubs.push(F.onSnapshot(F.collection(db,'tables',ONL.code,'seats'),snap=>{
     const seats=[null,null,null,null];
     snap.forEach(d=>{const x=d.data(), i=+d.id; if(i>=0&&i<4) seats[i]={uid:x.uid,name:String(x.name||'Player').slice(0,14),av:cleanAv(x.av),lvl:Math.max(1,Math.min(99,x.lvl|0)),rk:Math.max(0,Math.min(RANKS.length-1,x.rk|0))};});
-    if(ONL.on){ for(let a=0;a<4;a++) if(ONL.seats[a]&&!seats[a]) leftIn(a); return; }
+    if(ONL.on){ ONL.seatDocs=seats; for(let a=0;a<4;a++) if(ONL.seats[a]&&!seats[a]) leftIn(a); return; }
     ONL.seats=seats; ONL.me=seats.findIndex(x=>x&&x.uid===FB.uid); if(ONL.spec&&ONL.me<0) ONL.me=0; drawRoom();
   },e=>console.warn(e)));
   ONL.unsubs.push(F.onSnapshot(tRef(),s=>{
@@ -3137,7 +3149,8 @@ async function rejoinTable2(code,watch){
     const me=seats.findIndex(x=>x&&x.uid===FB.uid);
     if(me<0&&!watch){onlForget(); return false;}
     document.querySelectorAll('.veil').forEach(v=>v.remove());
-    ONL.code=code; ONL.host=d.host===FB.uid; ONL.spec=me<0; ONL.me=me<0?0:me; ONL.seats=seats; ONL.gone=new Set(); ONL.table=null; ONL.room=null;
+    const pending=me>=0&&(d.bots||[]).includes(me); /* sat down in a bot's seat; takes over at the next deal */
+    ONL.code=code; ONL.host=d.host===FB.uid; ONL.spec=me<0||pending; ONL.joinSeat=pending?me:-1; ONL.me=me<0?0:me; ONL.seats=seats; ONL.gone=new Set(); ONL.table=null; ONL.room=null;
     ONL.snd=soundOn; soundOn=false; FF=true; ONL.evReady=false; setTimeout(()=>{ONL.evReady=true; ffEnd();},25000); ONL.rejoinAt=Date.now();
     enterRoom(true); return true;
   }catch(e){console.warn(e); FF=false; soundOn=ONL.snd; toast('Couldn’t get back to that table.',3000); return false;}
@@ -3160,9 +3173,10 @@ function beginOnline(){
   if(ONL.room){ONL.room.remove(); ONL.room=null;}
   ONL.saved=Object.assign({},opts); Object.assign(opts,{teamBid:false},d.rules||{},{mode:d.mode,target:d.target});
   ONL.on=true; ONL.srv=!!d.srv; ONL.g=d.g||0; ONL.ev={}; ONL.myHands={}; ONL.gone=new Set(); ONL.miss={}; ONL.advanced=null; ONL.leftN={}; ONL.backN={}; ONL.goneG={}; ONL.bye=new Set(); if(!FF) ONL.evReady=true; ONL.dropped=false; ONL.lastEv=Date.now();
+  ONL.botOrder=(d.bots||[]).slice(); ONL.seatDocs=ONL.seats.slice();
   (d.bots||[]).forEach(a=>{ONL.seats[a]=null;});
-  if(!ONL.spec) onlRemember();
-  if(!ONL.spec) ONL.unsubs.push(F.onSnapshot(F.query(F.collection(db,'tables',ONL.code,'hands'),F.where('uid','==',FB.uid)),snap=>{
+  if(!ONL.spec||ONL.joinSeat>=0) onlRemember();
+  if(!ONL.spec||ONL.joinSeat>=0) ONL.unsubs.push(F.onSnapshot(F.query(F.collection(db,'tables',ONL.code,'hands'),F.where('uid','==',FB.uid)),snap=>{
     snap.forEach(x=>{const id=x.id.replace(/-x$/,''); if(x.id!==id&&ONL.myHands[id]) return; ONL.myHands[id]=x.data().cards;}); if(ONL.handWait) ONL.handWait();
   },e=>console.warn(e)));
   ONL.unsubs.push(F.onSnapshot(F.collection(db,'tables',ONL.code,'ev'),snap=>{
@@ -3176,7 +3190,7 @@ function beginOnline(){
   const lb=document.getElementById('lobby'); if(lb) lb.hidden=true;
   renderMe(); onlineNewGame(); specTag();
   const bots=4-ONL.seats.filter(Boolean).length;
-  if(ONL.spec){toast(`Watching table ${ONL.code}. You see every play, but nobody’s cards.`,3400); return;}
+  if(ONL.spec){ if(ONL.joinSeat<0) toast(`Watching table ${ONL.code}. You see every play, but nobody’s cards.`,3400); return;}
   if(FF) return;
   toast(bots?`Table ${ONL.code} · ${bots} bot${bots>1?'s':''} fill the empty seats 🤖`:`Table ${ONL.code} · full table. Good luck!`,3000);
 }
@@ -3184,9 +3198,12 @@ function specTag(){
   let t=document.getElementById('specTag');
   if(!ONL.on||!ONL.spec){if(t) t.remove(); return;}
   if(!t){t=document.createElement('div'); t.id='specTag'; stage.appendChild(t);}
-  t.innerHTML=`👀 Watching · bottom seat is ${esc(ONL.seats[0]?ONL.seats[0].name:'the host')}`;
+  const bn=['Dre','Nae','Big Ray'][Math.max(0,(ONL.botOrder||[]).indexOf(ONL.joinSeat))%3];
+  t.innerHTML=ONL.joinSeat>=0?`⏳ You’re in! You take over from ${bn} when the next hand starts`
+    :`👀 Watching · bottom seat is ${esc(ONL.seats[0]?ONL.seats[0].name:'the host')}`;
 }
 function onlineLeave(announce,quit){
+  if(ONL.on&&ONL.joinSeat>=0&&FB){ FB.F.deleteDoc(tRef('seats',String(ONL.joinSeat))).catch(()=>{}); ONL.joinSeat=-1; } /* never took the seat */
   if(ONL.on&&announce&&ONL.me>=0&&!ONL.spec){
     if(quit) post(`${ONL.g}.q${ONL.me}`,{s:ONL.me});
     const next=[0,1,2,3].find(a=>a!==ONL.me&&ONL.seats[a]&&!ONL.gone.has(a));
@@ -3217,7 +3234,7 @@ const SOCIAL={apple:false,facebook:false};
 const NAME_RX=/^[A-Za-z0-9_]{3,14}$/;
 const NAME_BAD=/fuck|shit|bitch|cunt|nigg|fag|dick|pussy|whore|slut|rape|nazi|hitler|retard|cock|porn|admin|moderator|bagsandbooks/i;
 const RND_RULES={jokers:false,deuce:false,nil:true,bags:true,timer:true,blind:false,teamBid:false};
-const RND_WAIT=45000;
+const RND_WAIT=18000;
 const RND={t:null,n:0,made:0,starting:false,merging:false};
 const SOC={inv:null,seen:new Set(),started:false};
 const RCACHE={};
@@ -3283,7 +3300,30 @@ async function startSocial(){
     else if(s.data().uid!==FB.uid){ const old=PROFILE.handle; PROFILE.handle=null; saveProfile(); SOC.started=false;
       toast(`@${old} is linked to another phone. Pick a username for this one.`,4200); onboard(); return; }
   }catch(e){console.warn(e);}
-  listenInvites();
+  listenInvites(); presence();
+}
+/* ---------- who's online: each open app checks in once a minute ---------- */
+function presence(){
+  if(SOC.pres||!FB) return;
+  const beat=async()=>{ if(document.hidden) return; const {F,db}=FB;
+    try{ await F.setDoc(F.doc(db,'presence',FB.uid),{at:F.serverTimestamp(),n:PROFILE.handle||''});
+      const q=F.query(F.collection(db,'presence'),F.where('at','>',F.Timestamp.fromMillis(Date.now()-150e3)));
+      SOC.online=Math.max(1,(await F.getCountFromServer(q)).data().count); paintOnline();
+    }catch(e){console.warn('presence',e);} };
+  SOC.pres=setInterval(beat,60e3); beat();
+  document.addEventListener('visibilitychange',()=>{ if(!document.hidden) beat(); });
+}
+function paintOnline(){
+  if(SOC.online==null) return;
+  const t=`${SOC.online} player${SOC.online===1?'':'s'} online now`;
+  const c=document.querySelector('.mc[data-m="randoms"] .mc-s'); if(c) c.innerHTML=`<span class="onl"><i></i>${t}</span>`;
+  const r=document.getElementById('rOnl'); if(r) r.innerHTML=`<i></i>${t}`;
+}
+async function friendOnline(uids){
+  if(!FB||!uids.length) return {};
+  const {F,db}=FB, out={};
+  await Promise.all(uids.map(async u=>{ try{ const d=await F.getDoc(F.doc(db,'presence',u)); const at=d.exists()&&d.data().at; out[u]=!!(at&&at.toMillis&&Date.now()-at.toMillis()<150e3); }catch(e){} }));
+  return out;
 }
 
 /* ---------- Sign in with Apple / Facebook (keeps the same player id, so name, friends and ratings carry over) ---------- */
@@ -3327,20 +3367,21 @@ async function addFriendByName(n){
 }
 function friendsSheet(inviting){
   const v=sheet('<div id="frs"></div>',{mid:true});
-  const sent=new Set();
-  const draw=()=>{const fr=friendsList();
+  const sent=new Set(); let on={};
+  friendOnline(friendsList().map(f=>f.uid)).then(o=>{on=o; if(v.isConnected) draw();});
+  const draw=()=>{const fr=friendsList().slice().sort((a,b)=>(on[b.uid]?1:0)-(on[a.uid]?1:0));
     v.querySelector('#frs').innerHTML=`
       <h2>${inviting?'Invite friends':'Friends'}</h2>
       <p class="lede">${inviting?'They get a pop-up to join this table if the app is open. You can also text them the code.':`You’re <b>@${esc(PROFILE.handle||PROFILE.name)}</b>. Share your username so friends can add you.`}</p>
       <div class="joinrow"><input id="fAdd" maxlength="15" placeholder="Add by username" autocapitalize="off" autocorrect="off" spellcheck="false" aria-label="Friend's username"><button class="btn" id="fGo">Add</button></div>
-      <div class="frl">${fr.length?fr.map((f,i)=>`<div class="fr"><div class="frn"><b>@${esc(f.n)}</b><small>${rtTag(f.uid)}</small></div>
+      <div class="frl">${fr.length?fr.map((f,i)=>`<div class="fr"><div class="frn"><b>${on[f.uid]?'<i class="dot"></i>':''}@${esc(f.n)}</b><small>${on[f.uid]?'<span class="onl">online now</span> ':''}${rtTag(f.uid)}</small></div>
         ${inviting?`<button class="btn sm" data-inv="${i}" ${sent.has(f.uid)?'disabled':''}>${sent.has(f.uid)?'Sent ✓':'Invite'}</button>`:`<button class="linkb" data-rm="${i}">Remove</button>`}</div>`).join('')
         :'<p class="fine">No friends yet. Add someone by their username, or tap ＋ Friend after a game.</p>'}</div>
       ${inviting||!PROFILE.handle?'':`<button class="btn ghost" id="fShare">Share my username</button>`}`;
     const inp=v.querySelector('#fAdd'), go=v.querySelector('#fGo');
     go.onclick=async()=>{go.disabled=true; if(await addFriendByName(inp.value)) draw(); else go.disabled=false;};
     inp.onkeydown=e=>{if(e.key==='Enter') go.click();};
-    v.querySelectorAll('[data-rm]').forEach(b=>b.onclick=()=>{fr.splice(+b.dataset.rm,1); saveProfile(); draw();});
+    v.querySelectorAll('[data-rm]').forEach(b=>b.onclick=()=>{const u=fr[+b.dataset.rm].uid; PROFILE.friends=friendsList().filter(f=>f.uid!==u); saveProfile(); draw();});
     v.querySelectorAll('[data-inv]').forEach(b=>b.onclick=async()=>{const f=fr[+b.dataset.inv]; b.disabled=true; b.textContent='Sending…';
       if(await sendInvite(f)){sent.add(f.uid); b.textContent='Sent ✓';} else {b.disabled=false; b.textContent='Invite';}});
     const sh=v.querySelector('#fShare'); if(sh) sh.onclick=async()=>{const t=`Add me on Bags & Books: @${PROFILE.handle}`;
@@ -3381,7 +3422,8 @@ function randomsSheet(){ whenNamed(()=>{
   const draw=()=>{
     v.querySelector('#rnd').innerHTML=`
       <h2>Play online</h2>
-      <p class="lede">Get matched with real players. If seats are still open after ${RND_WAIT/1000} seconds, bots fill them so you’re never stuck waiting.</p>
+      <p class="lede">Get matched with real players. You’ll be playing in under ${RND_WAIT/1000} seconds: open seats start as bots, and real players who search later take a bot’s seat at the next hand.</p>
+      <div class="onl" id="rOnl">${SOC.online!=null?`<i></i>${SOC.online} player${SOC.online===1?'':'s'} online now`:''}</div>
       <div class="seg tseg">${[['classic','Classic'],['jjdd','JJDD'],['ffa','Free-for-All']].map(([m,l])=>`<label><input type="radio" name="rm" value="${m}" ${m===mode?'checked':''}><span>${l}</span></label>`).join('')}</div>
       <ul class="notes"><li>Standard rules: nil on, 10-bag penalty, 15-second turns</li><li>${mode==='ffa'?'First to 100':'Partners · first to 300'}</li><li>Rate your table after the game. Good play keeps your stars up.</li></ul>
       <div class="myrt" id="rMine"></div>
@@ -3403,6 +3445,7 @@ async function findMatch(mode){
   if(!await connect()) return false;
   try{
     for(const t of await openPub(mode)) if(await trySit(t.code)) return true;
+    for(const t of await openLive(mode)) if(await joinLive(t)) return true;
     return await createTable(mode,mode==='ffa'?100:300,true);
   }catch(e){console.warn(e); toast('Couldn’t find a table. Try again.',2600); return false;}
 }
@@ -3412,6 +3455,23 @@ async function openPub(mode,skip){
   const ms=x=>x&&x.toMillis?x.toMillis():0;
   s.forEach(d=>{const x=d.data(); if(d.id!==skip&&x.host!==FB.uid&&now-ms(x.ping)<45e3) out.push({code:d.id,created:ms(x.created)||now});});
   return out.sort((a,b)=>a.created-b.created||(a.code<b.code?-1:1));
+}
+/* games already being played that still have a bot in them (server-run tables only) */
+async function openLive(mode){
+  const {F,db}=FB, now=Date.now(), out=[], ms=x=>x&&x.toMillis?x.toMillis():0;
+  const s=await F.getDocs(F.query(F.collection(db,'tables'),F.where('pub','==',true),F.where('status','==','playing'),F.where('mode','==',mode),F.limit(25)));
+  s.forEach(d=>{const x=d.data(); if(x.srv&&(x.bots||[]).length&&now-ms(x.act||x.created)<6*60e3&&x.host!==FB.uid) out.push({code:d.id,bots:x.bots.slice(),act:ms(x.act)});});
+  return out.sort((a,b)=>b.act-a.act);
+}
+async function joinLive(t){
+  const {F,db}=FB;
+  for(const a of shuffle(t.bots.slice())){
+    try{ await F.setDoc(F.doc(db,'tables',t.code,'seats',String(a)),Object.assign(mySeatInfo(),{join:true})); }catch(e){continue;}
+    const ok=await rejoinTable(t.code,false);
+    if(ok){ toast('Found a game in progress. You take over a bot’s seat when the next hand starts.',3600); return true; }
+    F.deleteDoc(F.doc(db,'tables',t.code,'seats',String(a))).catch(()=>{});
+  }
+  return false;
 }
 async function trySit(code,before){
   const {F,db}=FB, ss=await F.getDocs(F.collection(db,'tables',code,'seats')), taken=new Set(); let skip=false;
@@ -3436,10 +3496,10 @@ function pubRoom(){
     const ln=ONL.room.querySelector('#mmLine');
     if(ln) ln.innerHTML=humans>=4?'<b>Table full.</b> Dealing…'
       :humans>1?`<b>${humans} of 4</b> real players · ${left?`bots fill the rest in ${left}s`:'starting…'}`
-      :`<b>Looking for players…</b>${left?` ${left}s`:' Still looking. You can start with bots anytime.'}`;
+      :`<b>Looking for players…</b>${left?` starting with bots in ${left}s. Real players can still jump in.`:' Starting…'}`;
     if(!ONL.host) return;
     if(RND.n%15===0) FB.F.updateDoc(tRef(),{ping:FB.F.serverTimestamp()}).catch(()=>{});
-    if(!RND.starting&&(humans>=4||(humans>1&&left===0))){RND.starting=true; startRoom().then(ok=>{if(!ok) RND.starting=false;});}
+    if(!RND.starting&&(humans>=4||left===0)){RND.starting=true; startRoom().then(ok=>{if(!ok) RND.starting=false;});}
     else if(humans===1&&RND.n%8===4&&!RND.merging) mergeCheck();
   };
   RND.t=setInterval(tick,1000); tick();
