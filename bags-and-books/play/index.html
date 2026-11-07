@@ -1564,7 +1564,7 @@ function userClock(){
   if(!G||G.turn!==0||busy) return;
   if(document.querySelector('.veil')) return;
   const lb=document.getElementById('lobby'); if(lb&&!lb.hidden) return;
-  if(G.phase==='bid'&&!$('#bidPanel').hidden) startClock(0,()=>{toast("Time's up. Coach bid for you.");submitBid(suggestBid(0));});
+  if(G.phase==='bid'&&!$('#bidPanel').hidden) startClock(0,()=>{toast("Time's up. Coach bid for you.");submitBid(Math.max(1,suggestBid(0)));}); /* never auto-nil */
   else if(G.phase==='play') startClock(0,()=>{toast("Time's up. Played a card for you.");sel=null;playMine(botChoose(0));},G.trick.length?'Your play':'Your lead');
 }
 const loseAt=()=>opts.target===100?-100:-200;
@@ -2764,12 +2764,13 @@ function leftIn(a,d){
   if(ONL.gone.has(a)) return;
   ONL.gone.add(a); ONL.goneG[a]=ONL.g;
   if(!ONL.on) return;
-  const quit=!!(d&&d.q);
-  if(a===ONL.me&&!ONL.spec){ if(quit) return; /* we left on purpose */
+  const quit=!!(d&&d.q), bye=!!(d&&d.bye);
+  if(bye) ONL.bye.add(a); else ONL.bye.delete(a);
+  if(a===ONL.me&&!ONL.spec){ if(quit||bye) return; /* we left on purpose */
     ONL.dropped=true; onlineNames();
     if(!FF){ if(Date.now()-(ONL.rejoinAt||0)<180e3) postBack(); else droppedBar(); }
     return; }
-  const p=toL(a); toast(quit?`${NAMES[p]} quit. A bot plays their seat now.`:`${NAMES[p]} lost connection. A bot plays for them until they’re back.`,3400);
+  const p=toL(a); toast(quit?`${NAMES[p]} quit. A bot plays their seat now.`:bye?`${NAMES[p]} left the table.${G&&!G.over?' A bot plays their seat now.':''}`:`${NAMES[p]} lost connection. A bot plays for them until they’re back.`,3400);
   if(quit&&!FF&&ONL.table&&ONL.seats[a]&&ONL.table.host===ONL.seats[a].uid){ const tk=ONL.tok;
     setTimeout(()=>{ if(tk!==ONL.tok||!ONL.on||ONL.host) return; if(ONL.table&&ONL.seats[a]&&ONL.table.host!==ONL.seats[a].uid) return;
       toast('The host left and the table couldn’t continue. No penalty for you.',4200); onlineLeave(false); openLobby(); },8000); }
@@ -2805,7 +2806,7 @@ function drive(kind,p,id){
   const auto=()=>{
     if(tok!==ONL.tok||ONL.ev[id]||!G) return;
     if(!bot){ ONL.miss[a]=(ONL.miss[a]||0)+1; if(ONL.miss[a]>=3){post(`left.${ONL.g}.${a}.${ONL.leftN[a]||0}`,{s:a,q:0});} }
-    post(id,Object.assign({s:a},kind==='b'?{v:suggestBid(p)}:{c:botChoose(p).id}));
+    post(id,Object.assign({s:a},kind==='b'?{v:bot?suggestBid(p):Math.max(1,suggestBid(p))}:{c:botChoose(p).id}));
   };
   ONL.fbT=setTimeout(auto, bot?(reduce?120:650+Math.random()*450):(ONL.miss[a]>=1&&opts.timer?TURN_MS+1500:(opts.timer?TURN_MS+8000:120000)));
 }
@@ -3106,7 +3107,7 @@ function beginOnline(){
   const d=ONL.table, {F,db}=FB;
   if(ONL.room){ONL.room.remove(); ONL.room=null;}
   ONL.saved=Object.assign({},opts); Object.assign(opts,{teamBid:false},d.rules||{},{mode:d.mode,target:d.target});
-  ONL.on=true; ONL.g=d.g||0; ONL.ev={}; ONL.myHands={}; ONL.gone=new Set(); ONL.miss={}; ONL.advanced=null; ONL.leftN={}; ONL.backN={}; ONL.goneG={}; ONL.dropped=false; ONL.lastEv=Date.now();
+  ONL.on=true; ONL.g=d.g||0; ONL.ev={}; ONL.myHands={}; ONL.gone=new Set(); ONL.miss={}; ONL.advanced=null; ONL.leftN={}; ONL.backN={}; ONL.goneG={}; ONL.bye=new Set(); ONL.dropped=false; ONL.lastEv=Date.now();
   (d.bots||[]).forEach(a=>{ONL.seats[a]=null;});
   if(!ONL.spec) onlRemember();
   if(!ONL.spec) ONL.unsubs.push(F.onSnapshot(F.query(F.collection(db,'tables',ONL.code,'hands'),F.where('uid','==',FB.uid)),snap=>{
@@ -3136,7 +3137,7 @@ function onlineLeave(announce,quit){
     if(quit) post(`${ONL.g}.q${ONL.me}`,{s:ONL.me});
     const next=[0,1,2,3].find(a=>a!==ONL.me&&ONL.seats[a]&&!ONL.gone.has(a));
     if(ONL.host&&next===undefined) FB.F.updateDoc(tRef(),{status:'closed'}).catch(()=>{});
-    else { if(ONL.host) handHost(next); post(`left.${ONL.g}.${ONL.me}.${ONL.leftN[ONL.me]||0}`,{s:ONL.me,q:quit?1:0}); }
+    else { if(ONL.host) handHost(next); post(`left.${ONL.g}.${ONL.me}.${ONL.leftN[ONL.me]||0}`,quit?{s:ONL.me,q:1}:{s:ONL.me,q:0,bye:1}); }
   }
   {const b=document.getElementById('dropBar'); if(b) b.remove();}
   onlineUnsub(); if(ONL.room){ONL.room.remove(); ONL.room=null;}
@@ -3444,7 +3445,7 @@ function quitRatings(){
     const mk=`${ONL.g}.q${a}`;
     const file=()=>F.setDoc(F.doc(db,'users',s.uid,'rates',`q_${ONL.code}_${ONL.g}`),{from:FB.uid,stars:1,at:F.serverTimestamp(),code:ONL.code,g:ONL.g,fs:ONL.me,ts:a}).then(()=>{delete RCACHE[s.uid];}).catch(()=>{});
     if(ONL.ev[mk]) file();
-    else if(ONL.host&&ONL.gone.has(a)&&ONL.goneG[a]===ONL.g) post(mk,{s:a,drop:1}).then(ok=>{if(ok) file();}); /* dropped and never came back */
+    else if(ONL.host&&ONL.gone.has(a)&&ONL.goneG[a]===ONL.g&&!ONL.bye.has(a)) post(mk,{s:a,drop:1}).then(ok=>{if(ok) file();}); /* dropped and never came back */
   }
 }
 
@@ -3517,7 +3518,7 @@ function rateBlock(v,nx){
   const picked={};
   const el=document.createElement('div'); el.className='ratebox';
   el.innerHTML=`<h4>Rate the table <small>optional · anonymous</small></h4>`+others.map(a=>{const s=ONL.seats[a], fr=friendsList().some(f=>f.uid===s.uid);
-      return `<div class="rrow" data-a="${a}"><div class="mini">${avatarSVG(s.av)}</div><div class="rn"><b>${esc(s.name)}</b>${ONL.gone.has(a)?(ONL.ev[`${ONL.g}.q${a}`]&&!ONL.ev[`${ONL.g}.q${a}`].drop?'<em>quit</em>':'<em>lost connection</em>'):(partnersOn()&&a%2===ONL.me%2?'<em>partner</em>':'')}</div>
+      return `<div class="rrow" data-a="${a}"><div class="mini">${avatarSVG(s.av)}</div><div class="rn"><b>${esc(s.name)}</b>${ONL.gone.has(a)?(ONL.ev[`${ONL.g}.q${a}`]&&!ONL.ev[`${ONL.g}.q${a}`].drop?'<em>quit</em>':ONL.bye.has(a)?'<em>left</em>':'<em>lost connection</em>'):(partnersOn()&&a%2===ONL.me%2?'<em>partner</em>':'')}</div>
         <div class="stars">${[1,2,3,4,5].map(k=>`<button data-k="${k}" aria-label="${k} star${k>1?'s':''}">★</button>`).join('')}</div>
         ${fr?'':`<button class="addf" data-a="${a}" aria-label="Add ${esc(s.name)} as a friend">＋</button>`}</div>`;}).join('')+
     `<button class="btn ghost sm" id="rateSend" disabled>Send ratings</button>`;
