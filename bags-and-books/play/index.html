@@ -2010,7 +2010,7 @@ function endHand(){
     ${coinNotes.length?`<div class="xpl" style="margin-top:6px">${coinNotes.join(' · ')}</div>`:''}
     ${rankMsg?`<div class="xpl" style="margin-top:6px">${rankMsg}</div>`:''}</div>`;
   const sign=v=>v>0?`<span class="pos">+${v}</span>`:(v<0?`<span class="neg">${v}</span>`:'0');
-  const cols=P?['Us','Them']:NAMES.map((x,i)=>i===0?'You':x.split(' ').pop());
+  const cols=P?['Us','Them']:NAMES.map((x,i)=>i===0?'You':x.replace(' 🤖','').split(' ').pop());
   const bidCell=t=>G.teamBid&&G.teamBid[t]!=null?['Team '+G.teamBid[t]].concat(members(t).filter(q=>G.bids[q]===0).map(q=>bidTxt(q))).join(' + '):members(t).map(q=>bidTxt(q)).join(' + ');
   const row=(label,f)=>`<tr><td>${label}</td>${R.map((x,t)=>`<td>${f(x,t)}</td>`).join('')}</tr>`;
   const notes=[];
@@ -2807,7 +2807,7 @@ function drive(kind,p,id){
     if(!bot){ ONL.miss[a]=(ONL.miss[a]||0)+1; if(ONL.miss[a]>=3){post(`left.${ONL.g}.${a}.${ONL.leftN[a]||0}`,{s:a,q:0});} }
     post(id,Object.assign({s:a},kind==='b'?{v:suggestBid(p)}:{c:botChoose(p).id}));
   };
-  ONL.fbT=setTimeout(auto, bot?(reduce?120:650+Math.random()*450):(ONL.miss[a]>=1?6000:(opts.timer?TURN_MS+8000:120000)));
+  ONL.fbT=setTimeout(auto, bot?(reduce?120:650+Math.random()*450):(ONL.miss[a]>=1&&opts.timer?TURN_MS+1500:(opts.timer?TURN_MS+8000:120000)));
 }
 
 /* ---------- game flow, online ---------- */
@@ -3517,7 +3517,7 @@ function rateBlock(v,nx){
   const picked={};
   const el=document.createElement('div'); el.className='ratebox';
   el.innerHTML=`<h4>Rate the table <small>optional · anonymous</small></h4>`+others.map(a=>{const s=ONL.seats[a], fr=friendsList().some(f=>f.uid===s.uid);
-      return `<div class="rrow" data-a="${a}"><div class="mini">${avatarSVG(s.av)}</div><div class="rn"><b>${esc(s.name)}</b>${ONL.gone.has(a)?'<em>left early</em>':(partnersOn()&&a%2===ONL.me%2?'<em>partner</em>':'')}</div>
+      return `<div class="rrow" data-a="${a}"><div class="mini">${avatarSVG(s.av)}</div><div class="rn"><b>${esc(s.name)}</b>${ONL.gone.has(a)?(ONL.ev[`${ONL.g}.q${a}`]&&!ONL.ev[`${ONL.g}.q${a}`].drop?'<em>quit</em>':'<em>lost connection</em>'):(partnersOn()&&a%2===ONL.me%2?'<em>partner</em>':'')}</div>
         <div class="stars">${[1,2,3,4,5].map(k=>`<button data-k="${k}" aria-label="${k} star${k>1?'s':''}">★</button>`).join('')}</div>
         ${fr?'':`<button class="addf" data-a="${a}" aria-label="Add ${esc(s.name)} as a friend">＋</button>`}</div>`;}).join('')+
     `<button class="btn ghost sm" id="rateSend" disabled>Send ratings</button>`;
