@@ -527,6 +527,43 @@ button:focus-visible,input:focus-visible+span{outline:2px solid var(--brass);out
 .mc-tourney{background:radial-gradient(ellipse at 50% 20%,#6b5218,#16110a 80%);border-color:#c9a24a}
 .mc-random{background:radial-gradient(ellipse at 50% 25%,#7446ae,#22103d 80%)}
 .mc-crew{background:linear-gradient(160deg,#2d3138,#141619)}
+.mc-rnd{background:radial-gradient(ellipse at 50% 20%,#1d6b8f,#0b2233 80%)}
+.crew.rnd{opacity:.9}.crew .mini-av.q{display:grid;place-items:center;font:800 20px var(--f-ui);color:#bfe6ff;background:rgba(255,255,255,.08);border-style:dashed}
+.onb-hero{display:grid;place-items:center;margin:-4px auto 6px;width:64px;height:64px;border-radius:18px;background:linear-gradient(160deg,#1f5a3d,#0c2a1c);border:1px solid var(--brass);box-shadow:0 6px 18px rgba(0,0,0,.35)}
+.onb-hero span{font-size:34px;color:var(--brass)}
+#onb h2{text-align:center}#onb .lede{text-align:center}
+.onb-in{display:flex;align-items:center;gap:6px;border-radius:12px;border:1px solid var(--panel-line);background:rgba(0,0,0,.25);padding-left:12px}
+.onb-in span{font:800 18px var(--f-ui);color:var(--brass)}.onb-in .nameIn{border:0;background:none;padding-left:0;outline:none;box-shadow:none}.onb-in:focus-within{border-color:var(--brass);box-shadow:0 0 0 2px rgba(214,168,58,.35)}
+.onb-hint{font-size:12px;color:var(--muted);margin:6px 2px 10px}.onb-hint.bad{color:#ff8a7a}
+.onb-or{display:flex;align-items:center;gap:8px;margin:14px 0 8px;color:var(--muted);font-size:12px}.onb-or::before,.onb-or::after{content:"";flex:1;height:1px;background:var(--panel-line)}
+.btn.sso{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:8px}.btn.sso b{font:800 17px var(--f-ui)}
+.btn.sso.apple{background:#fff;color:#000}.btn.sso.fb{background:#1877f2;color:#fff}
+.linkb{background:none;border:0;padding:0 2px;color:var(--brass);font:700 13px var(--f-ui);text-decoration:underline;cursor:pointer}
+.hdl{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}.hdl b{font:700 22px var(--f-display)}
+.rt{display:inline-flex;align-items:center;gap:3px;font:700 12px var(--f-ui);color:#ffd36a;white-space:nowrap}.rt small{color:var(--muted);font-weight:500}
+.rt.new{color:var(--muted);font-weight:600}.rt.sub{color:var(--muted)}
+.rt i,.gstars i{font-style:normal;color:rgba(255,255,255,.18)}.rt i.f,.gstars i.f{color:#ffc93c}.rt i.h,.gstars i.h{background:linear-gradient(90deg,#ffc93c 50%,rgba(255,255,255,.18) 50%);-webkit-background-clip:text;background-clip:text;color:transparent}
+.myrt{display:flex;flex-direction:column;gap:3px;margin-top:6px}
+.mm{display:flex;align-items:center;gap:12px;margin:6px 0 10px;padding:12px;border-radius:14px;background:rgba(0,0,0,.25);border:1px dashed var(--brass);font-size:14px}
+.radar{position:relative;flex:none;width:28px;height:28px;border-radius:50%;background:radial-gradient(circle,var(--brass) 18%,transparent 20%)}
+.radar::before,.radar::after{content:"";position:absolute;inset:0;border-radius:50%;border:2px solid var(--brass);animation:radar 1.8s ease-out infinite}.radar::after{animation-delay:.9s}
+@keyframes radar{from{transform:scale(.3);opacity:1}to{transform:scale(1.4);opacity:0}}
+@media (prefers-reduced-motion:reduce){.radar::before,.radar::after{animation:none}}
+.frl{display:grid;gap:6px;margin:10px 0}.fr{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 10px;border-radius:12px;background:rgba(0,0,0,.2)}
+.frn{display:flex;flex-direction:column}.btn.sm{width:auto;padding:7px 14px;font-size:13px;margin:0}
+.ratebox{margin:10px 0;padding:10px;border-radius:14px;background:rgba(0,0,0,.22);border:1px solid var(--panel-line)}
+.ratebox h4{margin:0 0 6px}.ratebox h4 small{color:var(--muted);font-weight:500}
+.rrow{display:flex;align-items:center;gap:8px;padding:4px 0}.rrow .mini{width:30px;height:30px;flex:none;border-radius:50%;overflow:hidden}
+.rrow .rn{flex:1;min-width:0;display:flex;flex-direction:column}.rrow .rn b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.rrow .rn em{font-size:11px;color:var(--muted);font-style:normal}
+.stars{display:flex}.stars button{background:none;border:0;padding:2px 1px;font-size:22px;line-height:1;color:rgba(255,255,255,.22);cursor:pointer;transition:transform .12s}
+.stars button.on{color:#ffc93c}.stars button:active{transform:scale(1.25)}
+.addf{flex:none;width:30px;height:30px;border-radius:50%;border:1px solid var(--brass);background:none;color:var(--brass);font:800 16px var(--f-ui);cursor:pointer}
+.grade{margin:10px 0;padding:10px 12px;border-radius:14px;background:rgba(0,0,0,.22);border:1px solid var(--panel-line);text-align:center}
+.grade .gstars{font-size:26px;letter-spacing:2px;margin:2px 0}.grade small{color:var(--muted);font-size:12px}
+.invban{position:fixed;left:50%;top:max(10px,env(safe-area-inset-top));transform:translateX(-50%);z-index:9999;display:flex;align-items:center;gap:10px;width:min(440px,calc(100% - 24px));box-sizing:border-box;padding:10px 12px;border-radius:16px;background:#14301f;border:1px solid var(--brass);box-shadow:0 10px 30px rgba(0,0,0,.5);animation:ibIn .35s ease-out}
+.invban>span{font-size:22px}.invban div{flex:1;font-size:14px}.ibx{background:none;border:0;color:var(--muted);font-size:22px;cursor:pointer}
+@keyframes ibIn{from{transform:translate(-50%,-30px);opacity:0}}
+
 .mc-resume{background:radial-gradient(ellipse at 50% 25%,#3f6a55,#13261d 80%);border-color:var(--brass);box-shadow:0 0 0 2px rgba(214,176,98,.3),0 12px 26px rgba(0,0,0,.45)}
 .mini-tab{position:absolute;inset:26%;border-radius:50%;background:radial-gradient(ellipse,#2d6aa8,#0b2340);box-shadow:0 0 0 3px #4a3020}
 .mini-av{position:absolute;width:30%;aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;overflow:hidden;background:var(--chip);border:2px solid rgba(255,255,255,.5)}
@@ -1561,8 +1598,7 @@ function playerSheet(after){
   const ch=arr=>arr.map(([v,l])=>`<button data-v="${v}">${PREMIUM[v]&&!owns('acc:'+v)?`🔒 ${l} · ${PREMIUM[v].toLocaleString()}`:l}</button>`).join('');
   const v=sheet(`
     <div class="prof"><div class="big" id="pBig"><div class="pic" id="pPic"></div><span class="lv" id="pLv"></span></div>
-      <div class="who"><label for="pName" style="display:block;font-size:12px;color:var(--muted);margin-bottom:4px">Player name</label>
-      <input id="pName" maxlength="14" autocomplete="off" value="${esc(PROFILE.name)}"><div class="ttl" id="pTtl"></div></div></div>
+      <div class="who"><div class="hdl">${PROFILE.handle?`<b>@${esc(PROFILE.handle)}</b>`:`<b>${esc(PROFILE.name)}</b>`}<button class="linkb" id="pChg">${PROFILE.handle?'Change':'Pick a username'}</button></div><div class="ttl" id="pTtl"></div><div class="myrt" id="pRt"></div></div></div>
     <div class="bar"><i id="pBar"></i></div><div class="xpl" id="pXp"></div>
     <div class="stats"><div><b>${PROFILE.wins}</b><span>Wins</span></div><div><b>${PROFILE.losses}</b><span>Losses</span></div><div><b>${PROFILE.best}</b><span>Best streak</span></div><div><b>${PROFILE.nils}</b><span>Nils made</span></div></div>
     <div class="recs">${[['classic','Classic'],['jjdd','JJDD'],['ffa','Free-for-All'],['cup','Weekend Cup']].map(([k,l])=>{const r=(PROFILE.modeStats||{})[k]||{w:0,l:0};return `<span>${l} <b>${r.w}–${r.l}</b></span>`;}).join('')}${PROFILE.trophies?`<span>🏆 <b>${PROFILE.trophies}</b></span>`:''}</div>
@@ -1608,7 +1644,8 @@ function playerSheet(after){
     const k=g.dataset.k, val=b.dataset.v;
     if(k==='acc'&&PREMIUM[val]&&!owns('acc:'+val)){v.remove();openShop();return;}
     PROFILE.av[k]=(k==='skin'||k==='hc'||k==='shirt')?+val:val; saveProfile(); sync();}));
-  v.querySelector('#pName').addEventListener('input',e=>{PROFILE.name=e.target.value.trim().slice(0,14)||'You';saveProfile();renderMe();});
+  v.querySelector('#pChg').onclick=()=>{v.remove(); onboard(true);};
+  myRatingLine(v.querySelector('#pRt'));
   v.querySelector('#pDone').onclick=()=>{v.remove(); if(after) after();};
   sync();
   return v;
@@ -1884,6 +1921,7 @@ function endHand(){
   R.forEach((x,t)=>{G.scores[t]+=x.pts;G.bags[t]=x.bags;});
   renderSeats();
   const me=R[0], opps=R.slice(1), setThem=opps.some(x=>x.set), wonHand=me.pts>Math.max(...opps.map(x=>x.pts));
+  {const gr=G.gr||(G.gr={ok:0,bad:0,pen:0}); if(me.set||(G.bids[0]===0&&G.tricks[0]>0)) gr.bad++; else gr.ok++; if(me.penalty) gr.pen++;}
   if(P){
     if(R[1].set){say(2,pick(LINES.partSet));later(()=>say(oppSeat(),pick(LINES.oppGotSet)),900);chime(true);}
     else if(R[0].set){say(oppSeat(),pick(LINES.oppSet));later(()=>say(2,pick(LINES.partGotSet)),900);chime(false);}
@@ -1936,7 +1974,7 @@ function endHand(){
   }
   PROFILE.coins+=coins;
   /* rank badge (game results only) */
-  let rankMsg='', rpDelta=0;
+  let rankMsg='', rpDelta=0, gradeHtml='';
   if(over){
     const oldI=rankOf(PROFILE.rp), floor=RANKS[oldI].rp;
     if(won) rpDelta=30+(G.scores[0]-Math.max(...G.scores.slice(1))>=100?10:0)+Math.min(PROFILE.streak-1,3)*5+(G.tour?10:0);
@@ -1948,6 +1986,7 @@ function endHand(){
     if(newI>oldI){PROFILE.shield=true;rankMsg=`Promoted to ${RANKS[newI].n}! Your shield is recharged.`;}
     else if(newI<oldI) rankMsg=`You dropped to ${RANKS[newI].n}. Win games to earn your ${RANKS[oldI].n} badge back.`;
     PROFILE.lastPlayed=todayKey(); PROFILE.decayRef=null;
+    if(!ONL.on) gradeHtml=botGrade(won);
     const mk=G.tour?'cup':opts.mode, ms=PROFILE.modeStats||(PROFILE.modeStats={}); ms[mk]=ms[mk]||{w:0,l:0}; ms[mk][won?'w':'l']++;
   }
   /* daily missions */
@@ -1997,6 +2036,7 @@ function endHand(){
     </tbody></table></div>
     ${notes.length?`<ul class="notes">${notes.map(nn=>`<li>${esc(nn)}</li>`).join('')}</ul>`:''}
     ${recapHtml()}
+    ${gradeHtml}
     ${noCredit?(ONL.spec?'<p class="fine">You’re watching, so no XP or coins this time.</p>':''):xpHtml}
     <button class="btn" id="goNext">${over?(tourNext?`Play the ${TOUR_ROUNDS[G.tour]}`:(G.tour?'Back to lobby':'Play again')):'Deal next hand'}</button>
     ${unlocked.length?`<button class="btn ghost" id="goTheme">Switch to the ${unlocked[unlocked.length-1].name} table</button>`:''}
@@ -2353,6 +2393,7 @@ function renderLobby(){
   cards.push(card('ffa','mc-ffa','Free-for-All','No partners · First to 100',['Solo','Cutthroat'],'Play'));
   cards.push(card('tourney','mc-tourney','Weekend Cup','3 rounds · Lose once, you’re out',[`Entry ${TOUR_FEE}`,'Win 1,500'],'Enter'));
   cards.push(card('random','mc-random','Random','We pick the mode',['Surprise','Any mode'],'Spin'));
+  cards.push(card('randoms','mc-rnd','Play Online','Get matched with real players',['Online','Randoms'],ONL.on?'Back to table':'Find'));
   cards.push(`<button class="mc mc-crew" data-m="crew"><div class="mc-art" data-art="crew"></div><div><div class="mc-t">Play with your crew</div><div class="mc-s">Private tables with a code</div><div class="mc-tags"><span>Online</span><span>Room code</span></div></div><div class="mc-cta">${ONL.on?'Back to table':'Play'}</div></button>`);
   el.innerHTML=`
     <header class="lb-bar">
@@ -2383,6 +2424,7 @@ function renderLobby(){
     if(k==='ffa'){a.innerHTML=`<div class="mini-tab"></div>`+[[50,14,1],[86,50,3],[50,86,0],[14,50,2]].map(([x,y,i])=>`<div class="mini-av" style="left:${x}%;top:${y}%">${avatarSVG(i===0?PROFILE.av:(BOT_AV[i]))}</div>`).join('');}
     if(k==='tourney'){a.innerHTML=`<svg class="trophy" viewBox="0 0 64 64" aria-hidden="true"><path d="M20 10h24v14c0 8-5 14-12 14s-12-6-12-14z" fill="#f2c94c" stroke="#a87a22" stroke-width="1.5"/><path d="M20 14h-7c0 8 3 12 8 13M44 14h7c0 8-3 12-8 13" fill="none" stroke="#f2c94c" stroke-width="3"/><path d="M28 38h8v8h-8z" fill="#d6a83a"/><path d="M20 46h24v6H20z" fill="#5a3a12" stroke="#a87a22"/><path d="M32 16c2 3 5 4.5 5 7 0 1.8-1.5 2.5-2.8 2-.6-.3-1.1-.8-1.5-1.3.1 1.5.6 2.8 1.6 3.8h-4.6c1-1 1.5-2.3 1.6-3.8-.4.5-.9 1-1.5 1.3-1.3.5-2.8-.2-2.8-2 0-2.5 3-4 5-7z" fill="#7a5512"/></svg>`;}
     if(k==='random'){put(null,32,52,-12);put(null,50,48,0);put(null,68,52,12);a.insertAdjacentHTML('beforeend','<div class="q">?</div>');}
+    if(k==='randoms'){a.innerHTML=`<div class="crew rnd">${[1,2,3,0].map(i=>i===0?`<div class="mini-av">${avatarSVG(PROFILE.av)}</div>`:'<div class="mini-av q">?</div>').join('')}</div>`;}
     if(k==='crew'){a.innerHTML=`<div class="crew">${[1,2,3,0].map(i=>`<div class="mini-av">${avatarSVG(i===0?PROFILE.av:BOT_AV[i])}</div>`).join('')}</div>`;}
     if(k==='resume'){put({s:'H',r:14,id:'r1'},40,52,-8);put({s:'S',r:14,id:'r2'},60,48,8);}
   });
@@ -2390,7 +2432,8 @@ function renderLobby(){
   md.addEventListener('wheel',e=>{if(Math.abs(e.deltaY)>Math.abs(e.deltaX)){md.scrollLeft+=e.deltaY;e.preventDefault();}},{passive:false});
   el.querySelectorAll('.mc').forEach(b=>b.onclick=()=>{audio();const m=b.dataset.m;
     if(m==='resume'){closeLobby();return;}
-    if(m==='crew'){if(ONL.on){closeLobby();return;} crewSheet();return;}
+    if(m==='crew'){if(ONL.on){closeLobby();return;} whenNamed(()=>crewSheet());return;}
+    if(m==='randoms'){if(ONL.on){closeLobby();return;} randomsSheet();return;}
     openTable(m);});
   el.querySelector('#lbMe').onclick=()=>playerSheet(renderLobby);
   el.querySelector('#lbNow').onclick=()=>{audio(); if(!MODES[opts.mode]) opts.mode='classic';
@@ -2565,10 +2608,11 @@ function playerActions(p){
   const name=NAMES[p], info=os?[os.lvl,RANKS[os.rk]?RANKS[os.rk].n:'Bronze']:(BOT_INFO[name]||[10,'Silver']), blocked=(PROFILE.blocked||[]).includes(name), muted=MUTED.has(p);
   const avSrc=os?os.av:((OPP_SETS.flat().find(o=>o.n===name)||{}).av||BOT_AV[p]);
   const v=sheet(`<div class="prof"><div class="big" style="--tier:${RANKS.find(r=>r.n===info[1]).c}"><div class="pic">${avatarSVG(avSrc)}</div><span class="lv">${info[0]}</span></div>
-      <div class="who"><div style="font:700 24px var(--f-display)">${esc(name)}</div><div class="ttl">Level ${info[0]} · ${info[1]} badge${isPartner(p)?' · Your partner':''}</div></div></div>
+      <div class="who"><div style="font:700 24px var(--f-display)">${esc(name)}</div><div class="ttl">Level ${info[0]} · ${info[1]} badge${isPartner(p)?' · Your partner':''}</div>${os?`<div class="myrt">${rtTag(os.uid,true)}</div>`:''}</div></div>
     ${G&&!ONL.spec?`<h4>Throw something <span class="thrc">${coinIcon()}${fmt(PROFILE.coins)}</span></h4>
     ${giftGrids()}`:''}
     <div class="pa">
+      ${os&&FB&&os.uid!==FB.uid&&!(PROFILE.friends||[]).some(f=>f.uid===os.uid)?'<button id="pAddF">＋ Add friend</button>':''}
       <button id="pMute">${muted?'Unmute':'Mute'} chat</button>
       <button id="pBlock">${blocked?'Unblock':'Block'}</button>
       <button id="pReport" class="warn">Report</button>
@@ -2579,6 +2623,7 @@ function playerActions(p){
       <button class="btn" id="pSend">Send report</button>
     </div>`,{mid:true});
   v.querySelectorAll('.thr button').forEach(b=>b.onclick=()=>doThrow(p,b.dataset.k,v));
+  const af=v.querySelector('#pAddF'); if(af) af.onclick=()=>{addFriendSeat(os); af.textContent='✓ Friends'; af.disabled=true;};
   v.querySelector('#pMute').onclick=()=>{if(muted)MUTED.delete(p);else MUTED.add(p);toast(muted?`${name} unmuted`:`${name} muted. You won’t see their chat.`);v.remove();};
   v.querySelector('#pBlock').onclick=()=>{let b=PROFILE.blocked||[]; b=blocked?b.filter(n=>n!==name):b.concat(name); PROFILE.blocked=b; saveProfile();
     toast(blocked?`${name} unblocked`:`${name} blocked. You won’t be seated with them online.`);v.remove();};
@@ -2657,7 +2702,7 @@ async function fb(){
   const auth=/[?&#]fresh/.test(location.href)?U.initializeAuth(app,{persistence:U.inMemoryPersistence}):U.getAuth(app); // ?fresh = a separate test player in the same browser
   await auth.authStateReady();
   if(!auth.currentUser) await U.signInAnonymously(auth);
-  FB={F,db,uid:auth.currentUser.uid};
+  FB={F,db,U,auth,uid:auth.currentUser.uid};
   return FB;
 }
 const toL=a=>(a-ONL.me+4)%4, toA=l=>(l+ONL.me)%4;
@@ -2667,7 +2712,7 @@ function oHuman(p){const a=toA(p);return a!==ONL.me&&!oBot(a);}
 const tRef=(...p)=>FB.F.doc(FB.db,'tables',ONL.code,...p);
 const cleanAv=a=>{a=a||{};const ok=(v,l,d)=>l.includes(v)?v:d, n=(v,m)=>Number.isInteger(v)&&v>=0&&v<m?v:0;
   return {skin:n(a.skin,SKIN.length),hc:n(a.hc,HAIRC.length),shirt:n(a.shirt,SHIRT.length),hair:ok(a.hair,HAIR.map(x=>x[0]),'fade'),facial:ok(a.facial,FACIAL.map(x=>x[0]),'none'),acc:ok(a.acc,ACC.map(x=>x[0]),'none')};};
-const mySeatInfo=()=>({uid:FB.uid,name:String(PROFILE.name||'Player').slice(0,14),av:cleanAv(PROFILE.av),lvl:lvlInfo(PROFILE.xp).L,rk:rankOf(PROFILE.rp)});
+const mySeatInfo=()=>({uid:FB.uid,name:String(PROFILE.name||'Player').slice(0,14),av:cleanAv(PROFILE.av),lvl:lvlInfo(PROFILE.xp).L,rk:rankOf(PROFILE.rp),h:PROFILE.handle||''});
 
 /* write an event once; if it already exists, someone beat us to it and theirs stands */
 async function post(id,data){
@@ -2850,7 +2895,7 @@ function onlineResults(v,over){
   const nextH=G.handNo+1, did=`${ONL.g}.${nextH}.deal`;
   const advance=()=>{if(ONL.advanced===`${ONL.g}.${nextH}`) return; ONL.advanced=`${ONL.g}.${nextH}`; v.remove(); G.dealer=(G.dealer+1)%4; startHand();};
   if(over){
-    ffEnd(); seriesNote(v,nx);
+    ffEnd(); seriesNote(v,nx); rateBlock(v,nx);
     nx.textContent=ONL.host?'Run it back with this table':'Waiting on the host to run it back…'; nx.disabled=!ONL.host;
     nx.onclick=()=>{if(!ONL.host) return; nx.disabled=true; FB.F.updateDoc(tRef(),{g:ONL.g+1}).catch(e=>{console.warn(e);nx.disabled=false;});};
     const lv=document.createElement('button'); lv.className='btn ghost'; lv.textContent='Leave table';
@@ -2884,8 +2929,9 @@ function crewSheet(prefill){
     v.querySelector('#crew').innerHTML=`
       <h2>Play with your crew</h2>
       <p class="lede">Start a private table and text the code to your friends. Empty seats get bots, so you can start with just two of you.</p>
-      <h4>Your name at the table</h4>
-      <input id="cName" class="nameIn" maxlength="14" placeholder="Your name" autocomplete="nickname" value="${esc(nmv)}" aria-label="Your name">
+      ${PROFILE.handle?`<p class="lede" style="margin-top:-4px">Playing as <b>@${esc(PROFILE.handle)}</b> · <button class="linkb" id="cFriends">👥 Friends${(PROFILE.friends||[]).length?` (${PROFILE.friends.length})`:''}</button></p><input id="cName" type="hidden" value="${esc(PROFILE.handle)}">`
+      :`<h4>Your name at the table</h4>
+      <input id="cName" class="nameIn" maxlength="14" placeholder="Your name" autocomplete="nickname" value="${esc(nmv)}" aria-label="Your name">`}
       <h4>Join a friend’s table</h4>
       <div class="joinrow"><input id="cCode" maxlength="5" placeholder="CODE" autocomplete="off" autocapitalize="characters" spellcheck="false" value="${esc(prefill||'')}" aria-label="Table code"><button class="btn" id="cJoin">Join</button></div>
       <h4>Or start a new table</h4>
@@ -2896,7 +2942,8 @@ function crewSheet(prefill){
     v.querySelectorAll('input[name="cm"]').forEach(i=>i.onchange=()=>{mode=i.value;draw();});
     v.querySelectorAll('input[name="ct"]').forEach(i=>i.onchange=()=>{target=+i.value;});
     const nm=v.querySelector('#cName'); nm.oninput=()=>{nmv=nm.value;};
-    const named=()=>{const n=nm.value.trim().replace(/\s+/g,' '); if(!n){toast('Add your name so friends know who’s who.');nm.focus();return false;} PROFILE.name=n.slice(0,14); saveProfile(); renderMe(); return true;};
+    const cf=v.querySelector('#cFriends'); if(cf) cf.onclick=()=>friendsSheet(false);
+    const named=()=>{if(PROFILE.handle) return true; const n=nm.value.trim().replace(/\s+/g,' '); if(!n){toast('Add your name so friends know who’s who.');nm.focus();return false;} PROFILE.name=n.slice(0,14); saveProfile(); renderMe(); return true;};
     const code=v.querySelector('#cCode'); code.oninput=()=>{code.value=code.value.toUpperCase().replace(/[^A-Z0-9]/g,'');};
     v.querySelector('#cJoin').onclick=async e=>{const c=code.value.trim(); if(c.length!==5){toast('Codes are 5 letters and numbers.');return;} if(!named()) return;
       e.target.disabled=true; e.target.textContent='Joining…'; const ok=await joinTable(c); if(ok) v.remove(); else {e.target.disabled=false;e.target.textContent='Join';}};
@@ -2909,15 +2956,16 @@ async function connect(){
   try{ await fb(); return true; }
   catch(e){ console.warn(e); toast('Couldn’t reach the game server. Check your internet and try again.',3600); return false; }
 }
-async function createTable(mode,target){
+async function createTable(mode,target,pub){
   if(!await connect()) return false;
   const {F,db}=FB;
   try{
     let code='';
     for(let i=0;i<6;i++){code=Array.from({length:5},()=>CODE_AB[Math.floor(Math.random()*CODE_AB.length)]).join('');
       if(!(await F.getDoc(F.doc(db,'tables',code))).exists()) break;}
-    const rules={jokers:!!opts.jokers,deuce:!!opts.deuce,nil:!!opts.nil,bags:!!opts.bags,timer:!!opts.timer,blind:!!opts.blind,teamBid:!!opts.teamBid};
-    await F.setDoc(F.doc(db,'tables',code),{host:FB.uid,status:'lobby',mode,target,rules,g:0,bots:[],created:F.serverTimestamp()});
+    const rules=pub?Object.assign({},RND_RULES):{jokers:!!opts.jokers,deuce:!!opts.deuce,nil:!!opts.nil,bags:!!opts.bags,timer:!!opts.timer,blind:!!opts.blind,teamBid:!!opts.teamBid};
+    await F.setDoc(F.doc(db,'tables',code),Object.assign({host:FB.uid,status:'lobby',mode,target,rules,g:0,bots:[],created:F.serverTimestamp()},pub?{pub:true,ping:F.serverTimestamp()}:{}));
+    if(pub){RND.made=Date.now(); RND.starting=false;}
     ONL.code=code; ONL.host=true; ONL.me=0;
     await F.setDoc(tRef('seats','0'),mySeatInfo());
     enterRoom(); return true;
@@ -2963,27 +3011,32 @@ function drawRoom(){
   const v=ONL.room; if(!v||!ONL.table&&!ONL.host) {if(v) v.querySelector('#room').innerHTML='<p class="lede">Connecting…</p>'; return;}
   const t=ONL.table||{mode:'classic',target:300}, P=t.mode!=='ffa', link=`${location.origin}${location.pathname}?t=${ONL.code}`;
   const seat=a=>{const s=ONL.seats[a], me=a===ONL.me;
-    return `<div class="rs ${s?'on':''} ${me?'me':''}">${s?`<div class="mini">${avatarSVG(s.av)}</div><b>${esc(s.name)}${me?' (you)':''}</b><small>${a===0?'Host · ':''}Lv ${s.lvl}</small>`
+    return `<div class="rs ${s?'on':''} ${me?'me':''}">${s?`<div class="mini">${avatarSVG(s.av)}</div><b>${esc(s.name)}${me?' (you)':''}</b><small>${a===0&&!t.pub?'Host · ':''}Lv ${s.lvl} ${rtTag(s.uid)}</small>`
       :`<div class="mini empty">🤖</div><b>Open seat</b><small>${ONL.me<0?`<button class="sit" data-a="${a}">Sit here</button>`:'A bot plays it'}</small>`}</div>`;};
   const humans=ONL.seats.filter(Boolean).length;
   v.querySelector('#room').innerHTML=`
-    <h2>${esc(MODES[t.mode]?MODES[t.mode].name:'Spades')} · to ${t.target}</h2>
-    <div class="code-box"><small>Table code</small><b>${ONL.code}</b></div>
-    <div class="share-row"><button class="btn" id="rShare">Send invite</button><button class="btn ghost" id="rCopy">Copy link</button></div>
+    <h2>${t.pub?'Randoms · ':''}${esc(MODES[t.mode]?MODES[t.mode].name:'Spades')} · to ${t.target}</h2>
+    ${t.pub?`<div class="mm"><span class="radar"></span><div id="mmLine">Finding players…</div></div>`:`<div class="code-box"><small>Table code</small><b>${ONL.code}</b></div>`}
+    <div class="share-row">${t.pub?'':'<button class="btn" id="rShare">Send invite</button>'}<button class="btn ${t.pub?'':'ghost'}" id="rFr">👥 Invite friends</button>${t.pub?'':'<button class="btn ghost" id="rCopy">Copy link</button>'}</div>
     ${P?`<h4>Team 1</h4><div class="rgrid">${seat(0)}${seat(2)}</div><h4>Team 2</h4><div class="rgrid">${seat(1)}${seat(3)}</div>`
        :`<h4>Seats</h4><div class="rgrid">${[0,1,2,3].map(seat).join('')}</div>`}
     ${ONL.me<0?'<p class="lede" style="margin-top:10px">Pick a seat to sit down.</p>':''}
-    ${ONL.host?`<button class="btn" id="rStart" style="margin-top:12px">Start game${humans<4?` · ${4-humans} bot${4-humans>1?'s':''}`:''}</button>`
-      :`<p class="lede" style="margin-top:10px">${ONL.me>=0?'You’re in. Waiting on the host to start…':''}</p>`}
-    <button class="btn ghost" id="rLeave">${ONL.host?'Close table':'Leave'}</button>`;
+    ${ONL.host?`<button class="btn" id="rStart" style="margin-top:12px">${t.pub?'Start now':'Start game'}${humans<4?` · ${4-humans} bot${4-humans>1?'s':''}`:''}</button>`
+      :`<p class="lede" style="margin-top:10px">${ONL.me>=0?(t.pub?'You’re in. The game starts when the table fills or the timer runs out.':'You’re in. Waiting on the host to start…'):''}</p>`}
+    <button class="btn ghost" id="rLeave">${t.pub?'Leave':(ONL.host?'Close table':'Leave')}</button>`;
   v.querySelectorAll('.sit').forEach(b=>b.onclick=async()=>{b.disabled=true;
     try{await FB.F.setDoc(tRef('seats',b.dataset.a),mySeatInfo());}catch(e){toast('Someone just took that seat.');b.disabled=false;}});
   const invite=`Pull up to my Spades table on Bags & Books. Code ${ONL.code}: ${link}`;
-  v.querySelector('#rShare').onclick=async()=>{try{if(navigator.share){await navigator.share({title:'Bags & Books',text:invite});return;}}catch(e){return;} copyText(invite);};
-  v.querySelector('#rCopy').onclick=()=>copyText(link);
-  const st=v.querySelector('#rStart'); if(st) st.onclick=async()=>{st.disabled=true;
-    try{await FB.F.updateDoc(tRef(),{status:'playing',bots:[0,1,2,3].filter(a=>!ONL.seats[a])});}catch(e){console.warn(e);toast('Couldn’t start. Try again.');st.disabled=false;}};
+  const rf=v.querySelector('#rFr'); if(rf) rf.onclick=()=>friendsSheet(true);
+  if(t.pub) pubRoom();
+  const rs=v.querySelector('#rShare'); if(rs) rs.onclick=async()=>{try{if(navigator.share){await navigator.share({title:'Bags & Books',text:invite});return;}}catch(e){return;} copyText(invite);};
+  const rc=v.querySelector('#rCopy'); if(rc) rc.onclick=()=>copyText(link);
+  const st=v.querySelector('#rStart'); if(st) st.onclick=async()=>{st.disabled=true; if(!await startRoom()) st.disabled=false;};
   v.querySelector('#rLeave').onclick=()=>roomLeave(true);
+}
+async function startRoom(){
+  try{await FB.F.updateDoc(tRef(),{status:'playing',bots:[0,1,2,3].filter(a=>!ONL.seats[a])}); return true;}
+  catch(e){console.warn(e);toast('Couldn’t start. Try again.');return false;}
 }
 function copyText(t){
   const done=()=>toast('Copied. Paste it in a text to your friends.',2600);
@@ -3063,8 +3116,332 @@ setTimeout(()=>{const b=`https://www.gstatic.com/firebasejs/${FBV}/`; ['firebase
 {const qc=(new URLSearchParams(location.search).get('t')||'').toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,5);
  let saved=null; try{saved=JSON.parse(localStorage.getItem('bb-online')||'null');}catch(e){}
  if(saved&&saved.code&&Date.now()-saved.at<3*3600e3&&(!qc||qc===saved.code)) setTimeout(()=>{toast('Getting you back to your table…',2000); rejoinTable(saved.code,false).then(ok=>{if(!ok&&qc) crewSheet(qc);});},700);
- else if(qc) setTimeout(()=>{if(!document.querySelector('.veil')) crewSheet(qc);},700);}
+ else if(qc) setTimeout(()=>{if(document.getElementById('onb')) namedQ.push(()=>crewSheet(qc)); else if(!document.querySelector('.veil')) crewSheet(qc);},700);}
 </script>
+<script id="social">
+/* ===== Usernames, sign-in, friends, invites, randoms, player ratings ===== */
+/* Flip these on once each sign-in is set up in the Firebase console (Authentication → Sign-in method). */
+const SOCIAL={apple:false,facebook:false};
+const NAME_RX=/^[A-Za-z0-9_]{3,14}$/;
+const NAME_BAD=/fuck|shit|bitch|cunt|nigg|fag|dick|pussy|whore|slut|rape|nazi|hitler|retard|cock|porn|admin|moderator|bagsandbooks/i;
+const RND_RULES={jokers:false,deuce:false,nil:true,bags:true,timer:true,blind:false,teamBid:false};
+const RND_WAIT=45000;
+const RND={t:null,n:0,made:0,starting:false,merging:false};
+const SOC={inv:null,seen:new Set(),started:false};
+const RCACHE={};
+let namedQ=[];
+
+function needsName(){return !PROFILE.handle;}
+function whenNamed(f){ if(!needsName()) return f(); namedQ.push(f); if(!document.getElementById('onb')) onboard(); }
+function runNamedQ(){const q=namedQ; namedQ=[]; q.forEach(f=>{try{f();}catch(e){console.warn(e);}});}
+
+/* ---------- first launch: pick a username (or sign in) ---------- */
+function onboard(change){
+  const pre=PROFILE.handle||(PROFILE.name&&PROFILE.name!=='You'?PROFILE.name.replace(/[^A-Za-z0-9_]/g,'').slice(0,14):'');
+  const sso=(SOCIAL.apple||SOCIAL.facebook)&&!change;
+  const v=sheet(`<div id="onb">
+    ${change?'':'<div class="onb-hero"><span>♠</span></div>'}
+    <h2>${change?'Change your username':'Welcome to Bags &amp; Books'}</h2>
+    <p class="lede">${change?'Friends find and invite you by this name.':'Pick a username. It’s how your friends find you, invite you to tables and see you play.'}</p>
+    <div class="onb-in"><span>@</span><input id="oName" class="nameIn" maxlength="14" placeholder="username" autocomplete="nickname" autocapitalize="off" autocorrect="off" spellcheck="false" value="${esc(pre)}" aria-label="Username"></div>
+    <div class="onb-hint" id="oHint">3 to 14 letters, numbers or _</div>
+    <button class="btn" id="oGo">${change?'Save':'Let’s play'}</button>
+    ${sso?`<div class="onb-or"><span>or save your coins and level on every device</span></div>
+      ${SOCIAL.apple?'<button class="btn sso apple" id="oApple"><b></b> Continue with Apple</button>':''}
+      ${SOCIAL.facebook?'<button class="btn sso fb" id="oFb"><b>f</b> Continue with Facebook</button>':''}`:''}
+    ${change?'':'<button class="btn ghost" id="oLater">Play offline for now</button>'}
+    <p class="fine">Keep it friendly. Names that break the rules get changed.</p></div>`,{mid:true,noClose:!change});
+  const inp=v.querySelector('#oName'), hint=v.querySelector('#oHint'), go=v.querySelector('#oGo');
+  const bad=t=>{hint.textContent=t; hint.classList.add('bad');};
+  inp.oninput=()=>{inp.value=inp.value.replace(/[^A-Za-z0-9_]/g,''); hint.classList.remove('bad'); hint.textContent=inp.value.length<3?'3 to 14 letters, numbers or _':'Looks good';};
+  inp.onkeydown=e=>{if(e.key==='Enter') go.click();};
+  go.onclick=async()=>{audio(); const n=inp.value.trim();
+    if(change&&PROFILE.handle&&n===PROFILE.handle){v.remove();return;}
+    go.disabled=true; go.textContent='Checking…';
+    const err=await claimName(n);
+    if(err){bad(err); go.disabled=false; go.textContent=change?'Save':'Let’s play'; return;}
+    v.remove(); chime(true); toast(`You’re @${n}. Welcome to the table.`,2600); refreshMeta(); startSocial(); runNamedQ();};
+  const lt=v.querySelector('#oLater'); if(lt) lt.onclick=()=>{PROFILE.skipOnb=todayKey(); saveProfile(); namedQ=[]; v.remove();};
+  const ap=v.querySelector('#oApple'); if(ap) ap.onclick=()=>ssoStart('apple',v);
+  const fbb=v.querySelector('#oFb'); if(fbb) fbb.onclick=()=>ssoStart('facebook',v);
+  if(!change) setTimeout(()=>inp.focus(),300);
+  return v;
+}
+async function claimName(n){
+  if(!NAME_RX.test(n)) return 'Use 3 to 14 letters, numbers or _ (no spaces).';
+  if(NAME_BAD.test(n)) return 'Pick a different name.';
+  if(!await connect()) return 'Couldn’t reach the server. Check your internet.';
+  const {F,db}=FB, low=n.toLowerCase(), ref=F.doc(db,'names',low);
+  try{
+    const s=await F.getDoc(ref);
+    if(s.exists()&&s.data().uid!==FB.uid) return `@${n} is taken. Try another.`;
+    if(!s.exists()) await F.setDoc(ref,{uid:FB.uid,n,at:F.serverTimestamp()});
+    const old=PROFILE.handle; if(old&&old.toLowerCase()!==low) F.deleteDoc(F.doc(db,'names',old.toLowerCase())).catch(()=>{});
+    F.setDoc(F.doc(db,'users',FB.uid),{n,av:cleanAv(PROFILE.av),at:F.serverTimestamp()}).catch(e=>console.warn(e));
+    PROFILE.handle=n; PROFILE.name=n; saveProfile(); renderMe(); return '';
+  }catch(e){console.warn(e); return e&&e.code==='permission-denied'?`@${n} is taken. Try another.`:'Couldn’t save that. Try again.';}
+}
+/* on start: make sure this phone still owns the username, then listen for invites */
+async function startSocial(){
+  if(SOC.started||!PROFILE.handle) return; SOC.started=true;
+  if(!await connect()){SOC.started=false; return;}
+  try{
+    const s=await FB.F.getDoc(FB.F.doc(FB.db,'names',PROFILE.handle.toLowerCase()));
+    if(!s.exists()){ await claimName(PROFILE.handle); }
+    else if(s.data().uid!==FB.uid){ const old=PROFILE.handle; PROFILE.handle=null; saveProfile(); SOC.started=false;
+      toast(`@${old} is linked to another phone. Pick a username for this one.`,4200); onboard(); return; }
+  }catch(e){console.warn(e);}
+  listenInvites();
+}
+
+/* ---------- Sign in with Apple / Facebook (keeps the same player id, so name, friends and ratings carry over) ---------- */
+async function ssoStart(kind,v){
+  if(!await connect()) return;
+  const {U,auth}=FB, P=kind==='apple'?U.OAuthProvider:U.FacebookAuthProvider, prov=kind==='apple'?new U.OAuthProvider('apple.com'):new U.FacebookAuthProvider();
+  try{ await U.linkWithPopup(auth.currentUser,prov); }
+  catch(e){
+    if(e&&e.code==='auth/credential-already-in-use'){ /* this Apple/Facebook account already has a player: switch to it */
+      try{ await U.signInWithCredential(auth,P.credentialFromError(e)); FB.uid=auth.currentUser.uid; await cloudLoad(); }
+      catch(e2){console.warn(e2); toast('Sign-in didn’t finish. Try again.',2600); return;}
+    } else { console.warn(e); toast('Sign-in didn’t finish. Try again.',2600); return; }
+  }
+  PROFILE.linked=kind; saveProfile(); cloudSave();
+  if(v) v.remove();
+  if(needsName()) onboard(); else {refreshMeta(); startSocial(); runNamedQ();}
+}
+let cloudT=null;
+function cloudSave(){ if(!FB||!PROFILE.linked) return; clearTimeout(cloudT);
+  cloudT=setTimeout(()=>FB.F.setDoc(FB.F.doc(FB.db,'users',FB.uid,'priv','save'),{p:JSON.stringify(PROFILE),at:FB.F.serverTimestamp()}).catch(e=>console.warn(e)),1500); }
+async function cloudLoad(){
+  try{ const s=await FB.F.getDoc(FB.F.doc(FB.db,'users',FB.uid,'priv','save'));
+    if(s.exists()){ const d=JSON.parse(s.data().p||'{}'); PROFILE=Object.assign(JSON.parse(JSON.stringify(DEFAULT_PROFILE)),d); saveProfile(); refreshMeta(); toast('Welcome back. Your coins and level are loaded.',3000);} }
+  catch(e){console.warn(e);}
+}
+{const sp=saveProfile; saveProfile=function(){sp(); if(PROFILE.linked) cloudSave();};}
+
+/* ---------- friends + invites ---------- */
+function friendsList(){return PROFILE.friends||(PROFILE.friends=[]);}
+function addFriendSeat(s){ if(!s||!s.uid) return; const fr=friendsList(); if(fr.some(f=>f.uid===s.uid)) return;
+  fr.push({n:s.h||s.name,uid:s.uid}); saveProfile(); toast(`${s.h||s.name} added to your friends`); }
+async function addFriendByName(n){
+  n=String(n||'').trim().replace(/^@/,''); if(!NAME_RX.test(n)){toast('That doesn’t look like a username.');return false;}
+  if(!await connect()) return false;
+  try{ const s=await FB.F.getDoc(FB.F.doc(FB.db,'names',n.toLowerCase()));
+    if(!s.exists()){toast(`Nobody goes by @${n} yet.`,2600);return false;}
+    const d=s.data(); if(d.uid===FB.uid){toast('That’s you 😄');return false;}
+    const fr=friendsList(); if(fr.some(f=>f.uid===d.uid)){toast(`@${d.n||n} is already your friend.`);return false;}
+    fr.push({n:d.n||n,uid:d.uid}); saveProfile(); toast(`@${d.n||n} added`); return true;
+  }catch(e){console.warn(e); toast('Couldn’t look that up. Try again.');return false;}
+}
+function friendsSheet(inviting){
+  const v=sheet('<div id="frs"></div>',{mid:true});
+  const sent=new Set();
+  const draw=()=>{const fr=friendsList();
+    v.querySelector('#frs').innerHTML=`
+      <h2>${inviting?'Invite friends':'Friends'}</h2>
+      <p class="lede">${inviting?'They get a pop-up to join this table if the app is open. You can also text them the code.':`You’re <b>@${esc(PROFILE.handle||PROFILE.name)}</b>. Share your username so friends can add you.`}</p>
+      <div class="joinrow"><input id="fAdd" maxlength="15" placeholder="Add by username" autocapitalize="off" autocorrect="off" spellcheck="false" aria-label="Friend's username"><button class="btn" id="fGo">Add</button></div>
+      <div class="frl">${fr.length?fr.map((f,i)=>`<div class="fr"><div class="frn"><b>@${esc(f.n)}</b><small>${rtTag(f.uid)}</small></div>
+        ${inviting?`<button class="btn sm" data-inv="${i}" ${sent.has(f.uid)?'disabled':''}>${sent.has(f.uid)?'Sent ✓':'Invite'}</button>`:`<button class="linkb" data-rm="${i}">Remove</button>`}</div>`).join('')
+        :'<p class="fine">No friends yet. Add someone by their username, or tap ＋ Friend after a game.</p>'}</div>
+      ${inviting||!PROFILE.handle?'':`<button class="btn ghost" id="fShare">Share my username</button>`}`;
+    const inp=v.querySelector('#fAdd'), go=v.querySelector('#fGo');
+    go.onclick=async()=>{go.disabled=true; if(await addFriendByName(inp.value)) draw(); else go.disabled=false;};
+    inp.onkeydown=e=>{if(e.key==='Enter') go.click();};
+    v.querySelectorAll('[data-rm]').forEach(b=>b.onclick=()=>{fr.splice(+b.dataset.rm,1); saveProfile(); draw();});
+    v.querySelectorAll('[data-inv]').forEach(b=>b.onclick=async()=>{const f=fr[+b.dataset.inv]; b.disabled=true; b.textContent='Sending…';
+      if(await sendInvite(f)){sent.add(f.uid); b.textContent='Sent ✓';} else {b.disabled=false; b.textContent='Invite';}});
+    const sh=v.querySelector('#fShare'); if(sh) sh.onclick=async()=>{const t=`Add me on Bags & Books: @${PROFILE.handle}`;
+      try{if(navigator.share){await navigator.share({title:'Bags & Books',text:t});return;}}catch(e){return;} copyText(t);};
+  };
+  draw();
+}
+async function sendInvite(f){
+  if(!FB||!ONL.code) return false;
+  try{ await FB.F.addDoc(FB.F.collection(FB.db,'users',f.uid,'inv'),{from:FB.uid,n:PROFILE.handle||PROFILE.name,code:ONL.code,at:FB.F.serverTimestamp()}); return true; }
+  catch(e){console.warn(e); toast('Couldn’t send that invite.'); return false;}
+}
+function listenInvites(){
+  if(SOC.inv||!FB) return; const {F,db}=FB;
+  try{
+    SOC.inv=F.onSnapshot(F.query(F.collection(db,'users',FB.uid,'inv'),F.where('at','>',F.Timestamp.fromMillis(Date.now()-15*60e3))),snap=>{
+      snap.docChanges().forEach(ch=>{ if(ch.type!=='added'||SOC.seen.has(ch.doc.id)) return; SOC.seen.add(ch.doc.id);
+        const d=ch.doc.data(); if(!d||typeof d.code!=='string'||(PROFILE.blocked||[]).includes(d.n)) return;
+        F.deleteDoc(ch.doc.ref).catch(()=>{});
+        if(ONL.on||ONL.code) return; invBanner(d); });
+    },e=>console.warn(e));
+  }catch(e){console.warn(e);}
+}
+function invBanner(d){
+  document.querySelectorAll('.invban').forEach(x=>x.remove());
+  const b=document.createElement('div'); b.className='invban'; b.setAttribute('role','alert');
+  b.innerHTML=`<span>🃏</span><div><b>@${esc(String(d.n||'A friend').slice(0,14))}</b> invited you to their table</div><button class="btn sm" id="ibJoin">Join</button><button class="ibx" aria-label="Dismiss">×</button>`;
+  document.body.appendChild(b); chime(true);
+  const kill=()=>b.remove(); setTimeout(kill,45000);
+  b.querySelector('.ibx').onclick=kill;
+  b.querySelector('#ibJoin').onclick=async()=>{kill(); document.querySelectorAll('.veil').forEach(x=>x.remove()); await joinTable(String(d.code).toUpperCase().slice(0,5));};
+}
+
+/* ---------- randoms: matchmaking with real players ---------- */
+function randomsSheet(){ whenNamed(()=>{
+  let mode=PROFILE.rndMode||'classic';
+  const v=sheet('<div id="rnd"></div>',{mid:true});
+  const draw=()=>{
+    v.querySelector('#rnd').innerHTML=`
+      <h2>Play online</h2>
+      <p class="lede">Get matched with real players. If seats are still open after ${RND_WAIT/1000} seconds, bots fill them so you’re never stuck waiting.</p>
+      <div class="seg tseg">${[['classic','Classic'],['jjdd','JJDD'],['ffa','Free-for-All']].map(([m,l])=>`<label><input type="radio" name="rm" value="${m}" ${m===mode?'checked':''}><span>${l}</span></label>`).join('')}</div>
+      <ul class="notes"><li>Standard rules: nil on, 10-bag penalty, 15-second turns</li><li>${mode==='ffa'?'First to 100':'Partners · first to 300'}</li><li>Rate your table after the game. Good play keeps your stars up.</li></ul>
+      <div class="myrt" id="rMine"></div>
+      <button class="btn" id="rFind">Find a table</button>`;
+    v.querySelectorAll('input[name="rm"]').forEach(i=>i.onchange=()=>{mode=i.value;PROFILE.rndMode=mode;saveProfile();draw();});
+    myRatingLine(v.querySelector('#rMine'));
+    const b=v.querySelector('#rFind');
+    b.onclick=async()=>{audio(); b.disabled=true; b.textContent='Looking for players…';
+      const ok=await findMatch(mode); if(ok) v.remove(); else {b.disabled=false; b.textContent='Find a table';}};
+  };
+  draw();
+});}
+async function findMatch(mode){
+  if(!await connect()) return false;
+  try{
+    for(const t of await openPub(mode)) if(await trySit(t.code)) return true;
+    return await createTable(mode,mode==='ffa'?100:300,true);
+  }catch(e){console.warn(e); toast('Couldn’t find a table. Try again.',2600); return false;}
+}
+async function openPub(mode,skip){
+  const {F,db}=FB, now=Date.now(), out=[];
+  const s=await F.getDocs(F.query(F.collection(db,'tables'),F.where('pub','==',true),F.where('status','==','lobby'),F.where('mode','==',mode),F.limit(25)));
+  const ms=x=>x&&x.toMillis?x.toMillis():0;
+  s.forEach(d=>{const x=d.data(); if(d.id!==skip&&x.host!==FB.uid&&now-ms(x.ping)<45e3) out.push({code:d.id,created:ms(x.created)||now});});
+  return out.sort((a,b)=>a.created-b.created||(a.code<b.code?-1:1));
+}
+async function trySit(code,before){
+  const {F,db}=FB, ss=await F.getDocs(F.collection(db,'tables',code,'seats')), taken=new Set(); let skip=false;
+  ss.forEach(d=>{taken.add(+d.id); const x=d.data(); if((PROFILE.blocked||[]).includes(x.name)||x.uid===FB.uid) skip=true;});
+  if(skip) return false;
+  for(const a of shuffle([0,1,2,3].filter(a=>!taken.has(a)))){
+    try{ await F.setDoc(F.doc(db,'tables',code,'seats',String(a)),mySeatInfo()); }catch(e){continue;}
+    if(before) before();
+    ONL.code=code; ONL.host=false; ONL.me=a; ONL.spec=false; enterRoom(); return true;
+  }
+  return false;
+}
+function pubRoom(){
+  if(RND.t) return;
+  RND.n=0;
+  const tick=()=>{
+    const T=ONL.table;
+    if(!ONL.code||ONL.on||!ONL.room||!T||!T.pub){clearInterval(RND.t); RND.t=null; return;}
+    RND.n++;
+    const humans=ONL.seats.filter(Boolean).length, c=T.created&&T.created.toMillis?T.created.toMillis():0;
+    const start=(ONL.host&&RND.made?RND.made:(c||Date.now()))+RND_WAIT, left=Math.max(0,Math.ceil((start-Date.now())/1000));
+    const ln=ONL.room.querySelector('#mmLine');
+    if(ln) ln.innerHTML=humans>=4?'<b>Table full.</b> Dealing…'
+      :humans>1?`<b>${humans} of 4</b> real players · ${left?`bots fill the rest in ${left}s`:'starting…'}`
+      :`<b>Looking for players…</b>${left?` ${left}s`:' Still looking. You can start with bots anytime.'}`;
+    if(!ONL.host) return;
+    if(RND.n%15===0) FB.F.updateDoc(tRef(),{ping:FB.F.serverTimestamp()}).catch(()=>{});
+    if(!RND.starting&&(humans>=4||(humans>1&&left===0))){RND.starting=true; startRoom().then(ok=>{if(!ok) RND.starting=false;});}
+    else if(humans===1&&RND.n%8===4&&!RND.merging) mergeCheck();
+  };
+  RND.t=setInterval(tick,1000); tick();
+}
+/* two people searching at the same moment can each open a table; the newer one moves to the older one */
+async function mergeCheck(){
+  RND.merging=true;
+  try{
+    const mine=ONL.code, T=ONL.table, mc=T&&T.created&&T.created.toMillis?T.created.toMillis():Date.now();
+    const list=(await openPub(T.mode,mine)).filter(t=>t.created<mc||(t.created===mc&&t.code<mine));
+    for(const t of list){
+      if(ONL.code!==mine||ONL.seats.filter(Boolean).length>1) break;
+      const ok=await trySit(t.code,()=>{FB.F.updateDoc(FB.F.doc(FB.db,'tables',mine),{status:'closed'}).catch(()=>{}); onlineUnsub(); if(ONL.room){ONL.room.remove(); ONL.room=null;}});
+      if(ok){toast('Found players. Moving you to their table…',2400); break;}
+    }
+  }catch(e){console.warn(e);}
+  RND.merging=false;
+}
+
+/* ---------- player ratings: 1 to 5 stars, average of the last 50 games you were rated in ---------- */
+async function ratingOf(uid){
+  const c=RCACHE[uid]; if(c&&(c.p||Date.now()-c.t<300e3)) return c.p||c;
+  if(!FB) return null;
+  const {F,db}=FB;
+  const p=F.getDocs(F.query(F.collection(db,'users',uid,'rates'),F.orderBy('at','desc'),F.limit(50))).then(s=>{
+    let sum=0,n=0; s.forEach(d=>{const x=d.data().stars; if(Number.isInteger(x)&&x>=1&&x<=5){sum+=x;n++;}});
+    return RCACHE[uid]={avg:n?sum/n:0,n,t:Date.now()};
+  }).catch(e=>{console.warn(e); delete RCACHE[uid]; return null;});
+  RCACHE[uid]={p}; return p;
+}
+function starRow(avg){const f=Math.round(avg*2)/2; return [1,2,3,4,5].map(i=>`<i class="${f>=i?'f':f>=i-.5?'h':''}">★</i>`).join('');}
+function rtHtml(r,long){
+  if(!r||r.p) return '';
+  if(r.n<3) return `<span class="rt new">${long?'New player · not enough ratings yet':'New'}</span>`;
+  return `<span class="rt">${long?starRow(r.avg)+' ':'★ '}${r.avg.toFixed(1)}${long?` <small>from ${r.n} recent rating${r.n>1?'s':''}</small>`:''}</span>`;
+}
+function rtTag(uid,long){
+  if(!uid||!FB) return '';
+  const c=RCACHE[uid]; if(c&&!c.p) return `<span class="rtslot">${rtHtml(c,long)}</span>`;
+  ratingOf(uid).then(r=>{document.querySelectorAll(`.rtslot[data-u="${uid}"]`).forEach(el=>{el.innerHTML=rtHtml(r,el.dataset.l==='1');});});
+  return `<span class="rtslot" data-u="${esc(uid)}" data-l="${long?1:0}"></span>`;
+}
+async function myRatingLine(el){
+  if(!el) return;
+  const pr=PROFILE.botRates||[], pavg=pr.length?pr.reduce((a,b)=>a+b,0)/pr.length:0;
+  const practice=pr.length?`<span class="rt sub">Practice (bots) ${starRow(pavg)} ${pavg.toFixed(1)}</span>`:'';
+  el.innerHTML=practice;
+  if(!PROFILE.handle) return;
+  if(!FB){ if(!await connect()) return; }
+  const r=await ratingOf(FB.uid);
+  el.innerHTML=`<span class="rt">Player rating ${r&&r.n>=3?`${starRow(r.avg)} ${r.avg.toFixed(1)} <small>last ${r.n} rating${r.n>1?'s':''}</small>`:'<small>New. Play online to get rated.</small>'}</span>${practice}`;
+}
+function rateBlock(v,nx){
+  if(ONL.spec||!FB) return;
+  const others=[0,1,2,3].filter(a=>a!==ONL.me&&ONL.seats[a]&&ONL.seats[a].uid!==FB.uid);
+  if(!others.length) return;
+  const picked={};
+  const el=document.createElement('div'); el.className='ratebox';
+  el.innerHTML=`<h4>Rate the table <small>optional · anonymous</small></h4>`+others.map(a=>{const s=ONL.seats[a], fr=friendsList().some(f=>f.uid===s.uid);
+      return `<div class="rrow" data-a="${a}"><div class="mini">${avatarSVG(s.av)}</div><div class="rn"><b>${esc(s.name)}</b>${ONL.gone.has(a)?'<em>left early</em>':(partnersOn()&&a%2===ONL.me%2?'<em>partner</em>':'')}</div>
+        <div class="stars">${[1,2,3,4,5].map(k=>`<button data-k="${k}" aria-label="${k} star${k>1?'s':''}">★</button>`).join('')}</div>
+        ${fr?'':`<button class="addf" data-a="${a}" aria-label="Add ${esc(s.name)} as a friend">＋</button>`}</div>`;}).join('')+
+    `<button class="btn ghost sm" id="rateSend" disabled>Send ratings</button>`;
+  nx.before(el);
+  el.querySelectorAll('.rrow').forEach(r=>r.querySelectorAll('.stars button').forEach(b=>b.onclick=()=>{
+    const a=+r.dataset.a, k=+b.dataset.k; picked[a]=k; audio(); snap(0.2,800+k*250);
+    r.querySelectorAll('.stars button').forEach(x=>x.classList.toggle('on',+x.dataset.k<=k));
+    el.querySelector('#rateSend').disabled=false;}));
+  el.querySelectorAll('.addf').forEach(b=>b.onclick=()=>{addFriendSeat(ONL.seats[+b.dataset.a]); b.textContent='✓'; b.disabled=true;});
+  const send=el.querySelector('#rateSend');
+  send.onclick=async()=>{send.disabled=true; send.textContent='Sending…';
+    const res=await Promise.all(Object.entries(picked).map(([a,k])=>sendRate(+a,k)));
+    el.querySelectorAll('.stars button').forEach(b=>b.disabled=true);
+    send.textContent=res.every(Boolean)?'Thanks. Ratings sent ✓':'Some ratings didn’t send';};
+}
+async function sendRate(a,k){
+  const s=ONL.seats[a]; if(!s||!FB) return false; const {F,db}=FB;
+  try{ await F.setDoc(F.doc(db,'users',s.uid,'rates',`${FB.uid}_${ONL.code}_${ONL.g}`),{from:FB.uid,stars:k,at:F.serverTimestamp(),code:ONL.code,g:ONL.g,fs:ONL.me,ts:a});
+    delete RCACHE[s.uid]; return true; }
+  catch(e){ console.warn(e); return false; }
+}
+/* practice games: the bots grade how you played (kept separate from your real player rating) */
+function botGrade(won){
+  const gr=G.gr||{ok:0,bad:0,pen:0}, h=(gr.ok+gr.bad)||1;
+  let s=1+4*gr.ok/h-gr.pen*0.5+(won?0.5:0); s=Math.max(1,Math.min(5,Math.round(s)));
+  const pr=PROFILE.botRates||[]; pr.push(s); PROFILE.botRates=pr.slice(-50);
+  const by=partnersOn()?NAMES[2]:NAMES[oppSeat()];
+  const why=s>=5?'Clean game. Bids made and no wasted books.':s>=4?'Solid. Just a slip or two.':s>=3?'Some sets cost you. Tighten up those bids.':'Rough one. Count your sure books before you bid.';
+  return `<div class="grade"><div><b>${esc(String(by).replace(' 🤖',''))}</b> rated your play</div><div class="gstars">${starRow(s)}</div><small>${why} Practice stars stay private. Real players rate you online.</small></div>`;
+}
+
+/* boot */
+setTimeout(()=>{
+  if(/[?&#]fresh/.test(location.href)) return;
+  if(needsName()){ if(PROFILE.skipOnb!==todayKey()&&!document.querySelector('.veil')) onboard(); }
+  else startSocial();
+},400);
+</script>
+
 
 
 </body>
