@@ -150,6 +150,9 @@ button:focus-visible,input:focus-visible+span{outline:2px solid var(--brass);out
   font:600 11px/18px var(--f-ui);background:var(--back-a);border:1px solid var(--brass-dim);color:var(--ink);font-variant-numeric:tabular-nums}
 .av .dlr{position:absolute;left:-7px;top:-5px;width:17px;height:17px;border-radius:50%;background:var(--card);color:var(--card-black);font:700 10px/17px var(--f-ui);display:none}
 .seat.dealer .dlr{display:block}
+.av .gift{position:absolute;left:-10px;bottom:-6px;z-index:3;width:24px;height:24px;border-radius:50%;padding:0;border:1.5px solid var(--brass);background:#2a1d0c;font-size:13px;line-height:21px;text-align:center;cursor:pointer;box-shadow:0 2px 5px rgba(0,0,0,.45)}
+.av .gift:active{transform:scale(.9)}
+@media (max-height:430px){.av .gift{width:21px;height:21px;font-size:11px;line-height:18px;left:-9px}}
 .nm{font-weight:600;font-size:13px;white-space:nowrap}
 .nm i{font-style:normal;color:var(--brass);font-size:10px;letter-spacing:.12em;text-transform:uppercase;display:block;text-align:center;margin-top:-2px}
 .ch{font-size:11.5px;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap;background:rgba(0,0,0,.28);border-radius:10px;padding:1px 8px}
@@ -1941,7 +1944,9 @@ function menuSheet(){
 [0,1,2,3].forEach(p=>document.querySelector(`#seat${p} .av`).insertAdjacentHTML('beforeend',`<svg class="ring" id="ring${p}" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="46" pathLength="100"/></svg>`));
 $('#meAv').onclick=()=>playerSheet(); $('#meAv').onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();playerSheet();}};
 renderMe();
-$('#bGift').onclick=()=>giftSheet(); $('#bTrack').onclick=trackerSheet; $('#bChat').onclick=chatSheet; $('#bMenu').onclick=menuSheet;
+$('#bGift').onclick=()=>giftSheet();
+[1,2,3].forEach(p=>{const b=document.createElement('button'); b.className='gift'; b.textContent='🎁'; b.setAttribute('aria-label','Throw something at this player');
+  b.onclick=e=>{e.stopPropagation(); giftSheet(p);}; document.querySelector(`#seat${p} .av`).appendChild(b);}); $('#bTrack').onclick=trackerSheet; $('#bChat').onclick=chatSheet; $('#bMenu').onclick=menuSheet;
 function relayout(){
   renderHand(); sizeTable();
   trickEls.forEach(d=>{if(d.style.opacity==='0')return; d.style.transition='none'; place(d,slotPt(+d.dataset.p),+d.dataset.rot,1);});
@@ -2017,7 +2022,7 @@ function giftSheet(to){
       <p class="lede">Pick who it’s for, then what to throw. Everyone at the table sees it. You have <span class="coin-pill">${coinIcon()}${fmt(PROFILE.coins)}</span></p>
       <div class="gpick">${[1,2,3].map(p=>`<button data-p="${p}" class="${to===p?'on':''}"><div class="gav">${$('#pic'+p).innerHTML}</div><b>${esc(nmOf(p))}</b><small>${isPartner(p)?'Partner':(partnersOn()?'Opponent':'Rival')}</small></button>`).join('')}</div>
       <div class="thr">${THROWS.map(t=>`<button data-k="${t.k}" ${PROFILE.coins<t.c?'class="cant"':''}><span>${t.e}</span><small>${t.n}</small><em>${coinIcon()}${t.c}</em></button>`).join('')}</div>
-      <p class="fine">Tip: you can also tap anyone’s picture at the table.</p>`;
+      <p class="fine">Tip: tap the 🎁 on anyone’s picture to throw at them fast.</p>`;
     v.querySelectorAll('.gpick button').forEach(b=>b.onclick=()=>{to=+b.dataset.p; draw();});
     v.querySelectorAll('.thr button').forEach(b=>b.onclick=()=>doThrow(to,b.dataset.k,v));
   };
