@@ -3025,9 +3025,13 @@ function crewSheet(prefill){
   };
   draw();
 }
-async function connect(){
+/* the Claude app's preview blocks the online server; the real game (the app, or mcombizz.com) doesn't */
+const PREVIEW=/^https?:$/.test(location.protocol)&&!/(^|\.)mcombizz\.com$|^localhost$|^127\.0\.0\.1$/.test(location.hostname);
+async function connect(quiet){
   try{ await fb(); return true; }
-  catch(e){ console.warn(e); toast('Couldn’t reach the game server. Check your internet and try again.',3600); return false; }
+  catch(e){ console.warn(e);
+    if(!quiet) toast(PREVIEW?'Online play works in the Bags & Books app and at mcombizz.com, not in this preview.':'Couldn’t reach the game server. Check your internet and try again.',4200);
+    return false; }
 }
 async function createTable(mode,target,pub){
   if(!await connect()) return false;
@@ -3258,7 +3262,7 @@ function onboard(change){
 async function claimName(n){
   if(!NAME_RX.test(n)) return 'Use 3 to 14 letters, numbers or _ (no spaces).';
   if(NAME_BAD.test(n)) return 'Pick a different name.';
-  if(!await connect()) return 'Couldn’t reach the server. Check your internet.';
+  if(!await connect(true)) return PREVIEW?'Usernames work in the app and at mcombizz.com, not in this preview.':'Couldn’t reach the server. Check your internet.';
   const {F,db}=FB, low=n.toLowerCase(), ref=F.doc(db,'names',low);
   try{
     const s=await F.getDoc(ref);
@@ -3606,7 +3610,8 @@ function botGrade(won){
 /* boot */
 setTimeout(()=>{
   if(/[?&#]fresh/.test(location.href)) return;
-  if(needsName()){ if(PROFILE.skipOnb!==todayKey()&&!document.querySelector('.veil')) onboard(); }
+  if(PREVIEW) return; /* no online server in the preview, so don't ask for a username here */
+  if(needsName()){ if(PROFILE.skipOnb!==todayKey()) connect(true).then(ok=>{ if(ok&&needsName()&&!document.querySelector('.veil')) onboard(); }); }
   else startSocial();
 },400);
 </script>
