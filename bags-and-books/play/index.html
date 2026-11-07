@@ -640,6 +640,10 @@ button:focus-visible,input:focus-visible+span{outline:2px solid var(--brass);out
   .seat.n .info,.seat.s .info{align-items:flex-start!important}
   .seat.n .nm{display:flex;align-items:baseline;gap:5px}
 }
+@media (orientation:landscape) and (max-height:520px){
+  .seat.s{left:23%!important;right:auto!important;transform:none!important;flex-direction:row!important;gap:8px!important;align-items:center}
+  .seat.s .info{align-items:flex-start!important}
+}
 .av .nerd{position:absolute;right:-8px;top:-6px;z-index:3;font-size:17px;line-height:1;filter:drop-shadow(0 2px 3px rgba(0,0,0,.5))}
 .decks .dk .dmini{position:relative;height:44px;border-radius:8px;background:var(--card);border:1px solid var(--card-edge);display:flex;align-items:center;justify-content:center;gap:8px;font:700 15px var(--f-display);color:var(--card-black);overflow:hidden}
 .decks .dk .dmini .red{color:var(--card-red)}.decks .dk .dmini i{position:absolute;right:-10px;top:4px;width:26px;height:36px;border-radius:5px;background:repeating-linear-gradient(45deg,var(--back-a) 0 4px,var(--back-b) 4px 8px);transform:rotate(12deg);border:1px solid rgba(255,255,255,.5)}
@@ -1443,27 +1447,31 @@ function visFelt(){
 }
 function slotPt(p){
   const c=visFelt(), w=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--tcw'))||58, h=w*1.4;
-  const land=LAND.matches, dx=w*(land?1.0:0.8), dy=h*(land?0.17:0.48);
+  const land=LAND.matches, dx=w*(land?1.3:0.8), dy=h*(land?0.53:0.48);
   if(land){const f=felt.getBoundingClientRect(), st=stage.getBoundingClientRect(); c.y=f.top-st.top+midY();}
   return [{x:c.x,y:c.y+dy},{x:c.x-dx,y:c.y},{x:c.x,y:c.y-dy},{x:c.x+dx,y:c.y}][p];
 }
 function place(d,pt,rot,sc){const w=d.offsetWidth,h=d.offsetHeight;d.style.transform=`translate(${pt.x-w/2}px,${pt.y-h/2}px) rotate(${rot}deg) scale(${sc})`;}
 function sizeTable(){
   const v=visFelt();
-  const tcw=Math.round(Math.max(LAND.matches?36:44,LAND.matches?Math.min(64,v.w/8,(midGap()-6)/(1.4*1.34)):Math.min(74,v.w/6.2,v.h/5.6)));
+  const tcw=Math.round(Math.max(LAND.matches?36:44,LAND.matches?Math.min(66,v.w/(innerHeight<380?11.5:9),(midGap()-8)/(1.4*2.1)):Math.min(74,v.w/6.2,v.h/5.6)));
   document.documentElement.style.setProperty('--tcw',tcw+'px');
   felt.style.setProperty('--cy',midY()+'px');
 }
 /* room between the bottom of your partner's seat and the top of yours, so played cards never cover anyone */
+function lowEdge(){ /* the lowest point played cards may reach */
+  if(LAND.matches){ const f=felt.getBoundingClientRect(), ht=handEl.getBoundingClientRect().top+18; return Math.min(f.bottom-f.height*0.07,ht)-6; }
+  return document.querySelector('#seat0 .av').getBoundingClientRect().top;
+}
 function midGap(){
-  const a=document.querySelector('#seat2').getBoundingClientRect(), b=document.querySelector('#seat0 .av').getBoundingClientRect();
-  return Math.max(80,b.top-a.bottom);
+  const a=document.querySelector('#seat2').getBoundingClientRect();
+  return Math.max(80,lowEdge()-a.bottom);
 }
 /* halfway between your partner's picture and yours, so all four players sit evenly around the table */
 function midY(){
-  const f=felt.getBoundingClientRect(), a=document.querySelector('#seat2').getBoundingClientRect(), b=document.querySelector('#seat0 .av').getBoundingClientRect();
-  if(!a.height||!b.height) return visFelt().h/2;
-  return (a.bottom+b.top)/2-f.top;
+  const f=felt.getBoundingClientRect(), a=document.querySelector('#seat2').getBoundingClientRect();
+  if(!a.height) return visFelt().h/2;
+  return (a.bottom+lowEdge())/2-f.top;
 }
 
 /* ---------- rendering ---------- */
@@ -1476,7 +1484,7 @@ function renderHand(animate,offset=0){
   const ov=land?Math.round(cw*0.22):0;
   handEl.style.marginTop=(land?-ov:4)+'px'; stage.style.setProperty('--ov',ov+'px');
   handEl.style.setProperty('--cw',cw+'px'); handEl.style.height=Math.round(cw*1.4+(land?30:28))+'px';
-  const n=h.length, step=n>1?Math.min(cw*0.62,(W-cw)/(n-1)):0, x0=(W-(cw+step*(n-1)))/2;
+  const n=h.length, step=n>1?Math.min(cw*(land?0.74:0.62),(W-cw)/(n-1)):0, x0=(W-(cw+step*(n-1)))/2;
   const myTurn=G.phase==='play'&&G.turn===0&&!busy;
   const ok=myTurn?new Set(legal(0).map(c=>c.id)):null;
   h.forEach((c,i)=>{
