@@ -1580,7 +1580,7 @@ function startHand(){
   later(()=>status('Bidding'),sh);
   later(()=>preBid(nextBid), reduce?100:sh+1900);
 }
-const teamBidding=()=>opts.teamBid&&partnersOn()&&!ONL.on;
+const teamBidding=()=>opts.teamBid&&partnersOn();
 function teamSuggest(t){const ms=members(t).filter(p=>G.bids[p]===null); return Math.max(1,ms.reduce((a,p)=>a+Math.max(1,suggestBid(p)),0));}
 function setTeamBid(t,v){
   G.teamBid=G.teamBid||[null,null]; G.teamBid[t]=v;
@@ -1597,6 +1597,7 @@ function nextTeamBid(){
   const p=teamOrder().find(q=>G.bids[q]===null);
   if(p===undefined) return later(startPlay, 900);
   G.turn=p; renderSeats();
+  if(ONL.on) return onlineBidTurn(p);
   if(p===0){showBid(); userClock(); return;}
   status(NAMES[p]+' is calling books…'); startClock(p);
   later(()=>{
@@ -1984,7 +1985,7 @@ function rulesSheet(after){
     ${optRow('oN','Nil bids','Bid zero books for +100, or lose 100.',opts.nil)}
     ${optRow('oB','10-bag penalty','Every 10 overtricks costs 100 points.',opts.bags)}
     ${optRow('oT','15-second turn clock','Run out of time and the game plays for you.',opts.timer)}
-    ${optRow('oTB','Team bidding','The team that didn’t deal calls first: you call your books, your partner calls theirs, and they add up. Then the dealing team does the same. (Games with bots for now.)',opts.teamBid)}
+    ${optRow('oTB','Team bidding','The team that didn’t deal calls first: you call your books, your partner calls theirs, and they add up. Then the dealing team does the same. Online tables use the host’s setting.',opts.teamBid)}
     ${optRow('oBN','Blind nil (table votes)','The table votes at the start of each game. If 3 of 4 allow it, anyone can bid nil before seeing their cards. +200 or −200.',opts.blind)}
     </div>
     <button class="btn" id="go">Save rules</button>`,{noClose:true});
@@ -2694,7 +2695,8 @@ function onlineBidTurn(p){
   waitFor(id,d=>{
     stopClock(); if(p===0) $('#bidPanel').hidden=true;
     if(G.bids[p]===null) applyBid(p,d);
-    G.turn=(p+1)%4; renderSeats(); later(nextBid,reduce?50:600);
+    if(teamBidding()) teamCall(p);
+    G.turn=(p+1)%4; renderSeats(); later(nextBid,reduce?50:(teamBidding()&&G.bids[partnerOf(p)]!==null?1300:600));
   });
 }
 function onlineBid(v){
@@ -2816,7 +2818,7 @@ async function createTable(mode,target){
     let code='';
     for(let i=0;i<6;i++){code=Array.from({length:5},()=>CODE_AB[Math.floor(Math.random()*CODE_AB.length)]).join('');
       if(!(await F.getDoc(F.doc(db,'tables',code))).exists()) break;}
-    const rules={jokers:!!opts.jokers,deuce:!!opts.deuce,nil:!!opts.nil,bags:!!opts.bags,timer:!!opts.timer,blind:!!opts.blind};
+    const rules={jokers:!!opts.jokers,deuce:!!opts.deuce,nil:!!opts.nil,bags:!!opts.bags,timer:!!opts.timer,blind:!!opts.blind,teamBid:!!opts.teamBid};
     await F.setDoc(F.doc(db,'tables',code),{host:FB.uid,status:'lobby',mode,target,rules,g:0,bots:[],created:F.serverTimestamp()});
     ONL.code=code; ONL.host=true; ONL.me=0;
     await F.setDoc(tRef('seats','0'),mySeatInfo());
@@ -2921,7 +2923,7 @@ function roomLeave(byUser){
 function beginOnline(){
   const d=ONL.table, {F,db}=FB;
   if(ONL.room){ONL.room.remove(); ONL.room=null;}
-  ONL.saved=Object.assign({},opts); Object.assign(opts,d.rules||{},{mode:d.mode,target:d.target});
+  ONL.saved=Object.assign({},opts); Object.assign(opts,{teamBid:false},d.rules||{},{mode:d.mode,target:d.target});
   ONL.on=true; ONL.g=d.g||0; ONL.ev={}; ONL.myHands={}; ONL.gone=new Set(); ONL.miss={}; ONL.advanced=null;
   (d.bots||[]).forEach(a=>{ONL.seats[a]=null;});
   if(!ONL.spec) onlRemember();
