@@ -2745,9 +2745,9 @@ function srvAsk(id,delay,lead){
         const r=await fetch(SRV_URL,{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+t},body:JSON.stringify({code,id})}).then(x=>x.json());
         if(r.wait&&!ONL.ev[id]) return setTimeout(go,Math.min(r.wait+150,20000));
         if(r.ok||r.done) return done(true);
-        if(++tries<3&&r.err!=='not now'&&r.err!=='not seated') return setTimeout(go,1500);
+        if(++tries<10&&r.err!=='not now'&&r.err!=='not seated'&&r.err!=='no') return setTimeout(go,Math.min(1500*tries,6000));
         done(false);
-      }catch(e){ console.warn('srv',e); if(++tries<5) setTimeout(go,2500); else done(false); }
+      }catch(e){ console.warn('srv',e); if(++tries<10) setTimeout(go,Math.min(1500*tries,6000)); else done(false); }
     };
     setTimeout(go,(delay||0)+(lead===false||lead&&!iLead()?2500:0));
   });
