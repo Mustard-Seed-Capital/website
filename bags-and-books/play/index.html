@@ -2217,7 +2217,7 @@ function menuSheet(){
     <button class="btn ghost" id="mMe">Your player &amp; tables</button>`);
   v.querySelector('#mMe').onclick=()=>{v.remove();playerSheet();};
   v.querySelector('#mS').onchange=e=>{soundOn=e.target.checked;audio();};
-  v.querySelector('#mNew').onclick=()=>{v.remove(); if(ONL.on) return leaveGame(); openLobby();};
+  v.querySelector('#mNew').onclick=()=>{v.remove(); if(ONL.on) return leaveGame(); if(ONL.joining) cancelRejoin(); openLobby();};
   v.querySelector('#mSet').onclick=()=>{v.remove();settingsSheet();};
   v.querySelector('#mHelp').onclick=()=>{v.remove();helpSheet();};
 }
@@ -3241,15 +3241,31 @@ function copyText(t){
 async function rejoinTable(code,watch){
   if(ONL.on&&ONL.code===code) return true; /* already there */
   if(ONL.joining) return false; ONL.joining=true;
-  try{ return await rejoinTable2(code,watch); } finally { ONL.joining=false; }
+  const tok=ONL.rejTok=(ONL.rejTok||0)+1;
+  const bar=watch?null:rejoinBar(tok);
+  const slow=setTimeout(()=>{ if(tok!==ONL.rejTok||ONL.on) return; cancelRejoin(); toast('Couldn’t get back to that table, so we let it go.',3200); openLobby(); },15000);
+  try{ return await rejoinTable2(code,watch,tok); } finally { ONL.joining=false; clearTimeout(slow); if(bar) bar.remove(); }
 }
-async function rejoinTable2(code,watch){
+/* stop any reconnect that's still running, and forget the table */
+function cancelRejoin(){ ONL.rejTok=(ONL.rejTok||0)+1; ONL.joining=false; onlForget(); const b=document.getElementById('rejBar'); if(b) b.remove(); }
+function rejoinBar(tok){
+  const old=document.getElementById('rejBar'); if(old) old.remove();
+  const b=document.createElement('div'); b.id='rejBar'; b.className='invban';
+  b.innerHTML='<span>🔄</span><div>Getting you back to your table…</div><button class="btn sm ghost" id="rjLeave">Leave it</button>';
+  document.body.appendChild(b);
+  b.querySelector('#rjLeave').onclick=()=>{ if(tok!==ONL.rejTok) return; cancelRejoin();
+    if(ONL.on) onlineLeave(true,false); else ONL.code=null;
+    openLobby(); toast('Left that table. You’re free to start a new game.',2800); };
+  return b;
+}
+async function rejoinTable2(code,watch,tok){
   if(!await connect()) return false;
+  if(tok!==ONL.rejTok) return false;
   const {F,db}=FB;
   try{
-    const s=await F.getDoc(F.doc(db,'tables',code));
+    const s=await F.getDoc(F.doc(db,'tables',code)); if(tok!==ONL.rejTok) return false;
     if(!s.exists()||s.data().status!=='playing'){onlForget(); if(watch) toast('That game is over. Ask for a new code.',3000); return false;}
-    const d=s.data(), ss=await F.getDocs(F.collection(db,'tables',code,'seats')), seats=[null,null,null,null];
+    const d=s.data(), ss=await F.getDocs(F.collection(db,'tables',code,'seats')), seats=[null,null,null,null]; if(tok!==ONL.rejTok) return false;
     ss.forEach(x=>{const v=x.data(), i=+x.id; if(i>=0&&i<4) seats[i]={uid:v.uid,name:String(v.name||'Player').slice(0,14),av:cleanAv(v.av),lvl:Math.max(1,Math.min(99,v.lvl|0)),rk:Math.max(0,Math.min(RANKS.length-1,v.rk|0))};});
     const me=seats.findIndex(x=>x&&x.uid===FB.uid);
     if(me<0&&!watch){onlForget(); return false;}
@@ -3311,6 +3327,7 @@ function specTag(){
     :`👀 Watching · bottom seat is ${esc(ONL.seats[0]?ONL.seats[0].name:'the host')}`;
 }
 function onlineLeave(announce,quit){
+  ONL.rejTok=(ONL.rejTok||0)+1; {const b=document.getElementById('rejBar'); if(b) b.remove();}
   if(ONL.on&&ONL.joinSeat>=0&&FB){ FB.F.deleteDoc(tRef('seats',String(ONL.joinSeat))).catch(()=>{}); ONL.joinSeat=-1; } /* never took the seat */
   if(ONL.on&&announce&&ONL.me>=0&&!ONL.spec){
     if(quit) post(`${ONL.g}.q${ONL.me}`,{s:ONL.me});
@@ -3641,7 +3658,8 @@ async function mergeCheck(){
 function gameLive(){return !!(ONL.on&&!ONL.spec&&G&&!G.over&&(G.phase==='bid'||G.phase==='play'||G.phase==='between'||G.phase==='idle'));}
 function stalled(){return !ONL.srv&&Date.now()-(ONL.lastEv||Date.now())>45e3;}
 function partnerGone(){return partnersOn()&&ONL.gone.has((ONL.me+2)%4);}
-function quitCounts(){return gameLive()&&!stalled()&&!partnerGone();}
+function aloneNow(){return ![0,1,2,3].some(a=>a!==ONL.me&&ONL.seats[a]&&!ONL.gone.has(a));}
+function quitCounts(){return gameLive()&&!stalled()&&!partnerGone()&&!aloneNow();}
 function leaveGame(){
   if(!quitCounts()){ onlineLeave(true,false); openLobby(); return; }
   const t=quitTimeoutFor(Date.now(),1);
