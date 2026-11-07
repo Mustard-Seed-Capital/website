@@ -2728,7 +2728,7 @@ function waitFor(id,cb){
   ONL.wait={id,cb,tok}; ffEnd();
 }
 function ffEnd(){
-  if(!FF) return; FF=false; soundOn=ONL.snd;
+  if(!FF||!ONL.evReady) return; FF=false; soundOn=ONL.snd;
   if(G&&ONL.on){renderSeats(); renderHand(); if(!ONL.spec) toast('You’re back in. It’s live now.',2200); if(ONL.dropped) postBack();}
 }
 function onEv(id,d){
@@ -3075,6 +3075,11 @@ function copyText(t){
   if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(done,()=>prompt('Copy this:',t)); else prompt('Copy this:',t);
 }
 async function rejoinTable(code,watch){
+  if(ONL.on&&ONL.code===code) return true; /* already there */
+  if(ONL.joining) return false; ONL.joining=true;
+  try{ return await rejoinTable2(code,watch); } finally { ONL.joining=false; }
+}
+async function rejoinTable2(code,watch){
   if(!await connect()) return false;
   const {F,db}=FB;
   try{
@@ -3086,7 +3091,7 @@ async function rejoinTable(code,watch){
     if(me<0&&!watch){onlForget(); return false;}
     document.querySelectorAll('.veil').forEach(v=>v.remove());
     ONL.code=code; ONL.host=d.host===FB.uid; ONL.spec=me<0; ONL.me=me<0?0:me; ONL.seats=seats; ONL.gone=new Set(); ONL.table=null; ONL.room=null;
-    ONL.snd=soundOn; soundOn=false; FF=true; setTimeout(ffEnd,15000); ONL.rejoinAt=Date.now();
+    ONL.snd=soundOn; soundOn=false; FF=true; ONL.evReady=false; setTimeout(()=>{ONL.evReady=true; ffEnd();},25000); ONL.rejoinAt=Date.now();
     enterRoom(true); return true;
   }catch(e){console.warn(e); FF=false; soundOn=ONL.snd; toast('Couldn’t get back to that table.',3000); return false;}
 }
@@ -3107,7 +3112,7 @@ function beginOnline(){
   const d=ONL.table, {F,db}=FB;
   if(ONL.room){ONL.room.remove(); ONL.room=null;}
   ONL.saved=Object.assign({},opts); Object.assign(opts,{teamBid:false},d.rules||{},{mode:d.mode,target:d.target});
-  ONL.on=true; ONL.g=d.g||0; ONL.ev={}; ONL.myHands={}; ONL.gone=new Set(); ONL.miss={}; ONL.advanced=null; ONL.leftN={}; ONL.backN={}; ONL.goneG={}; ONL.bye=new Set(); ONL.dropped=false; ONL.lastEv=Date.now();
+  ONL.on=true; ONL.g=d.g||0; ONL.ev={}; ONL.myHands={}; ONL.gone=new Set(); ONL.miss={}; ONL.advanced=null; ONL.leftN={}; ONL.backN={}; ONL.goneG={}; ONL.bye=new Set(); if(!FF) ONL.evReady=true; ONL.dropped=false; ONL.lastEv=Date.now();
   (d.bots||[]).forEach(a=>{ONL.seats[a]=null;});
   if(!ONL.spec) onlRemember();
   if(!ONL.spec) ONL.unsubs.push(F.onSnapshot(F.query(F.collection(db,'tables',ONL.code,'hands'),F.where('uid','==',FB.uid)),snap=>{
@@ -3118,6 +3123,8 @@ function beginOnline(){
       /* rare: two phones sent the same move at once and the server kept the other one; reload to catch up exactly */
       if(ch.type==='removed'&&ONL.ev[id]&&ONL.ev[id].by===FB.uid){toast('Syncing with the table…',1500); setTimeout(()=>location.reload(),700); return;}
       if(ch.type!=='added') return; const x=ch.doc.data(); if(ONL.ev[id]) return; ONL.ev[id]=x; onEv(id,x);});
+    if(!ONL.evReady){ONL.evReady=true; setTimeout(()=>{ if(!FF) return;
+      if((ONL.wait&&!ONL.ev[ONL.wait.id])||(ONL.watchDeal&&!ONL.ev[ONL.watchDeal[0]])) ffEnd(); },0);}
   },e=>{console.warn(e); toast('Lost the connection to the table.',3000);}));
   const lb=document.getElementById('lobby'); if(lb) lb.hidden=true;
   renderMe(); onlineNewGame(); specTag();
