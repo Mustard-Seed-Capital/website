@@ -533,6 +533,17 @@ button:focus-visible,input:focus-visible+span{outline:2px solid var(--brass);out
 @keyframes onlp{50%{box-shadow:0 0 0 6px rgba(61,220,132,0)}}
 @media (prefers-reduced-motion:reduce){.onl i,.frn .dot{animation:none}}
 #rOnl{margin:-4px 0 8px}
+.seat.talk{z-index:60!important}
+@media (orientation:landscape) and (max-height:520px){
+  .seat.w .bub{top:0!important;left:100%!important;right:auto!important;translate:8px 0!important}
+  .seat.e .bub{top:0!important;right:100%!important;left:auto!important;translate:-8px 0!important}
+  .seat.s .bub{bottom:100%!important;top:auto!important;left:0!important;translate:0 -8px!important}
+}
+.giftstay{position:absolute;right:-12px;top:-14px;z-index:6;font-size:26px;line-height:1;filter:drop-shadow(0 3px 4px rgba(0,0,0,.5));animation:gsIn .45s cubic-bezier(.3,1.6,.5,1),gsBob 2.4s ease-in-out .45s infinite;transition:opacity .7s,transform .7s;pointer-events:none}
+.giftstay.out{opacity:0;transform:translateY(-10px) scale(.7)}
+@keyframes gsIn{from{transform:scale(.2) rotate(-30deg)}}
+@keyframes gsBob{50%{transform:translateY(-4px) rotate(6deg)}}
+@media (prefers-reduced-motion:reduce){.giftstay{animation:none}}
 .mc-rnd{background:radial-gradient(ellipse at 50% 20%,#1d6b8f,#0b2233 80%)}
 .crew.rnd{opacity:.9}.crew .mini-av.q{display:grid;place-items:center;font:800 20px var(--f-ui);color:#bfe6ff;background:rgba(255,255,255,.08);border-style:dashed}
 .onb-hero{display:grid;place-items:center;margin:-4px auto 6px;width:64px;height:64px;border-radius:18px;background:linear-gradient(160deg,#1f5a3d,#0c2a1c);border:1px solid var(--brass);box-shadow:0 6px 18px rgba(0,0,0,.35)}
@@ -1536,11 +1547,16 @@ function status(t){$('#status').textContent=t||'';}
 let toastT;
 function toast(t,ms=2200){const el=$('#toast');el.textContent=t;el.classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>el.classList.remove('on'),ms);}
 const bubT=[];
-function say(p,t,ms=2600,force){if(ONL.on&&p!==0&&!force&&oHuman(p))return;if(MUTED.has(p)||(PROFILE.blocked||[]).includes(NAMES[p]))return;const b=$('#bub'+p);b.textContent=t;b.classList.add('on');clearTimeout(bubT[p]);bubT[p]=setTimeout(()=>b.classList.remove('on'),ms);fitBub(b);}
-function fitBub(b){ b.style.marginLeft='0px'; b.style.marginTop='0px';
-  const r=b.getBoundingClientRect(), st=stage.getBoundingClientRect(), pad=6;
-  let dx=0, dy=0; if(r.right>st.right-pad) dx=st.right-pad-r.right; if(r.left+dx<st.left+pad) dx=st.left+pad-r.left;
-  if(r.top<st.top+pad) dy=st.top+pad-r.top; b.style.marginLeft=dx+'px'; b.style.marginTop=dy+'px'; }
+function say(p,t,ms=2600,force){if(ONL.on&&p!==0&&!force&&oHuman(p))return;if(MUTED.has(p)||(PROFILE.blocked||[]).includes(NAMES[p]))return;const b=$('#bub'+p), st=$('#seat'+p);b.textContent=t;b.classList.add('on');st.classList.add('talk');clearTimeout(bubT[p]);bubT[p]=setTimeout(()=>{b.classList.remove('on');st.classList.remove('talk');},ms);fitBub(b);}
+function fitBub(b){ /* keep the whole bubble on the table, away from the rounded rail */
+  b.style.marginLeft='0px'; b.style.marginTop='0px';
+  const r=b.getBoundingClientRect(), f=felt.getBoundingClientRect(), st=stage.getBoundingClientRect();
+  const L=Math.max(st.left,f.left)+(LAND.matches?f.height*0.12:6), R=Math.min(st.right,f.right)-(LAND.matches?f.height*0.12:6);
+  const T=Math.max(st.top,LAND.matches?f.top+10:st.top)+4, B=(LAND.matches?f.bottom-12:st.bottom)-4;
+  let dx=0, dy=0;
+  if(r.right>R) dx=R-r.right; if(r.left+dx<L) dx=L-r.left;
+  if(r.bottom>B) dy=B-r.bottom; if(r.top+dy<T) dy=T-r.top;
+  b.style.marginLeft=dx+'px'; b.style.marginTop=dy+'px'; }
 const pick=a=>a[Math.floor(Math.random()*a.length)];
 const MUTED=new Set();
 const isPartner=p=>partnersOn()&&p===2;
@@ -1578,8 +1594,9 @@ function userClock(){
   if(!G||G.turn!==0||busy) return;
   if(document.querySelector('.veil')) return;
   const lb=document.getElementById('lobby'); if(lb&&!lb.hidden) return;
-  if(G.phase==='bid'&&!$('#bidPanel').hidden) startClock(0,()=>{toast("Time's up. Coach bid for you.");submitBid(Math.max(1,suggestBid(0)));}); /* never auto-nil */
-  else if(G.phase==='play') startClock(0,()=>{toast("Time's up. Played a card for you.");sel=null;playMine(botChoose(0));},G.trick.length?'Your play':'Your lead');
+  const ms=ONL.on?turnMs():undefined;
+  if(G.phase==='bid'&&!$('#bidPanel').hidden) startClock(0,()=>{toast("Time's up. Coach bid for you.");submitBid(Math.max(1,suggestBid(0)));},undefined,ms); /* never auto-nil */
+  else if(G.phase==='play') startClock(0,()=>{toast("Time's up. Played a card for you.");sel=null;playMine(botChoose(0));},G.trick.length?'Your play':'Your lead',ms);
 }
 const loseAt=()=>opts.target===100?-100:-200;
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
@@ -2327,7 +2344,15 @@ function throwAt(a,b,k){
   requestAnimationFrame(()=>{el.style.transition=`transform ${dur/2}ms ease-out`; put(mid,1.35,k==='crown'?0:220);
     setTimeout(()=>{el.style.transition=`transform ${dur/2}ms ease-in`; put(B,1.1,k==='crown'?0:420);},dur/2);});
   setTimeout(()=>{cardTap(1); if(soundOn&&AC) burst(AC.currentTime,0.16,{type:'lowpass',f0:k==='rain'?2400:500,vol:0.2});
-    el.classList.add(k==='crown'?'land':'splat'); setTimeout(()=>el.remove(),1100);},dur);
+    el.classList.add(k==='crown'?'land':'splat'); setTimeout(()=>{el.remove(); giftStay(b,t.e);},1100);},dur);
+}
+/* the gift sits on the player's picture for ~10s so they can show it off */
+function giftStay(b,e){
+  const p=typeof b==='number'?b:0; const av=document.querySelector(`#seat${p} .av`)||document.querySelector(`#pic${p}`);
+  if(!av) return;
+  av.querySelectorAll('.giftstay').forEach(x=>x.remove());
+  const g=document.createElement('div'); g.className='giftstay'; g.textContent=e; av.appendChild(g);
+  setTimeout(()=>g.classList.add('out'),9200); setTimeout(()=>g.remove(),10000);
 }
 const QUICK_EXTRA=["Pass the hot sauce, this hand is spicy 🌶️","Unc, you reneged!","Go sit at the kids' table","Book. Book. Book. Book.","Y'all done or nah?","Run me my books"];
 const fmt=n=>Number(n).toLocaleString('en-US');
@@ -2733,8 +2758,10 @@ const mySeatInfo=()=>({uid:FB.uid,name:String(PROFILE.name||'Player').slice(0,14
 async function post(id,data){
   if(!FB||!ONL.code||ONL.spec) return false;
   const {F,db}=FB, ref=F.doc(db,'tables',ONL.code,'ev',id);
+  const t0=Date.now(); ONL.sentAt=ONL.sentAt||{}; ONL.sentAt[id]=t0;
   try{ await F.setDoc(ref,Object.assign({by:FB.uid,at:F.serverTimestamp()},data)); return true; }
-  catch(e){ if(e&&e.code==='permission-denied'&&ONL.ev[id]&&ONL.ev[id].by!==FB.uid) return true; /* someone beat us to it; theirs stands */
+  catch(e){ if(e&&e.code==='permission-denied'){ for(let i=0;i<8&&!ONL.ev[id];i++) await new Promise(r=>setTimeout(r,250));
+      if(ONL.ev[id]&&ONL.ev[id].by!==FB.uid){ if(/\.[bp]\d+$/.test(id)) toast('Time ran out, so the table moved for you.',2400); return true; } } /* the table already moved for this seat; that move stands */
     console.warn('post',id,e); return false; }
 }
 /* ---- table server (Cloud Function): deals, plays bots, covers timeouts; nobody's phone holds other players' cards ---- */
@@ -2747,6 +2774,8 @@ async function srvUp(){
   catch(e){ srvOk=false; }
   setTimeout(()=>{srvOk=null;},60e3); return srvOk;
 }
+let warmAt=0;
+function srvWarm(force){ if(!force&&Date.now()-warmAt<180e3) return; warmAt=Date.now(); fetch(SRV_URL).catch(()=>{}); }
 function iLead(){return [0,1,2,3].find(a=>ONL.seats[a]&&!ONL.gone.has(a))===ONL.me;}
 function srvAsk(id,delay,lead){
   if(!ONL.srv||ONL.spec||ONL.me<0) return Promise.resolve(false);
@@ -2776,7 +2805,13 @@ function ffEnd(){
   if(!FF||!ONL.evReady) return; FF=false; soundOn=ONL.snd;
   if(G&&ONL.on){renderSeats(); renderHand(); if(!ONL.spec) toast('You’re back in. It’s live now.',2200); if(ONL.dropped) postBack();}
 }
+function turnMs(){ /* time left on the current turn, by the table's clock */
+  if(!ONL.on||!ONL.lastAt) return TURN_MS;
+  return Math.max(3000,Math.min(TURN_MS,TURN_MS-(Date.now()+(ONL.skew||0)-ONL.lastAt)));
+}
 function onEv(id,d){
+  if(d&&d.at&&d.at.toMillis&&/\.(deal|b\d|p\d+)$/.test(id)){ const at=d.at.toMillis(); ONL.lastAt=Math.max(ONL.lastAt||0,at);
+    const t0=ONL.sentAt&&ONL.sentAt[id]; if(t0) ONL.skew=at-(t0+(Date.now()-t0)/2); }
   if(ONL.host&&typeof d.s==='number'&&ONL.seats[d.s]&&d.by===ONL.seats[d.s].uid) ONL.miss[d.s]=0;
   if(id.startsWith('c.')) return chatIn(d);
   if(id.startsWith('t.')) return throwIn(d);
@@ -2866,7 +2901,20 @@ function onlineNewGame(){
   ONL.tok++; ONL.wait=null; ONL.watch=null; ONL.watchDeal=null; ONL.handWait=null; ONL.dealt=false; ONL.sent=null; clearTimeout(ONL.fbT);
   onlineNames(); G.dealer=toL(3);
   renderSeats(); renderHand(); $('#bidPanel').hidden=true; $('#votePanel').hidden=true;
-  if(opts.blind&&opts.nil) later(()=>onlineVote(startHand),reduce?50:600); else later(startHand,400);
+  if(!ONL.spec&&!FF&&ONL.me>=0) post(`${ONL.g}.r${ONL.me}`,{s:ONL.me}); /* "my phone is loaded" */
+  readyGate(()=>{ if(opts.blind&&opts.nil) later(()=>onlineVote(startHand),reduce?50:600); else later(startHand,400); });
+}
+/* wait (up to 10s) until every real player's phone has the table loaded, so nobody starts behind */
+function readyGate(cb){
+  const tok=ONL.tok, t0=Date.now();
+  const chk=()=>{
+    if(tok!==ONL.tok) return;
+    const miss=[0,1,2,3].filter(a=>ONL.seats[a]&&!ONL.gone.has(a)&&!ONL.ev[`${ONL.g}.r${a}`]);
+    if(!miss.length||Date.now()-t0>10000){ status(''); return cb(); }
+    status(`Waiting for ${miss.map(a=>a===ONL.me?'you':ONL.seats[a].name).join(' & ')} to load…`);
+    setTimeout(chk,250);
+  };
+  chk();
 }
 function onlineNames(){
   const bn=['Dre','Nae','Big Ray'], ba=[BOT_AV[1],BOT_AV[2],BOT_AV[3]];
@@ -2916,7 +2964,7 @@ function applyBid(p,d){
 }
 function onlineBidTurn(p){
   const id=evId('b'+toA(p));
-  if(p===0&&!ONL.spec){showBid();userClock();} else {status((p===0?NAMES[0]:NAMES[p])+' is bidding…'); startClock(p);}
+  if(p===0&&!ONL.spec){showBid();userClock();} else {status((p===0?NAMES[0]:NAMES[p])+' is bidding…'); startClock(p,null,'',turnMs());}
   drive('b',p,id);
   waitFor(id,d=>{
     stopClock(); if(p===0) $('#bidPanel').hidden=true;
@@ -2933,7 +2981,7 @@ function onlineBid(v){
 function onlineTurn(){
   const p=G.turn, id=evId('p'+G.played.size);
   if(p===0&&!ONL.spec){busy=false; status(G.trick.length?'Your play':'Your lead'); renderHand(); userClock();}
-  else {busy=true; status(''); renderHand(); startClock(p);}
+  else {busy=true; status(''); renderHand(); startClock(p,null,'',turnMs());}
   drive('p',p,id);
   waitFor(id,d=>{const c=G.deck.find(x=>x.id===d.c); if(!c){console.warn('unknown card',d);return;} sel=null; playCard(p,c);});
 }
@@ -3122,7 +3170,8 @@ function drawRoom(){
   if(t.pub) pubRoom();
   const rs=v.querySelector('#rShare'); if(rs) rs.onclick=async()=>{try{if(navigator.share){await navigator.share({title:'Bags & Books',text:invite});return;}}catch(e){return;} copyText(invite);};
   const rc=v.querySelector('#rCopy'); if(rc) rc.onclick=()=>copyText(link);
-  const st=v.querySelector('#rStart'); if(st) st.onclick=async()=>{st.disabled=true; if(!await startRoom()) st.disabled=false;};
+  srvWarm();
+  const st=v.querySelector('#rStart'); if(st) st.onclick=async()=>{st.disabled=true; srvWarm(true); if(!await startRoom()) st.disabled=false;};
   v.querySelector('#rLeave').onclick=()=>roomLeave(true);
 }
 async function startRoom(){
@@ -3179,11 +3228,12 @@ function beginOnline(){
   if(!ONL.spec||ONL.joinSeat>=0) ONL.unsubs.push(F.onSnapshot(F.query(F.collection(db,'tables',ONL.code,'hands'),F.where('uid','==',FB.uid)),snap=>{
     snap.forEach(x=>{const id=x.id.replace(/-x$/,''); if(x.id!==id&&ONL.myHands[id]) return; ONL.myHands[id]=x.data().cards;}); if(ONL.handWait) ONL.handWait();
   },e=>console.warn(e)));
-  ONL.unsubs.push(F.onSnapshot(F.collection(db,'tables',ONL.code,'ev'),snap=>{
+  ONL.unsubs.push(F.onSnapshot(F.collection(db,'tables',ONL.code,'ev'),{includeMetadataChanges:true},snap=>{
     snap.docChanges().forEach(ch=>{const id=ch.doc.id;
-      /* rare: two phones sent the same move at once and the server kept the other one; reload to catch up exactly */
-      if(ch.type==='removed'&&ONL.ev[id]&&ONL.ev[id].by===FB.uid){toast('Syncing with the table…',1500); setTimeout(()=>location.reload(),700); return;}
-      if(ch.type!=='added') return; const x=ch.doc.data(); if(ONL.ev[id]) return; ONL.ev[id]=x; onEv(id,x);});
+      if(ch.type==='removed') return;
+      /* game moves count once the server has them (chat and gifts show instantly) */
+      if(ch.doc.metadata.hasPendingWrites&&!/^[ct]\./.test(id)) return;
+      const x=ch.doc.data({serverTimestamps:'estimate'}); if(ONL.ev[id]) return; ONL.ev[id]=x; onEv(id,x);});
     if(!ONL.evReady){ONL.evReady=true; setTimeout(()=>{ if(!FF) return;
       if((ONL.wait&&!ONL.ev[ONL.wait.id])||(ONL.watchDeal&&!ONL.ev[ONL.watchDeal[0]])) ffEnd(); },0);}
   },e=>{console.warn(e); toast('Lost the connection to the table.',3000);}));
