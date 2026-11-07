@@ -1,9 +1,0 @@
-set -e
-mkdir -p ~/bb && cd ~/bb && curl -sfL https://mcombizz.com/srvdeploy/bbsrv-7k2q.tgz -o d.tgz && tar xzf d.tgz
-gcloud config set project bags-and-books
-gcloud services enable cloudfunctions.googleapis.com cloudbuild.googleapis.com run.googleapis.com artifactregistry.googleapis.com
-cd functions
-gcloud functions deploy table --gen2 --runtime=nodejs22 --region=us-central1 --source=. --entry-point=table --trigger-http --allow-unauthenticated --memory=256Mi --max-instances=20 --timeout=20s --quiet
-echo URL: $(gcloud functions describe table --gen2 --region=us-central1 --format='value(serviceConfig.uri)')
-curl -s https://us-central1-bags-and-books.cloudfunctions.net/table; echo
-echo DEPLOY_DONE
