@@ -2766,7 +2766,9 @@ function leftIn(a,d){
   if(!ONL.on) return;
   const quit=!!(d&&d.q);
   if(a===ONL.me&&!ONL.spec){ if(quit) return; /* we left on purpose */
-    ONL.dropped=true; if(!FF) droppedBar(); onlineNames(); return; }
+    ONL.dropped=true; onlineNames();
+    if(!FF){ if(Date.now()-(ONL.rejoinAt||0)<180e3) postBack(); else droppedBar(); }
+    return; }
   const p=toL(a); toast(quit?`${NAMES[p]} quit. A bot plays their seat now.`:`${NAMES[p]} lost connection. A bot plays for them until they’re back.`,3400);
   if(quit&&!FF&&ONL.table&&ONL.seats[a]&&ONL.table.host===ONL.seats[a].uid){ const tk=ONL.tok;
     setTimeout(()=>{ if(tk!==ONL.tok||!ONL.on||ONL.host) return; if(ONL.table&&ONL.seats[a]&&ONL.table.host!==ONL.seats[a].uid) return;
@@ -2805,7 +2807,7 @@ function drive(kind,p,id){
     if(!bot){ ONL.miss[a]=(ONL.miss[a]||0)+1; if(ONL.miss[a]>=3){post(`left.${ONL.g}.${a}.${ONL.leftN[a]||0}`,{s:a,q:0});} }
     post(id,Object.assign({s:a},kind==='b'?{v:suggestBid(p)}:{c:botChoose(p).id}));
   };
-  ONL.fbT=setTimeout(auto, bot?(reduce?120:650+Math.random()*450):(opts.timer?TURN_MS+8000:120000));
+  ONL.fbT=setTimeout(auto, bot?(reduce?120:650+Math.random()*450):(ONL.miss[a]>=1?6000:(opts.timer?TURN_MS+8000:120000)));
 }
 
 /* ---------- game flow, online ---------- */
@@ -3083,7 +3085,7 @@ async function rejoinTable(code,watch){
     if(me<0&&!watch){onlForget(); return false;}
     document.querySelectorAll('.veil').forEach(v=>v.remove());
     ONL.code=code; ONL.host=d.host===FB.uid; ONL.spec=me<0; ONL.me=me<0?0:me; ONL.seats=seats; ONL.gone=new Set(); ONL.table=null; ONL.room=null;
-    ONL.snd=soundOn; soundOn=false; FF=true; setTimeout(ffEnd,15000);
+    ONL.snd=soundOn; soundOn=false; FF=true; setTimeout(ffEnd,15000); ONL.rejoinAt=Date.now();
     enterRoom(true); return true;
   }catch(e){console.warn(e); FF=false; soundOn=ONL.snd; toast('Couldn’t get back to that table.',3000); return false;}
 }
@@ -3451,7 +3453,7 @@ function handHost(a){
   const s=ONL.seats[a]; if(!s||!FB) return Promise.resolve();
   /* grab everything now: the leave clears the table state right after this call */
   const {F,db}=FB, code=ONL.code, g=ONL.g, H=G?G.handNo:0, copies=[];
-  if(G&&ONL.dealt&&(G.phase==='bid'||G.phase==='play')) for(let x=0;x<4;x++){ if(x===a) continue;
+  if(G&&(G.phase==='bid'||G.phase==='play')) for(let x=0;x<4;x++){ if(x===a) continue;
     const cards=(G.hands[toL(x)]||[]).filter(c=>c&&c.s!=='?'&&!G.played.has(c.id)).map(c=>c.id);
     if(cards.length) copies.push([x,cards]); }
   const b=F.writeBatch(db);
