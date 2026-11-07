@@ -2768,6 +2768,9 @@ function leftIn(a,d){
   if(a===ONL.me&&!ONL.spec){ if(quit) return; /* we left on purpose */
     ONL.dropped=true; if(!FF) droppedBar(); onlineNames(); return; }
   const p=toL(a); toast(quit?`${NAMES[p]} quit. A bot plays their seat now.`:`${NAMES[p]} lost connection. A bot plays for them until they’re back.`,3400);
+  if(quit&&!FF&&ONL.table&&ONL.seats[a]&&ONL.table.host===ONL.seats[a].uid){ const tk=ONL.tok;
+    setTimeout(()=>{ if(tk!==ONL.tok||!ONL.on||ONL.host) return; if(ONL.table&&ONL.seats[a]&&ONL.table.host!==ONL.seats[a].uid) return;
+      toast('The host left and the table couldn’t continue. No penalty for you.',4200); onlineLeave(false); openLobby(); },8000); }
   onlineNames();
   if(ONL.host&&ONL.drv&&toA(ONL.drv[1])===a) drive(...ONL.drv);
 }
@@ -2817,9 +2820,9 @@ function onlineNewGame(){
 }
 function onlineNames(){
   const bn=['Dre','Nae','Big Ray'], ba=[BOT_AV[1],BOT_AV[2],BOT_AV[3]];
-  const botSeats=[0,1,2,3].filter(a=>!ONL.seats[a]||ONL.gone.has(a)); // same order on every phone
+  const botSeats=[0,1,2,3].filter(a=>!ONL.seats[a]); // same order on every phone
   for(let p=1;p<4;p++){const a=toA(p), s=ONL.seats[a];
-    if(s&&!ONL.gone.has(a)){NAMES[p]=s.name; $('#pic'+p).innerHTML=avatarSVG(s.av);}
+    if(s){NAMES[p]=s.name+(ONL.gone.has(a)?' 🤖':''); $('#pic'+p).innerHTML=avatarSVG(s.av);}
     else {const bi=botSeats.indexOf(a)%3; NAMES[p]=bn[bi]+' 🤖'; $('#pic'+p).innerHTML=avatarSVG(ba[bi]);}}
   if(G) renderSeats();
 }
@@ -3411,7 +3414,7 @@ function leaveGame(){
   if(!quitCounts()){ onlineLeave(true,false); openLobby(); return; }
   const t=quitTimeoutFor(Date.now(),1);
   const v=sheet(`<h2>Leave this game?</h2>
-    <p class="lede">Leaving before the game ends counts as a <b>quit</b>. You get an automatic <b>1-star</b> rating and a <b>${fmtDur(t)}</b> timeout from Play Online. A bot takes your seat.</p>
+    <p class="lede">Leaving before the game ends counts as a <b>quit</b>. You get an automatic <b>1-star</b> rating and a <b>${fmtDur(t).replace(/ (minute|hour)s?$/,'-$1')}</b> timeout from Play Online. A bot takes your seat.</p>
     <ul class="notes"><li>Lost connection? That’s not a quit. Open the app again before the game ends and you get your seat back.</li><li>If your partner leaves first, you can go with no penalty.</li></ul>
     <button class="btn" id="qStay">Stay and finish</button><button class="btn ghost warn" id="qGo">Leave anyway</button>`,{mid:true});
   v.querySelector('#qStay').onclick=()=>v.remove();
@@ -3444,16 +3447,16 @@ function quitRatings(){
 }
 
 /* ---------- host hand-off: if the host leaves, the next player runs the table ---------- */
-async function handHost(a){
-  const s=ONL.seats[a]; if(!s) return; const {F,db}=FB;
-  try{
-    const H=G.handNo, b=F.writeBatch(db);
-    if(G&&ONL.dealt&&(G.phase==='bid'||G.phase==='play')) for(let x=0;x<4;x++){ if(x===a) continue;
-      const cards=(G.hands[toL(x)]||[]).filter(c=>c&&c.s!=='?'&&!G.played.has(c.id)).map(c=>c.id);
-      if(cards.length) b.set(F.doc(db,'tables',ONL.code,'hands',`${ONL.g}-${H}-${x}-x`),{uid:s.uid,cards}); }
-    await b.commit();
-    await F.updateDoc(tRef(),{host:s.uid,hs:a});
-  }catch(e){console.warn('handoff',e);}
+function handHost(a){
+  const s=ONL.seats[a]; if(!s||!FB) return Promise.resolve();
+  /* grab everything now: the leave clears the table state right after this call */
+  const {F,db}=FB, code=ONL.code, g=ONL.g, H=G?G.handNo:0, copies=[];
+  if(G&&ONL.dealt&&(G.phase==='bid'||G.phase==='play')) for(let x=0;x<4;x++){ if(x===a) continue;
+    const cards=(G.hands[toL(x)]||[]).filter(c=>c&&c.s!=='?'&&!G.played.has(c.id)).map(c=>c.id);
+    if(cards.length) copies.push([x,cards]); }
+  const b=F.writeBatch(db);
+  copies.forEach(([x,cards])=>b.set(F.doc(db,'tables',code,'hands',`${g}-${H}-${x}-x`),{uid:s.uid,cards}));
+  return b.commit().then(()=>F.updateDoc(F.doc(db,'tables',code),{host:s.uid,hs:a})).catch(e=>console.warn('handoff',e));
 }
 function takeHost(){
   ONL.host=true; toast('The host left. Your phone runs the table now.',3200);
@@ -3516,7 +3519,7 @@ function rateBlock(v,nx){
         <div class="stars">${[1,2,3,4,5].map(k=>`<button data-k="${k}" aria-label="${k} star${k>1?'s':''}">★</button>`).join('')}</div>
         ${fr?'':`<button class="addf" data-a="${a}" aria-label="Add ${esc(s.name)} as a friend">＋</button>`}</div>`;}).join('')+
     `<button class="btn ghost sm" id="rateSend" disabled>Send ratings</button>`;
-  nx.before(el);
+  const top=v.querySelector('.sheet .lede'); if(top) top.after(el); else nx.before(el);
   el.querySelectorAll('.rrow').forEach(r=>r.querySelectorAll('.stars button').forEach(b=>b.onclick=()=>{
     const a=+r.dataset.a, k=+b.dataset.k; picked[a]=k; audio(); snap(0.2,800+k*250);
     r.querySelectorAll('.stars button').forEach(x=>x.classList.toggle('on',+x.dataset.k<=k));
