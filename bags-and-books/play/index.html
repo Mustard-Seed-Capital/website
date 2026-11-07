@@ -590,6 +590,12 @@ button:focus-visible,input:focus-visible+span{outline:2px solid var(--brass);out
 .gpick button{display:grid;justify-items:center;gap:2px;padding:10px 4px;border-radius:14px;border:1px solid var(--panel-line);background:rgba(255,255,255,.04);color:inherit;font:600 13px var(--f-ui);cursor:pointer}
 .gpick button.on{border-color:var(--brass);background:rgba(240,199,94,.14);box-shadow:0 0 0 2px rgba(240,199,94,.25)}
 .gpick small{opacity:.65;font-size:11px}.gav{width:52px;height:52px;border-radius:50%;overflow:hidden;background:var(--chip);margin-bottom:4px}.gav svg{width:100%;height:100%;display:block}
+@media (max-width:440px) and (orientation:portrait){.tools{gap:4px!important}.tools button{width:31px;height:31px}.tools svg{width:17px;height:17px}.team .det{font-size:10px;white-space:nowrap;letter-spacing:0}.team b{font-size:26px}#bar{gap:6px}}
+.deckfx{position:absolute;z-index:7;width:0;height:0;pointer-events:none}
+.deckfx .card{position:absolute;box-shadow:0 2px 4px rgba(0,0,0,.35)}
+.dealno{float:right;font:600 10.5px var(--f-ui);letter-spacing:.02em;text-transform:none;opacity:.75}
+.hrow{padding:8px 0;border-top:1px solid var(--panel-line)}.hrow b{font-size:14px}.hrow span{float:right;font-size:12px;opacity:.75}
+.hcards{display:flex;flex-wrap:wrap;gap:4px 12px;margin-top:4px;font-size:13.5px}.hcards i{font-style:normal;font-weight:600}.hcards i.red{color:#ff8a8a}
 .recap{margin:10px 0 4px}.rbooks{display:flex;flex-wrap:wrap;gap:6px}.rbooks span{padding:4px 9px;border-radius:999px;background:rgba(255,255,255,.07);font-size:12.5px}.rbooks span.top{background:rgba(240,199,94,.22)}
 .series{margin:10px 0;padding:10px 12px;border-radius:12px;background:rgba(240,199,94,.14);border:1px solid rgba(240,199,94,.35);font-weight:700;text-align:center}.series small{display:block;font-weight:500;opacity:.7;font-size:11.5px;margin-top:2px}
 #specTag{position:absolute;left:50%;top:8px;transform:translateX(-50%);z-index:20;padding:5px 12px;border-radius:999px;background:rgba(0,0,0,.55);font:700 12px var(--f-ui);white-space:nowrap}
@@ -687,7 +693,8 @@ button:focus-visible,input:focus-visible+span{outline:2px solid var(--brass);out
   .me-row{padding:6px 10px}.me-row .av{width:42px;height:42px}
   .sheet h4{margin:10px 0 4px}
   .opt{padding:6px 0}
-  .tools button{width:34px;height:34px}
+  .tools button{width:32px;height:32px}
+  .tools{gap:6px!important}
   #stage{min-height:0}
   .sheet{width:min(720px,100%);padding:14px 18px 12px}
   .sheet h2{font-size:22px}
@@ -733,6 +740,7 @@ button:focus-visible,input:focus-visible+span{outline:2px solid var(--brass);out
     <div class="team us"><b id="scUs">0</b><span class="lbl" id="lbUs">Us</span><span class="det" id="dtUs">0 bags</span></div>
     <div class="tools">
       <button id="bTrack" aria-label="Card tracker"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="7" height="10" rx="1.5"/><rect x="14" y="4" width="7" height="10" rx="1.5"/><path d="M4 19h16"/></svg></button>
+      <button id="bHint" aria-label="Coach hint"><svg viewBox="0 0 24 24"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/></svg></button>
       <button id="bGift" aria-label="Throw something"><svg viewBox="0 0 24 24"><rect x="3.5" y="9" width="17" height="11.5" rx="1.5"/><path d="M3.5 13h17M12 9v11.5M12 9C10 5 6.5 4.8 6.5 7S9.5 9 12 9s5.5-.2 5.5-2S14 5 12 9"/></svg></button>
       <button id="bChat" aria-label="Trash talk"><svg viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/></svg></button>
       <button id="bMenu" aria-label="Menu"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
@@ -776,7 +784,7 @@ const SUITS=['S','H','C','D'];
 const SYM={S:'♠',H:'♥',C:'♣',D:'♦'};
 const RL={11:'J',12:'Q',13:'K',14:'A'};
 const NAMES=['You','Dre','Nae','Big Ray'];
-let opts={target:500,jokers:false,deuce:false,bags:true,nil:true,timer:true,mode:'classic',blind:true};
+let opts={target:500,jokers:false,deuce:false,bags:true,nil:true,timer:true,mode:'classic',blind:true,teamBid:true};
 let G=null;
 
 /* modes: classic & jjdd are partnerships; ffa is every player for themself */
@@ -818,7 +826,10 @@ function hierarchy(){
   top.push('A♠','K♠','Q♠');
   return top.join(' › ')+' …';
 }
-function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+/* fair shuffle: the phone's secure random generator (the kind used for encryption), no bias, no "house" logic */
+function rndInt(n){try{const u=new Uint32Array(1), lim=Math.floor(4294967296/n)*n; let x; do{crypto.getRandomValues(u); x=u[0];}while(x>=lim); return x%n;}catch(e){return Math.floor(Math.random()*n);}}
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=rndInt(i+1);[a[i],a[j]]=[a[j],a[i]];}return a;}
+function dealCode(order){let h=2166136261; for(const ch of order.join(',')){h^=ch.charCodeAt(0); h=Math.imul(h,16777619)>>>0;} const x=h.toString(16).toUpperCase().padStart(8,'0'); return x.slice(0,4)+'-'+x.slice(4);}
 const SORT_ORDER={D:0,C:1,H:2,S:3};
 function sortHand(h){return h.sort((a,b)=>SORT_ORDER[a.s]-SORT_ORDER[b.s]||power(a)-power(b));}
 
@@ -832,8 +843,9 @@ function dealHand(){
   G.hands=[[],[],[],[]];
   d.forEach((c,i)=>G.hands[(G.dealer+1+i)%4].push(c));
   G.hands.forEach(sortHand);
+  G.dealNo=dealCode(d.map(c=>c.id)); G.start=G.hands.map(h=>h.slice());
   G.bids=[null,null,null,null]; G.tricks=[0,0,0,0]; G.trick=[]; G.broken=false; G.played=new Set(); G.lastTrick=null;
-  G.blind=[false,false,false,false]; G.hideHand=false;
+  G.blind=[false,false,false,false]; G.hideHand=false; G.teamBid=null;
   G.handNo++;
 }
 function legal(p){
@@ -949,11 +961,13 @@ function botChoose(p){
 }
 function scoreTeam(t){
   const ps=members(t); let pts=0,contract=0,books=0; const notes=[];
+  const tb=G.teamBid&&G.teamBid[t]!=null?G.teamBid[t]:null;
   ps.forEach(p=>{books+=G.tricks[p];
     if(G.bids[p]===0){ const bl=G.blind&&G.blind[p], v=bl?200:100, kind=bl?'blind nil':'nil';
       if(G.tricks[p]===0){pts+=v;notes.push(`${NAMES[p]} made ${kind}  +${v}`);} else {pts-=v;notes.push(`${NAMES[p]}'s ${kind} got busted  −${v}`);} }
     else contract+=G.bids[p];
   });
+  if(tb!=null) contract=tb;
   let bagsAdd=0, set=false;
   if(contract>0){
     if(books>=contract){pts+=contract*10; bagsAdd=books-contract; pts+=bagsAdd;}
@@ -1377,7 +1391,7 @@ function renderHand(animate,offset=0){
     handEl.appendChild(d);
   });
 }
-function bidTxt(p){const b=G.bids[p]; return b===null?'—':(b===0?(G.blind&&G.blind[p]?'Blind nil':'Nil'):b);}
+function bidTxt(p){const b=G.bids[p]; if(b!==null&&b!==0&&G.teamBid&&G.teamBid[teamOf(p)]!=null) return 'Team '+G.teamBid[teamOf(p)]; return b===null?'—':(b===0?(G.blind&&G.blind[p]?'Blind nil':'Nil'):b);}
 function renderSeats(){
   for(let p=0;p<4;p++){
     const ch=$('#ch'+p), b=G.bids[p];
@@ -1447,7 +1461,7 @@ function userClock(){
   if(!G||G.turn!==0||busy) return;
   if(document.querySelector('.veil')) return;
   const lb=document.getElementById('lobby'); if(lb&&!lb.hidden) return;
-  if(G.phase==='bid'&&!$('#bidPanel').hidden) startClock(0,()=>{toast("Time's up. Coach bid for you.");submitBid(suggestBid(0));});
+  if(G.phase==='bid'&&!$('#bidPanel').hidden) startClock(0,()=>{toast("Time's up. Coach bid for you.");submitBid(teamBidding()?(G.bids[2]===0?Math.max(1,suggestBid(0)):teamSuggest(0)):suggestBid(0));});
   else if(G.phase==='play') startClock(0,()=>{toast("Time's up. Played a card for you.");sel=null;playMine(botChoose(0));},G.trick.length?'Your play':'Your lead');
 }
 const loseAt=()=>opts.target===100?-100:-200;
@@ -1552,10 +1566,28 @@ function startHand(){
   if(!ONL.on) dealHand(); ONL.dealt=false; sel=null; busy=false; clearTrick(true); G.recap=[];
   G.phase='bid'; G.turn=(G.dealer+1)%4;
   G.hideHand=ONL.spec||blindEligible(0);
-  renderSeats(); renderHand(true,reduce?0:900); riffle(0); if(!reduce) G.hands[0].forEach((_,i)=>dealFwip(0.9+i*0.07)); status('Bidding');
-  later(()=>preBid(nextBid), reduce?100:1900);
+  renderSeats(); const sh=reduce||FF?0:1500; if(sh) shuffleFx(G.dealer); renderHand(true,reduce?0:sh+300); riffle(0); if(sh) setTimeout(()=>riffle(0),700); if(!reduce&&!FF) G.hands[0].forEach((_,i)=>dealFwip(sh/1000+0.3+i*0.07)); status(`${G.dealer===0?'You’re':NAMES[G.dealer]+' is'} shuffling…`);
+  later(()=>status('Bidding'),sh);
+  later(()=>preBid(nextBid), reduce?100:sh+1900);
+}
+const teamBidding=()=>opts.teamBid&&partnersOn()&&!ONL.on;
+function teamSuggest(t){const ms=members(t).filter(p=>G.bids[p]===null); return Math.max(1,ms.reduce((a,p)=>a+Math.max(1,suggestBid(p)),0));}
+function setTeamBid(t,v){
+  G.teamBid=G.teamBid||[null,null]; G.teamBid[t]=v;
+  const ms=members(t).filter(p=>G.bids[p]===null);
+  if(ms.length===1) G.bids[ms[0]]=v; else {const hi=Math.ceil(v/2); G.bids[ms[0]]=hi; G.bids[ms[1]]=(v-hi)||0.5;}
+}
+function nextTeamBid(){
+  const first=teamOf((G.dealer+1)%4), order=[first,1-first];
+  const t=order.find(x=>members(x).some(p=>G.bids[p]===null));
+  if(t===undefined) return startPlay();
+  renderSeats();
+  if(t===0){ G.turn=0; renderSeats(); showBid(); userClock(); return; }
+  const lead=members(t)[0]; G.turn=lead; status(`${NAMES[members(t)[0]]} & ${NAMES[members(t)[1]]} are bidding…`); startClock(lead);
+  later(()=>{stopClock(); const v=teamSuggest(t); setTeamBid(t,v); say(lead,`We got ${v}.`,1800); snap(0.25,1500); renderSeats(); later(nextTeamBid,reduce?50:650);}, reduce?80:1200+Math.random()*500);
 }
 function nextBid(){
+  if(teamBidding()) return nextTeamBid();
   if(G.bids.every(b=>b!==null)) return startPlay();
   if(G.bids[G.turn]!==null){G.turn=(G.turn+1)%4; return nextBid();}
   renderSeats();
@@ -1573,6 +1605,13 @@ function nextBid(){
 function showBid(){
   status('');
   const panel=$('#bidPanel'), grid=$('#bidGrid'), pb=G.bids[2];
+  if(teamBidding()){
+    const mate=G.bids[2]===0?null:Math.max(1,suggestBid(2)), oppT=G.teamBid&&G.teamBid[1]!=null?G.teamBid[1]:null;
+    $('#bidSub').textContent=`Team bid: you and ${NAMES[2]} bid together.${mate?` ${NAMES[2]} says about ${mate}.`:` ${NAMES[2]} went blind nil, so this is your bid.`}${oppT!=null?` They bid ${oppT}.`:' You bid first since they dealt.'}`;
+    const sug=G.bids[2]===0?Math.max(1,suggestBid(0)):teamSuggest(0), grid=$('#bidGrid'); grid.innerHTML='';
+    for(let i=1;i<=13;i++){const b=document.createElement('button');b.textContent=String(i);if(i===sug)b.classList.add('sug');b.onclick=()=>submitBid(i);grid.appendChild(b);}
+    $('#coach').innerHTML=`Coach counts about <b>${sug}</b> for your team.`; $('#bidPanel').hidden=false; return;
+  }
   $('#bidSub').textContent = !partnersOn()? `Every player bids for themself. ${[1,2,3].filter(q=>G.bids[q]!==null).map(q=>NAMES[q]+' '+bidTxt(q)).join(', ')||'You bid first.'}` : (pb===null? 'You bid before your partner.' : `${NAMES[2]} bid ${pb===0?'Nil':pb}.`);
   const sug=suggestBid(0);
   grid.innerHTML='';
@@ -1644,8 +1683,11 @@ function blindOffer(cb){
   startClock(0,()=>reveal(),'Blind nil?',6000);
 }
 function submitBid(v){
-  if(!G||G.phase!=='bid'||G.turn!==0||G.bids[0]!==null) return;
+  if(!G||G.phase!=='bid'||G.turn!==0) return;
+  if(teamBidding()?(G.teamBid&&G.teamBid[0]!=null):G.bids[0]!==null) return;
   if(ONL.on) return onlineBid(v);
+  if(teamBidding()){ stopClock(); $('#bidPanel').hidden=true; setTeamBid(0,v); say(0,`We got ${v}.`,1600); snap(0.3,1500);
+    later(()=>say(2,pick(['Bet, I got you','That’s us','Let’s work'])),700); renderSeats(); later(nextTeamBid,600); return; }
   stopClock(); $('#bidPanel').hidden=true;
   G.bids[0]=v; say(0,v===0?'Nil.':`I got ${v}.`,1600); snap(0.3,1500);
   if(v===0) later(()=>say(oppSeat(),pick(LINES.nilBid)),800);
@@ -1723,6 +1765,29 @@ function resolveTrick(){
   else later(nextTurn,reduce?80:520);
 }
 const nmOf=p=>p===0?'You':String(NAMES[p]).replace(' 🤖','');
+function shuffleFx(dealer){
+  const S=seatPt(dealer), C=visFelt(), at={x:S.x+(C.x-S.x)*0.42, y:S.y+(C.y-S.y)*0.42};
+  const w=Math.max(34,Math.min(52,(parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--tcw'))||52)*0.8));
+  const box=document.createElement('div'); box.className='deckfx'; box.style.cssText=`left:${at.x}px;top:${at.y}px;--cw:${w}px`; stage.appendChild(box);
+  const n=10, cards=[];
+  for(let i=0;i<n;i++){const c=document.createElement('div'); c.className='card back'; c.style.cssText=`left:${-w/2}px;top:${-w*0.7-i*0.6}px;z-index:${i}`; box.appendChild(c); cards.push(c);}
+  const half=(i)=>i%2?1:-1;
+  /* two riffles: split into halves, then the halves snap back together */
+  cards.forEach((c,i)=>c.animate([
+    {transform:'translate(0,0) rotate(0)'},
+    {transform:`translate(${half(i)*w*0.62}px,${-2}px) rotate(${half(i)*-8}deg)`,offset:0.22},
+    {transform:`translate(0,${-i*0.3}px) rotate(0)`,offset:0.42},
+    {transform:`translate(${half(i)*w*0.62}px,${-2}px) rotate(${half(i)*-8}deg)`,offset:0.62},
+    {transform:'translate(0,0) rotate(0)',offset:0.82},
+    {transform:'translate(0,0) rotate(0)'}],{duration:1100,easing:'ease-in-out',delay:i*12}));
+  /* then the deal: cards fly to each seat around the table */
+  setTimeout(()=>{
+    for(let k=0;k<8;k++){const p=(dealer+1+k)%4, T=seatPt(p), c=cards[n-1-k]; if(!c) break;
+      c.animate([{transform:'translate(0,0) scale(1)',opacity:1},{transform:`translate(${T.x-at.x}px,${T.y-at.y+w*0.7}px) scale(.6) rotate(${180+k*30}deg)`,opacity:0}],{duration:360,delay:k*70,easing:'ease-in',fill:'forwards'});}
+    setTimeout(()=>box.animate([{opacity:1},{opacity:0}],{duration:250,fill:'forwards'}),600);
+    setTimeout(()=>box.remove(),900);
+  },1150);
+}
 function clearTrick(now){trickEls.forEach(d=>d.remove());trickEls=[];}
 
 function endHand(){
@@ -1821,7 +1886,7 @@ function endHand(){
     ${rankMsg?`<div class="xpl" style="margin-top:6px">${rankMsg}</div>`:''}</div>`;
   const sign=v=>v>0?`<span class="pos">+${v}</span>`:(v<0?`<span class="neg">${v}</span>`:'0');
   const cols=P?['Us','Them']:NAMES.map((x,i)=>i===0?'You':x.split(' ').pop());
-  const bidCell=t=>members(t).map(q=>bidTxt(q)).join(' + ');
+  const bidCell=t=>G.teamBid&&G.teamBid[t]!=null?['Team '+G.teamBid[t]].concat(members(t).filter(q=>G.bids[q]===0).map(q=>bidTxt(q))).join(' + '):members(t).map(q=>bidTxt(q)).join(' + ');
   const row=(label,f)=>`<tr><td>${label}</td>${R.map((x,t)=>`<td>${f(x,t)}</td>`).join('')}</tr>`;
   const notes=[];
   if(P){
@@ -1854,6 +1919,7 @@ function endHand(){
     const v=sheet(body,{mid:true,noClose:true});
     later(()=>{const bar=v.querySelector('#xpBar'); if(bar) bar.style.width=Math.round(after.into/after.need*100)+'%';},120);
     if(leveled){later(()=>{chime(true);toast(`Level ${after.L}: ${titleFor(after.L)}`);},700);}
+    const sh=v.querySelector('#seeHands'); if(sh) sh.onclick=()=>handsSheet();
     const gt=v.querySelector('#goTheme'); if(gt) gt.onclick=()=>{applyTheme(unlocked[unlocked.length-1].id);saveProfile();gt.textContent='New table is set';gt.disabled=true;};
     if(ONL.on) return onlineResults(v,over);
     v.querySelector('#goNext').onclick=()=>{v.remove();
@@ -1870,8 +1936,17 @@ function recapHtml(){
   const rc=(G.recap||[]).slice();
   [0,1,2,3].forEach(q=>{if(G.bids[q]===0&&!G.tricks[q]) rc.push(`${nmOf(q)} made ${G.blind[q]?'blind ':''}nil 🔥`);});
   const top=[0,1,2,3].reduce((a,b)=>G.tricks[b]>G.tricks[a]?b:a,0);
-  return `<div class="recap"><h4>Hand recap</h4><div class="rbooks">${[0,1,2,3].map(q=>`<span class="${q===top?'top':''}">${esc(nmOf(q))} <b>${G.tricks[q]}</b></span>`).join('')}</div>
-    ${rc.length?`<ul class="notes">${rc.slice(0,6).map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`:''}</div>`;
+  const fair=G.start&&!ONL.on?`<button class="btn ghost" id="seeHands" style="margin-top:8px">🔍 See all 4 starting hands</button>`:'';
+  return `<div class="recap"><h4>Hand recap${G.dealNo?` <span class="dealno">🔒 Fair deal #${G.dealNo}</span>`:''}</h4><div class="rbooks">${[0,1,2,3].map(q=>`<span class="${q===top?'top':''}">${esc(nmOf(q))} <b>${G.tricks[q]}</b></span>`).join('')}</div>
+    ${rc.length?`<ul class="notes">${rc.slice(0,6).map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`:''}${fair}</div>`;
+}
+function handsSheet(){
+  const start=G.start; if(!start) return;
+  const row=q=>{const by={S:[],H:[],C:[],D:[]}; start[q].forEach(c=>by[c.s].push(c));
+    return `<div class="hrow"><b>${esc(nmOf(q))}${q===0?'':(isPartner(q)?' · partner':'')}</b><span>${G.bids[q]===null?'':'Bid '+bidTxt(q)+' · took '+G.tricks[q]}</span>
+      <div class="hcards">${['S','H','D','C'].map(s=>by[s].length?`<i class="${s==='H'||s==='D'?'red':''}">${SYM[s]} ${by[s].sort((a,b)=>power(b)-power(a)).map(c=>c.joker?(c.joker==='big'?'BJ':'LJ'):rankLabel(c)).join(' ')}</i>`:'').join('')}</div></div>`;};
+  sheet(`<h2>Every starting hand</h2><p class="lede">Deal #${G.dealNo}. Cards are shuffled with your phone’s secure random generator, the same kind used for encryption. Nobody, including us, decides who gets what.</p>
+    ${[0,1,2,3].map(row).join('')}`,{mid:true});
 }
 /* ---------- sheets ---------- */
 function sheet(html,o={}){
@@ -1894,12 +1969,13 @@ function rulesSheet(after){
     ${optRow('oN','Nil bids','Bid zero books for +100, or lose 100.',opts.nil)}
     ${optRow('oB','10-bag penalty','Every 10 overtricks costs 100 points.',opts.bags)}
     ${optRow('oT','15-second turn clock','Run out of time and the game plays for you.',opts.timer)}
+    ${optRow('oTB','Team bidding','The team that didn’t deal bids first, together, then the dealing team. You and your partner pick one number for your side. (Games with bots for now.)',opts.teamBid)}
     ${optRow('oBN','Blind nil (table votes)','The table votes at the start of each game. If 3 of 4 allow it, anyone can bid nil before seeing their cards. +200 or −200.',opts.blind)}
     </div>
     <button class="btn" id="go">Save rules</button>`,{noClose:true});
   v.querySelector('#go').onclick=()=>{
     opts.jokers=v.querySelector('#oJ').checked; opts.deuce=v.querySelector('#oD').checked;
-    opts.nil=v.querySelector('#oN').checked; opts.bags=v.querySelector('#oB').checked; opts.timer=v.querySelector('#oT').checked; opts.blind=v.querySelector('#oBN').checked;
+    opts.nil=v.querySelector('#oN').checked; opts.bags=v.querySelector('#oB').checked; opts.timer=v.querySelector('#oT').checked; opts.blind=v.querySelector('#oBN').checked; opts.teamBid=v.querySelector('#oTB').checked;
     try{localStorage.setItem('bb-opts',JSON.stringify(opts));}catch(e){}
     v.remove(); if(after) after();
   };
@@ -1967,7 +2043,22 @@ function menuSheet(){
 [0,1,2,3].forEach(p=>document.querySelector(`#seat${p} .av`).insertAdjacentHTML('beforeend',`<svg class="ring" id="ring${p}" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="46" pathLength="100"/></svg>`));
 $('#meAv').onclick=()=>playerSheet(); $('#meAv').onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();playerSheet();}};
 renderMe();
-$('#bGift').onclick=()=>giftSheet();
+$('#bGift').onclick=()=>giftSheet(); $('#bHint').onclick=()=>coachHint();
+function coachHint(){
+  if(ONL.on){toast('Coach is off at online tables so every game stays fair.',2800);return;}
+  if(!G||G.phase==='bid'){ if(G&&G.phase==='bid'&&G.turn===0) toast(`Coach counts about ${suggestBid(0)===0?'Nil':suggestBid(0)} for this hand.`,2600); else toast('Coach helps on your turn.'); return;}
+  if(G.phase!=='play'||G.turn!==0||busy){toast('Coach helps on your turn.');return;}
+  const c=botChoose(0), led=G.trick.length?G.trick[0].c.s:null, nm=(c.joker?(c.joker==='big'?'Big Joker':'Little Joker'):rankLabel(c)+SYM[c.s]);
+  const L=legal(0), low=L.every(x=>power(x)>=power(c));
+  let why='best play here';
+  if(G.bids[0]===0&&!G.tricks[0]) why='keeps your nil safe';
+  else if(led&&c.s==='S'&&led!=='S') why='cut it with a spade';
+  else if(isBoss(c,0)&&!(G.trick.length&&curWin().p===2)) why='this one should win the book';
+  else if(G.trick.length&&partnersOn()&&curWin().p===2) why='your partner has it, throw low';
+  else if(low) why='throw off your lowest card';
+  sel=c.id; renderHand(); cardSwish(0.3,0,0.05);
+  toast(`💡 Coach: play the ${nm}, ${why}. Tap it to play.`,3400); track&&track('coach');
+}
 [1,2,3].forEach(p=>{const b=document.createElement('button'); b.className='gift'; b.textContent='🎁'; b.setAttribute('aria-label','Throw something at this player');
   b.onclick=e=>{e.stopPropagation(); giftSheet(p);}; document.querySelector(`#seat${p} .av`).appendChild(b);}); $('#bTrack').onclick=trackerSheet; $('#bChat').onclick=chatSheet; $('#bMenu').onclick=menuSheet;
 function relayout(){
