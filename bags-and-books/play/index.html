@@ -171,7 +171,7 @@ button:focus-visible,input:focus-visible+span{outline:2px solid var(--brass);out
 .seat.s .bub{bottom:100%;left:50%;translate:-50% -8px}
 
 /* bid panel */
-#votePanel{position:absolute;z-index:16;left:50%;top:var(--cy,50%);transform:translate(-50%,-50%);width:min(330px, 84%);
+#votePanel{position:absolute;z-index:16;left:50%;top:50%;transform:translate(-50%,-50%);width:min(330px, 84%);
   background:rgba(8,20,16,.94);border:1px solid #ff8a3a;border-radius:16px;padding:14px;box-sizing:border-box;text-align:center;
   box-shadow:0 0 0 3px rgba(255,120,40,.18),0 18px 40px rgba(0,0,0,.55);animation:rise .25s both}
 #votePanel h3{margin:2px 0 0;font:700 21px/1.15 var(--f-display)}
@@ -609,6 +609,11 @@ button:focus-visible,input:focus-visible+span{outline:2px solid var(--brass);out
 .decks .dk.locked{opacity:.6}.th.hol .nm2{color:var(--brass)}
 body.deck-easy .card .idx{transform:scale(1.25);transform-origin:top left;font-family:var(--f-ui)}body.deck-easy .card .idx.b{transform-origin:bottom right}
 body.deck-neon .card{box-shadow:0 0 0 1px var(--card-edge),0 0 10px rgba(122,60,255,.45),0 4px 10px rgba(0,0,0,.4)}
+@media (orientation:landscape) and (max-height:420px){
+  #votePanel{padding:8px 14px 10px!important;width:min(380px,70%)}
+  #votePanel h3{font-size:17px}#votePanel .sub{font-size:11.5px;margin:2px 0 6px}
+  .vp-v .mini{width:30px;height:30px}.vp-v{width:62px;font-size:12px;gap:1px}
+}
 .dealno{float:right;font:600 10.5px var(--f-ui);letter-spacing:.02em;text-transform:none;opacity:.75}
 .hrow{padding:8px 0;border-top:1px solid var(--panel-line)}.hrow b{font-size:14px}.hrow span{float:right;font-size:12px;opacity:.75}
 .hcards{display:flex;flex-wrap:wrap;gap:4px 12px;margin-top:4px;font-size:13.5px}.hcards i{font-style:normal;font-weight:600}.hcards i.red{color:#ff8a8a}
@@ -634,6 +639,9 @@ body.deck-neon .card{box-shadow:0 0 0 1px var(--card-edge),0 0 10px rgba(122,60,
 .stakes button small{font-size:10.5px;font-weight:600;color:var(--muted)}
 .stakes button.on{border-color:var(--brass);box-shadow:inset 0 0 0 1px var(--brass)}
 .stakes button:disabled{opacity:.4}
+.stakes.hi button{border-color:rgba(120,200,255,.35);background:linear-gradient(180deg,rgba(80,150,255,.12),rgba(0,0,0,.2))}
+.stakes.hi button.on{border-color:#8fd0ff;box-shadow:inset 0 0 0 1px #8fd0ff}
+h4.hr{color:#8fd0ff}.hrbtn{margin-top:8px;font-size:13px}
 .tsum{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-top:12px;font-size:13px;color:var(--muted)}
 .tsum b{color:var(--ink);font-variant-numeric:tabular-nums}
 .ladder{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
@@ -727,7 +735,7 @@ body.deck-neon .card{box-shadow:0 0 0 1px var(--card-edge),0 0 10px rgba(122,60,
   .seat.s .av{width:42px;height:42px}
   .seat.n{flex-direction:column;width:auto;top:6px;gap:1px;transform:translateX(-50%)}
   .seat.n .nm i{display:inline;margin-left:5px}
-  .seat.n .bub{top:50%;left:100%;translate:8px -50%}
+  .seat.n .bub{top:50%;right:100%;left:auto;translate:-10px -50%}
   .seat .nm{font-size:12.5px;line-height:1.15}
   .seat .ch{font-size:11px;padding:1px 8px}
   /* side players sit at the middle of the open felt, halfway between your partner and you */
@@ -1477,7 +1485,11 @@ function status(t){$('#status').textContent=t||'';}
 let toastT;
 function toast(t,ms=2200){const el=$('#toast');el.textContent=t;el.classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>el.classList.remove('on'),ms);}
 const bubT=[];
-function say(p,t,ms=2600,force){if(ONL.on&&p!==0&&!force&&oHuman(p))return;if(MUTED.has(p)||(PROFILE.blocked||[]).includes(NAMES[p]))return;const b=$('#bub'+p);b.textContent=t;b.classList.add('on');clearTimeout(bubT[p]);bubT[p]=setTimeout(()=>b.classList.remove('on'),ms);}
+function say(p,t,ms=2600,force){if(ONL.on&&p!==0&&!force&&oHuman(p))return;if(MUTED.has(p)||(PROFILE.blocked||[]).includes(NAMES[p]))return;const b=$('#bub'+p);b.textContent=t;b.classList.add('on');clearTimeout(bubT[p]);bubT[p]=setTimeout(()=>b.classList.remove('on'),ms);fitBub(b);}
+function fitBub(b){ b.style.marginLeft='0px'; b.style.marginTop='0px';
+  const r=b.getBoundingClientRect(), st=stage.getBoundingClientRect(), pad=6;
+  let dx=0, dy=0; if(r.right>st.right-pad) dx=st.right-pad-r.right; if(r.left+dx<st.left+pad) dx=st.left+pad-r.left;
+  if(r.top<st.top+pad) dy=st.top+pad-r.top; b.style.marginLeft=dx+'px'; b.style.marginTop=dy+'px'; }
 const pick=a=>a[Math.floor(Math.random()*a.length)];
 const MUTED=new Set();
 const isPartner=p=>partnersOn()&&p===2;
@@ -2265,6 +2277,8 @@ function throwAt(a,b,k){
 }
 const QUICK_EXTRA=["Pass the hot sauce, this hand is spicy 🌶️","Unc, you reneged!","Go sit at the kids' table","Book. Book. Book. Book.","Y'all done or nah?","Run me my books"];
 const fmt=n=>Number(n).toLocaleString('en-US');
+const kfmt=n=>n>=1e6?(n/1e6).toFixed(n%1e6?1:0)+'M':n>=1e4?(n/1e3).toFixed(n%1e3?1:0)+'K':fmt(n);
+const HIGH_STAKES=[10000,25000,50000,100000,250000,500000,1000000,5000000];
 function coinIcon(){return `<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="11" fill="#e9b949"/><circle cx="12" cy="12" r="8.6" fill="#f6d36b" stroke="#b8862b" stroke-width="1"/><path d="M12 6.6c1.6 2 4 3.2 4 5.2 0 1.4-1.2 2-2.2 1.6-.5-.2-.9-.6-1.2-1 .1 1.2.5 2.2 1.3 3H10c.8-.8 1.2-1.8 1.3-3-.3.4-.7.8-1.2 1-1 .4-2.2-.2-2.2-1.6 0-2 2.4-3.2 4-5.2z" fill="#7a5512"/></svg>`;}
 const ICON={
   daily:'<path d="M5 9h14v10H5z"/><path d="M4 6h16v3H4zM12 6v13M12 6c-1.5-3-5-3-4.5-.5.4 1.6 4.5.5 4.5.5zm0 0c1.5-3 5-3 4.5-.5-.4 1.6-4.5.5-4.5.5z"/>',
@@ -2394,12 +2408,13 @@ function openTable(m){
   if(m==='random'){mode=pick(['classic','jjdd','ffa']);picked=true;}
   const M=MODES[mode];
   let target=(mode==='ffa'||tour)?100:([100,300,500].includes(opts.target)&&opts.mode===mode?opts.target:300);
-  let stake=tour?TOUR_FEE:0;
+  let stake=tour?TOUR_FEE:0, high=false;
   const v=sheet('<div id="tbl"></div>',{mid:true});
   const draw=()=>{
     const hier=withMode(mode,()=>hierarchy());
     const rules=withMode(mode,()=>[mode==='jjdd'?null:(opts.jokers?'Jokers in':null),opts.nil?'Nil allowed':'No nil',opts.bags?'10 bags = −100':'No bag penalty',opts.timer?'15-second turns':'No turn clock',opts.blind&&opts.nil?'Blind nil by vote':null].filter(Boolean).join(' · '));
     const P=mode!=='ffa', can=PROFILE.coins>=stake;
+    const stBtn=x=>`<button data-st="${x}" class="${x===stake?'on':''}" ${PROFILE.coins<x?'disabled':''}>${x?coinIcon()+kfmt(x):'Free'}<small>${x?(P?'Win '+kfmt(x*2):'1st wins '+kfmt(x*3)):'No entry'}</small></button>`;
     const win=tour?'1,500 + trophy':(stake?(P?fmt(stake*2):`${fmt(stake*3)} for 1st`):'XP & coins');
     v.querySelector('#tbl').innerHTML=`
       ${picked?`<div class="lvup" style="animation:none;margin:0 0 10px">🎲 Random picked <b>${M.name}</b></div>`:''}
@@ -2413,13 +2428,16 @@ function openTable(m){
       </div>
       ${(!tour&&mode!=='ffa')?`<h4>Play to</h4><div class="seg tseg">${[100,300,500].map(t=>`<label><input type="radio" name="ttg" value="${t}" ${t===target?'checked':''}><span>${t}</span></label>`).join('')}</div>`:''}
       ${tour?`<h4>Prizes</h4><div class="tinfo"><div><small>Champion</small><b>1,500 coins + 🏆</b></div><div><small>Finalist</small><b>300 coins</b></div></div>`
-        :`<h4>Table stakes</h4><div class="stakes">${[0,100,500,2500].map(x=>`<button data-st="${x}" class="${x===stake?'on':''}" ${PROFILE.coins<x?'disabled':''}>${x?coinIcon()+fmt(x):'Free'}<small>${x?(P?'Win '+fmt(x*2):'1st wins '+fmt(x*3)):'No entry'}</small></button>`).join('')}</div>`}
+        :`<h4>Table stakes</h4><div class="stakes">${[0,100,500,2500].map(stBtn).join('')}</div>
+          ${high||HIGH_STAKES.includes(stake)?`<h4 class="hr">💎 High roller tables</h4><div class="stakes hi">${HIGH_STAKES.map(stBtn).join('')}</div>`
+            :`<button class="btn ghost hrbtn" id="tHigh">＋ Higher stakes · up to ${kfmt(HIGH_STAKES[HIGH_STAKES.length-1])}</button>`}`}
       <div class="tsum"><span>Entry <b>${stake?fmt(stake):'Free'}</b></span><span>Win <b>${win}</b></span><span>You have <b>${fmt(PROFILE.coins)}</b></span></div>
       <button class="btn" id="tJoin" ${can?'':'disabled'}>${can?(stake?`Join table · pay ${fmt(stake)}`:'Join table'):'Not enough coins'}</button>
       ${(mode!=='jjdd'&&!tour)?'<button class="btn ghost" id="tRules">House rules</button>':''}
       <p class="fine">Coins are for play only. They can’t be cashed out, traded or sent to other players.</p>`;
     v.querySelectorAll('input[name="ttg"]').forEach(i=>i.onchange=()=>{target=+i.value;draw();});
     v.querySelectorAll('[data-st]').forEach(b=>b.onclick=()=>{stake=+b.dataset.st;draw();});
+    const th=v.querySelector('#tHigh'); if(th) th.onclick=()=>{high=true;draw();};
     const r=v.querySelector('#tRules'); if(r) r.onclick=()=>{v.remove();rulesSheet(()=>openTable(m));};
     v.querySelector('#tJoin').onclick=()=>{
       if(PROFILE.coins<stake) return;
