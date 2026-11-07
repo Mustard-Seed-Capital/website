@@ -1812,7 +1812,7 @@ function endHand(){
 
 function recapHtml(){
   const rc=(G.recap||[]).slice();
-  [0,1,2,3].forEach(q=>{if(G.bids[q]===0) rc.push(`${nmOf(q)} ${G.blind[q]?'blind ':''}nil ${G.tricks[q]?'got busted':'made it'}`);});
+  [0,1,2,3].forEach(q=>{if(G.bids[q]===0&&!G.tricks[q]) rc.push(`${nmOf(q)} made ${G.blind[q]?'blind ':''}nil 🔥`);});
   const top=[0,1,2,3].reduce((a,b)=>G.tricks[b]>G.tricks[a]?b:a,0);
   return `<div class="recap"><h4>Hand recap</h4><div class="rbooks">${[0,1,2,3].map(q=>`<span class="${q===top?'top':''}">${esc(nmOf(q))} <b>${G.tricks[q]}</b></span>`).join('')}</div>
     ${rc.length?`<ul class="notes">${rc.slice(0,6).map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`:''}</div>`;
