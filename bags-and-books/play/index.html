@@ -122,7 +122,7 @@ button:focus-visible,input:focus-visible+span{outline:2px solid var(--brass);out
 .seat.n{top:12px;left:50%;transform:translateX(-50%)}
 .seat.w{left:4px;top:50%;transform:translateY(-62%)}
 .seat.e{right:4px;top:50%;transform:translateY(-62%)}
-.seat.s{bottom:8px;left:50%;transform:translateX(-50%);flex-direction:row;width:auto;gap:8px}
+.seat.s{bottom:8px;left:50%;transform:translateX(-50%);flex-direction:column;width:auto;gap:3px}
 .av{position:relative;width:48px;height:48px;border-radius:50%;flex:none;
   border:2px solid var(--brass-dim);box-shadow:0 4px 10px rgba(0,0,0,.45);
   transition:box-shadow .3s,border-color .3s}
@@ -158,7 +158,7 @@ button:focus-visible,input:focus-visible+span{outline:2px solid var(--brass);out
 .ch{font-size:11.5px;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap;background:rgba(0,0,0,.28);border-radius:10px;padding:1px 8px}
 .ch b{color:var(--ink);font-weight:600}
 .ch.nil b{color:var(--brass)}
-.seat.s .info{display:flex;flex-direction:column;align-items:flex-start;gap:2px}
+.seat.s .info{display:flex;flex-direction:column;align-items:center;gap:2px}
 
 /* speech bubbles */
 .bub{position:absolute;z-index:20;max-width:150px;width:max-content;padding:6px 10px;border-radius:12px;background:var(--card);color:var(--card-black);
@@ -578,7 +578,11 @@ button:focus-visible,input:focus-visible+span{outline:2px solid var(--brass);out
 .throwfx.splat{animation:splat 1s ease-out forwards}.throwfx.land{animation:land 1.1s ease-out forwards}
 @keyframes splat{0%{opacity:1}25%{opacity:1;font-size:62px}100%{opacity:0;font-size:70px}}
 @keyframes land{0%{opacity:1}60%{opacity:1;font-size:46px}100%{opacity:0;font-size:46px}}
-.thr{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:12px}
+.thr{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-bottom:12px}
+.thr.rx button span{font-size:24px}
+.reactfx{position:absolute;z-index:31;pointer-events:none;transform:translate(-50%,-50%);font-size:44px;line-height:1;text-align:center;animation:rpop 2.2s ease-out forwards;filter:drop-shadow(0 4px 6px rgba(0,0,0,.5))}
+.reactfx small{display:block;font:700 10px var(--f-ui);margin-top:2px;padding:1px 6px;border-radius:999px;background:rgba(0,0,0,.6);color:#fff;white-space:nowrap}
+@keyframes rpop{0%{opacity:0;transform:translate(-50%,-40%) scale(.3)}15%{opacity:1;transform:translate(-50%,-55%) scale(1.3)}25%{transform:translate(-50%,-50%) scale(1)}80%{opacity:1}100%{opacity:0;transform:translate(-50%,-75%) scale(1)}}
 .thr button{display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 2px 7px;border-radius:12px;border:1px solid var(--panel-line);background:rgba(255,255,255,.05);color:inherit;font:600 10.5px/1.1 var(--f-ui);cursor:pointer}
 .thr button span{font-size:26px;line-height:1}.thr button.cant{opacity:.45}
 .thr em,.thrc{font-style:normal;display:inline-flex;align-items:center;gap:3px;font-weight:800}.thr em svg,.thrc svg{width:13px;height:13px}.thrc{float:right;font-size:12px}
@@ -697,11 +701,12 @@ button:focus-visible,input:focus-visible+span{outline:2px solid var(--brass);out
   #felt::after{inset:9% 7%;border-radius:18% / 42%}
   .av{width:40px;height:40px}
   .seat.s .av{width:42px;height:42px}
-  .seat.n{flex-direction:row;width:auto;top:8px;gap:8px}
+  .seat.n{flex-direction:row;width:auto;top:8px;gap:8px;transform:translateX(-22px)}
   .seat.n .nm i{display:inline;margin-left:5px}
   .seat.n .bub{top:50%;left:100%;translate:8px -50%}
   .seat.w,.seat.e{transform:translateY(-70%)}
-  .seat.s{left:50%;transform:translateX(-50%);bottom:calc(var(--ov,0px) + 4px)}
+  .seat.s{left:50%;transform:translateX(-24px);bottom:calc(var(--ov,0px) + 4px);flex-direction:row;gap:8px}
+  .seat.s .info{align-items:flex-start}
   #status{left:auto;right:10%;transform:none;bottom:calc(var(--ov,0px) + 14px)}
   #bidPanel{width:min(440px,72%);padding:10px 12px}
   #bidPanel h3{font-size:19px}
@@ -1999,17 +2004,27 @@ const SHOP=[
   {id:'theme:cookout',name:'Cookout table',price:1500,kind:'Table'},
   {id:'theme:royal',name:'Royal Purple table',price:2500,kind:'Table'}
 ];
-const THROWS=[{k:'tomato',e:'🍅',n:'Tomato',c:10},{k:'salt',e:'🧂',n:'Salty',c:10},{k:'fire',e:'🔥',n:'On fire',c:15},{k:'rain',e:'💸',n:'Make it rain',c:25},{k:'crown',e:'👑',n:'Crown',c:40}];
+const THROWS=[{k:'tomato',e:'🍅',n:'Tomato',c:10},{k:'egg',e:'🥚',n:'Egg',c:10},{k:'salt',e:'🧂',n:'Salty',c:10},{k:'ice',e:'🧊',n:'Ice cold',c:10},{k:'wing',e:'🍗',n:'Wing',c:10},
+  {k:'pie',e:'🥧',n:'Pie',c:15},{k:'fire',e:'🔥',n:'On fire',c:15},{k:'rose',e:'🌹',n:'Rose',c:20},{k:'rain',e:'💸',n:'Make it rain',c:25},{k:'bubbly',e:'🍾',n:'Bubbly',c:30},{k:'crown',e:'👑',n:'Crown',c:40},{k:'trophy',e:'🏆',n:'Trophy',c:50}];
+/* quick reactions pop up over a player: hype your partner up or let them know */
+const REACTS=[{k:'r_clap',e:'👏',n:'Nice',c:5,g:1},{k:'r_100',e:'💯',n:'100',c:5,g:1},{k:'r_goat',e:'🐐',n:'GOAT',c:5,g:1},{k:'r_flex',e:'💪',n:'Strong',c:5,g:1},{k:'r_pray',e:'🙏',n:'Thank you',c:5,g:1},{k:'r_cool',e:'😎',n:'Cool',c:5,g:1},
+  {k:'r_facepalm',e:'🤦',n:'Really?',c:5,g:0},{k:'r_mad',e:'😤',n:'Mad',c:5,g:0},{k:'r_clown',e:'🤡',n:'Clown',c:5,g:0},{k:'r_cap',e:'🧢',n:'Cap',c:5,g:0},{k:'r_sleep',e:'😴',n:'Wake up',c:5,g:0},{k:'r_eyes',e:'👀',n:'I see you',c:5,g:0}];
+const GIFTS=THROWS.concat(REACTS);
+const REACT_BACK={good:['Appreciate you 🙏','I got you','That’s what I do 😎','Say less'],bad:['My bad 😩','Relax, I got a plan','Watch the next one','Don’t start 😂']};
 const THROW_BACK={tomato:['Oh you got jokes 😂','Keep that energy at the table','Wipe that off and watch your books'],salt:['Salty? I’m just winning 😂','Pass the pepper too'],fire:['I know I’m hot 🔥','Too hot to handle'],rain:['Make it rain! 💸','Big spender over here'],crown:['Bow down 👑','Royalty at the table']};
 function doThrow(p,k,v){
-  const t=THROWS.find(x=>x.k===k), now=Date.now();
+  const t=GIFTS.find(x=>x.k===k), now=Date.now();
   if(!G||G.phase==='idle'){toast('Start a game first.');return;}
   if(now-(throwAt.last||0)<3000){toast('Easy, one at a time 😂');return;}
   if(PROFILE.coins<t.c){toast(`You need ${t.c} coins for that. Grab more in the Shop.`,2600);return;}
   PROFILE.coins-=t.c; saveProfile(); refreshMeta(); throwAt.last=now; if(v) v.remove(); audio();
   throwAt(0,p,t.k);
   if(ONL.on) post('t.'+now.toString(36)+Math.random().toString(36).slice(2,6),{s:ONL.me,to:toA(p),k:t.k});
-  else later(()=>say(p,pick(THROW_BACK[t.k]||THROW_BACK.tomato),2400),900);
+  else later(()=>say(p,pick(t.k.startsWith('r_')?REACT_BACK[t.g?'good':'bad']:(THROW_BACK[t.k]||THROW_BACK.tomato)),2400),900);
+}
+function giftGrids(){
+  const btn=t=>`<button data-k="${t.k}" ${PROFILE.coins<t.c?'class="cant"':''}><span>${t.e}</span><small>${t.n}</small><em>${coinIcon()}${t.c}</em></button>`;
+  return `<h4>Reactions</h4><div class="thr rx">${REACTS.map(btn).join('')}</div><h4>Throw something</h4><div class="thr">${THROWS.map(btn).join('')}</div>`;
 }
 /* the gift button on the table: pick a player, then what to throw */
 function giftSheet(to){
@@ -2018,10 +2033,10 @@ function giftSheet(to){
   to=to||1;
   const v=sheet('<div id="gift"></div>',{mid:true});
   const draw=()=>{
-    v.querySelector('#gift').innerHTML=`<h2>Throw something</h2>
-      <p class="lede">Pick who it’s for, then what to throw. Everyone at the table sees it. You have <span class="coin-pill">${coinIcon()}${fmt(PROFILE.coins)}</span></p>
+    v.querySelector('#gift').innerHTML=`<h2>Send something</h2>
+      <p class="lede">Pick who it’s for, then send a reaction or throw something. Everyone at the table sees it. You have <span class="coin-pill">${coinIcon()}${fmt(PROFILE.coins)}</span></p>
       <div class="gpick">${[1,2,3].map(p=>`<button data-p="${p}" class="${to===p?'on':''}"><div class="gav">${$('#pic'+p).innerHTML}</div><b>${esc(nmOf(p))}</b><small>${isPartner(p)?'Partner':(partnersOn()?'Opponent':'Rival')}</small></button>`).join('')}</div>
-      <div class="thr">${THROWS.map(t=>`<button data-k="${t.k}" ${PROFILE.coins<t.c?'class="cant"':''}><span>${t.e}</span><small>${t.n}</small><em>${coinIcon()}${t.c}</em></button>`).join('')}</div>
+      ${giftGrids()}
       <p class="fine">Tip: tap the 🎁 on anyone’s picture to throw at them fast.</p>`;
     v.querySelectorAll('.gpick button').forEach(b=>b.onclick=()=>{to=+b.dataset.p; draw();});
     v.querySelectorAll('.thr button').forEach(b=>b.onclick=()=>doThrow(to,b.dataset.k,v));
@@ -2029,7 +2044,12 @@ function giftSheet(to){
   draw();
 }
 function throwAt(a,b,k){
-  const t=THROWS.find(x=>x.k===k); if(!t||!G) return;
+  const t=GIFTS.find(x=>x.k===k); if(!t||!G) return;
+  if(k.startsWith('r_')){ // reaction: pops up over the player
+    const B=seatPt(b), el=document.createElement('div'); el.className='reactfx'; el.innerHTML=`${t.e}<small>${esc(nmOf(a))}</small>`;
+    el.style.left=B.x+'px'; el.style.top=B.y+'px'; stage.appendChild(el); cardTap(0.5); chime(!!t.g);
+    setTimeout(()=>el.remove(),2200); return;
+  }
   const A=seatPt(a), B=seatPt(b), el=document.createElement('div'); el.className='throwfx'; el.textContent=t.e; stage.appendChild(el);
   const put=(pt,sc,r)=>{el.style.transform=`translate(${pt.x-24}px,${pt.y-24}px) scale(${sc}) rotate(${r}deg)`;};
   const dur=reduce?80:700, mid={x:(A.x+B.x)/2,y:Math.min(A.y,B.y)-90};
@@ -2325,7 +2345,7 @@ function playerActions(p){
   const v=sheet(`<div class="prof"><div class="big" style="--tier:${RANKS.find(r=>r.n===info[1]).c}"><div class="pic">${avatarSVG(avSrc)}</div><span class="lv">${info[0]}</span></div>
       <div class="who"><div style="font:700 24px var(--f-display)">${esc(name)}</div><div class="ttl">Level ${info[0]} · ${info[1]} badge${isPartner(p)?' · Your partner':''}</div></div></div>
     ${G&&!ONL.spec?`<h4>Throw something <span class="thrc">${coinIcon()}${fmt(PROFILE.coins)}</span></h4>
-    <div class="thr">${THROWS.map(t=>`<button data-k="${t.k}" ${PROFILE.coins<t.c?'class="cant"':''}><span>${t.e}</span><small>${t.n}</small><em>${coinIcon()}${t.c}</em></button>`).join('')}</div>`:''}
+    ${giftGrids()}`:''}
     <div class="pa">
       <button id="pMute">${muted?'Unmute':'Mute'} chat</button>
       <button id="pBlock">${blocked?'Unblock':'Block'}</button>
@@ -2459,7 +2479,7 @@ function onEv(id,d){
 }
 function throwIn(d){
   if(FF||!G||d.s===ONL.me&&!ONL.spec) return;
-  if(![0,1,2,3].includes(d.s)||![0,1,2,3].includes(d.to)||!THROWS.some(t=>t.k===d.k)) return;
+  if(![0,1,2,3].includes(d.s)||![0,1,2,3].includes(d.to)||!GIFTS.some(t=>t.k===d.k)) return;
   const f=toL(d.s); if(MUTED.has(f)||(PROFILE.blocked||[]).includes(NAMES[f])) return;
   throwAt(f,toL(d.to),d.k);
 }
