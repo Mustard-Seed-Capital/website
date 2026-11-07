@@ -1430,7 +1430,7 @@ function startClock(p,onTimeout,label,ms){
   ring.classList.add('run'); c.getBoundingClientRect();
   c.style.transition=`stroke-dashoffset ${ms}ms linear, stroke .3s`; c.style.strokeDashoffset='100';
   const end=Date.now()+ms;
-  const tick=()=>{
+  const upd=()=>{
     const s=Math.max(0,Math.ceil((end-Date.now())/1000));
     if(s<=3) ring.classList.add('low');
     if(p===0){
@@ -1440,7 +1440,7 @@ function startClock(p,onTimeout,label,ms){
     }
     clock.last=s;
   };
-  tick(); clock.tick=setInterval(tick,200);
+  upd(); clock.tick=setInterval(upd,200);
   if(onTimeout) clock.t=setTimeout(()=>{stopClock();onTimeout();},ms);
 }
 function userClock(){
