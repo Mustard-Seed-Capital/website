@@ -3,6 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="../../assets/icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Bags & Books">
+<meta name="theme-color" content="#0e2219">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px/1.4 -apple-system,system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}html,body{-webkit-text-size-adjust:100%;overscroll-behavior:none}</style>
 </head>
 <body>
@@ -539,7 +546,18 @@ button:focus-visible,input:focus-visible+span{outline:2px solid var(--brass);out
 .tinfo small{display:block;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
 .tinfo b{font-size:14.5px;font-weight:600}
 .seg.tseg{display:inline-flex}
-.joinrow{display:flex;gap:8px}.nameIn{display:block;width:100%;box-sizing:border-box;font:700 17px/1.2 var(--f-ui);padding:11px 12px;border-radius:12px;border:1px solid var(--panel-line);background:rgba(0,0,0,.25);color:inherit}
+.joinrow{display:flex;gap:8px}.throwfx{position:absolute;left:0;top:0;width:48px;height:48px;font-size:40px;line-height:48px;text-align:center;z-index:30;pointer-events:none;filter:drop-shadow(0 6px 8px rgba(0,0,0,.45))}
+.throwfx.splat{animation:splat 1s ease-out forwards}.throwfx.land{animation:land 1.1s ease-out forwards}
+@keyframes splat{0%{opacity:1}25%{opacity:1;font-size:62px}100%{opacity:0;font-size:70px}}
+@keyframes land{0%{opacity:1}60%{opacity:1;font-size:46px}100%{opacity:0;font-size:46px}}
+.thr{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:12px}
+.thr button{display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 2px 7px;border-radius:12px;border:1px solid var(--panel-line);background:rgba(255,255,255,.05);color:inherit;font:600 10.5px/1.1 var(--f-ui);cursor:pointer}
+.thr button span{font-size:26px;line-height:1}.thr button.cant{opacity:.45}
+.thr em,.thrc{font-style:normal;display:inline-flex;align-items:center;gap:3px;font-weight:800}.thr em svg,.thrc svg{width:13px;height:13px}.thrc{float:right;font-size:12px}
+.recap{margin:10px 0 4px}.rbooks{display:flex;flex-wrap:wrap;gap:6px}.rbooks span{padding:4px 9px;border-radius:999px;background:rgba(255,255,255,.07);font-size:12.5px}.rbooks span.top{background:rgba(240,199,94,.22)}
+.series{margin:10px 0;padding:10px 12px;border-radius:12px;background:rgba(240,199,94,.14);border:1px solid rgba(240,199,94,.35);font-weight:700;text-align:center}.series small{display:block;font-weight:500;opacity:.7;font-size:11.5px;margin-top:2px}
+#specTag{position:absolute;left:50%;top:8px;transform:translateX(-50%);z-index:20;padding:5px 12px;border-radius:999px;background:rgba(0,0,0,.55);font:700 12px var(--f-ui);white-space:nowrap}
+.nameIn{display:block;width:100%;box-sizing:border-box;font:700 17px/1.2 var(--f-ui);padding:11px 12px;border-radius:12px;border:1px solid var(--panel-line);background:rgba(0,0,0,.25);color:inherit}
 .joinrow input{flex:1;min-width:0;font:800 22px/1 var(--f-ui);letter-spacing:.3em;text-align:center;text-transform:uppercase;padding:10px;border-radius:12px;border:1px solid var(--panel-line);background:rgba(0,0,0,.25);color:inherit}
 .joinrow .btn{width:auto;margin:0;padding:0 22px}
 .code-box{display:grid;justify-items:center;gap:2px;margin:6px 0 10px;padding:10px;border-radius:14px;background:rgba(0,0,0,.25);border:1px dashed var(--brass)}
@@ -1014,8 +1032,9 @@ const stage=$('#stage'), felt=$('#felt'), handEl=$('#hand');
 const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
 const FLY=reduce?60:340;
 let sel=null, busy=false, soundOn=true, AC=null, trickEls=[], timers=[];
-const later=(fn,ms)=>{const t=setTimeout(fn,ms);timers.push(t);return t;};
-const ONL={on:false,code:null,me:0,host:false,seats:[null,null,null,null],gone:new Set(),g:0,ev:{},myHands:{},wait:null,watch:null,watchDeal:null,handWait:null,unsubs:[],fbT:null,drv:null,saved:null,sent:null,tok:0,dealt:false,miss:{},table:null,room:null,advanced:null};
+let FF=false; // fast-forward while catching up on a table (rejoin / watching)
+const later=(fn,ms)=>{const t=setTimeout(fn,FF?0:ms);timers.push(t);return t;};
+const ONL={on:false,code:null,me:0,host:false,seats:[null,null,null,null],gone:new Set(),g:0,ev:{},myHands:{},wait:null,watch:null,watchDeal:null,handWait:null,unsubs:[],fbT:null,spec:false,snd:true,drv:null,saved:null,sent:null,tok:0,dealt:false,miss:{},table:null,room:null,advanced:null};
 function clearTimers(){timers.forEach(clearTimeout);timers=[];}
 
 /* felt noise texture */
@@ -1474,9 +1493,9 @@ function newGame(extra){
 }
 function startHand(){
   if(ONL.on&&!ONL.dealt) return onlineDeal();
-  if(!ONL.on) dealHand(); ONL.dealt=false; sel=null; busy=false; clearTrick(true);
+  if(!ONL.on) dealHand(); ONL.dealt=false; sel=null; busy=false; clearTrick(true); G.recap=[];
   G.phase='bid'; G.turn=(G.dealer+1)%4;
-  G.hideHand=blindEligible(0);
+  G.hideHand=ONL.spec||blindEligible(0);
   renderSeats(); renderHand(true,reduce?0:900); riffle(0); if(!reduce) G.hands[0].forEach((_,i)=>dealFwip(0.9+i*0.07)); status('Bidding');
   later(()=>preBid(nextBid), reduce?100:1900);
 }
@@ -1550,7 +1569,7 @@ function preBid(done){
     }
     done();
   };
-  if(G.hideHand) blindOffer(bots); else bots();
+  if(G.hideHand&&!FF&&!ONL.spec) blindOffer(bots); else { if(!ONL.spec&&G.hideHand){G.hideHand=false;renderHand();} bots(); }
 }
 function blindOffer(cb){
   const vp=$('#votePanel'), d=behindBy(0);
@@ -1608,7 +1627,7 @@ function playCard(p,c){
   const ledBefore=G.trick.length?G.trick[0].c.s:null;
   const breaking=c.s==='S'&&!G.broken;
   G.trick.push({p,c}); G.played.add(c.id); if(c.s==='S') G.broken=true;
-  if(breaking) later(()=>spadesBroken(p),FLY);
+  if(breaking){ later(()=>spadesBroken(p),FLY); if(G.recap) G.recap.push(`${nmOf(p)} broke spades on book ${G.tricks.reduce((a,b)=>a+b,0)+1}`); }
   if(p===0) renderHand();
   // fly card
   const d=cardEl(c); d.classList.add('tc'); d.style.zIndex=10+G.trick.length; stage.appendChild(d);
@@ -1628,6 +1647,7 @@ function playCard(p,c){
 }
 function resolveTrick(){
   const cwin=curWin(), w=cwin.p; G.tricks[w]++; G.lastTrick=G.trick.map(t=>({p:t.p,c:t.c}));
+  if(G.recap&&cwin.led!=='S'&&G.trick[cwin.i].c.s==='S'&&G.trick[0].p!==w){const L=G.trick[0].c; G.recap.push(`${nmOf(w)} cut ${nmOf(G.trick[0].p)==='You'?'your':nmOf(G.trick[0].p)+'’s'} ${rankLabel(L)}${SYM[L.s]||''} lead`);}
   if(w===0&&cwin.led!=='S'&&G.trick[cwin.i].c.s==='S') track('cut');
   if(G.blind[w]&&G.tricks[w]===1){
     toast(w===0?'Your blind nil got busted':`${NAMES[w]}'s blind nil got busted`,2600); chime(w===0||isPartner(w)?false:true);
@@ -1646,10 +1666,12 @@ function resolveTrick(){
   if(G.hands.every(h=>h.length===0)) later(endHand,reduce?100:700);
   else later(nextTurn,reduce?80:520);
 }
+const nmOf=p=>p===0?'You':String(NAMES[p]).replace(' 🤖','');
 function clearTrick(now){trickEls.forEach(d=>d.remove());trickEls=[];}
 
 function endHand(){
   stopClock(); G.phase='between'; status('');
+  const noCredit=ONL.on&&(ONL.spec||onlCredited()), keepP=noCredit?JSON.stringify(PROFILE):null;
   const P=partnersOn(), n=teamCount(), R=[];
   for(let t=0;t<n;t++) R.push(scoreTeam(t));
   R.forEach((x,t)=>{G.scores[t]+=x.pts;G.bags[t]=x.bags;});
@@ -1664,7 +1686,7 @@ function endHand(){
     else if(setThem){say([1,2,3].find(q=>R[q].set),pick(LINES.oppGotSet));chime(true);}
     else chime(wonHand);
   }
-  const tgt=opts.target, go=gameOverCheck(tgt,loseAt()), over=go.over, won=over&&go.winner===0;
+  const tgt=opts.target, go=gameOverCheck(tgt,loseAt()), over=go.over, won=over&&go.winner===0; G.lastWinner=go.winner;
   const place=over?1+[1,2,3].slice(0,n-1).filter(q=>G.scores[q]>G.scores[0]).length:0; // FFA finishing place
   G.over=over;
   const blindWins=[0,1,2,3].filter(q=>G.blind[q]&&G.tricks[q]===0);
@@ -1729,6 +1751,7 @@ function endHand(){
   if(wonHand) track('handWin');
   if(over){track('games'); if(won) track('gameWin');}
   saveProfile();
+  if(keepP){PROFILE=JSON.parse(keepP);saveProfile();} else if(ONL.on) onlCredit();
   const after=lvlInfo(PROFILE.xp), leveled=after.L>before.L, unlocked=THEMES.filter(t=>!t.vip&&t.lvl>before.L&&t.lvl<=after.L);
   if(gain) later(()=>floatXP(gain),reduce?0:500);
   renderMe();
@@ -1766,7 +1789,8 @@ function endHand(){
       <tr class="tot"><td>Score</td>${G.scores.map(v=>`<td>${v}</td>`).join('')}</tr>
     </tbody></table></div>
     ${notes.length?`<ul class="notes">${notes.map(nn=>`<li>${esc(nn)}</li>`).join('')}</ul>`:''}
-    ${xpHtml}
+    ${recapHtml()}
+    ${noCredit?(ONL.spec?'<p class="fine">You’re watching, so no XP or coins this time.</p>':''):xpHtml}
     <button class="btn" id="goNext">${over?(tourNext?`Play the ${TOUR_ROUNDS[G.tour]}`:(G.tour?'Back to lobby':'Play again')):'Deal next hand'}</button>
     ${unlocked.length?`<button class="btn ghost" id="goTheme">Switch to the ${unlocked[unlocked.length-1].name} table</button>`:''}
     ${over&&!(G.tour&&!tourNext)?'<button class="btn ghost" id="goRules">Back to lobby</button>':''}`;
@@ -1786,6 +1810,13 @@ function endHand(){
   }, reduce?100:(blindWins.length?2700:1300));
 }
 
+function recapHtml(){
+  const rc=(G.recap||[]).slice();
+  [0,1,2,3].forEach(q=>{if(G.bids[q]===0) rc.push(`${nmOf(q)} ${G.blind[q]?'blind ':''}nil ${G.tricks[q]?'got busted':'made it'}`);});
+  const top=[0,1,2,3].reduce((a,b)=>G.tricks[b]>G.tricks[a]?b:a,0);
+  return `<div class="recap"><h4>Hand recap</h4><div class="rbooks">${[0,1,2,3].map(q=>`<span class="${q===top?'top':''}">${esc(nmOf(q))} <b>${G.tricks[q]}</b></span>`).join('')}</div>
+    ${rc.length?`<ul class="notes">${rc.slice(0,6).map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`:''}</div>`;
+}
 /* ---------- sheets ---------- */
 function sheet(html,o={}){
   const v=document.createElement('div'); v.className='veil'+(o.mid?' mid':'');
@@ -1933,6 +1964,19 @@ const SHOP=[
   {id:'theme:cookout',name:'Cookout table',price:1500,kind:'Table'},
   {id:'theme:royal',name:'Royal Purple table',price:2500,kind:'Table'}
 ];
+const THROWS=[{k:'tomato',e:'🍅',n:'Tomato',c:10},{k:'salt',e:'🧂',n:'Salty',c:10},{k:'fire',e:'🔥',n:'On fire',c:15},{k:'rain',e:'💸',n:'Make it rain',c:25},{k:'crown',e:'👑',n:'Crown',c:40}];
+const THROW_BACK={tomato:['Oh you got jokes 😂','Keep that energy at the table','Wipe that off and watch your books'],salt:['Salty? I’m just winning 😂','Pass the pepper too'],fire:['I know I’m hot 🔥','Too hot to handle'],rain:['Make it rain! 💸','Big spender over here'],crown:['Bow down 👑','Royalty at the table']};
+function throwAt(a,b,k){
+  const t=THROWS.find(x=>x.k===k); if(!t||!G) return;
+  const A=seatPt(a), B=seatPt(b), el=document.createElement('div'); el.className='throwfx'; el.textContent=t.e; stage.appendChild(el);
+  const put=(pt,sc,r)=>{el.style.transform=`translate(${pt.x-24}px,${pt.y-24}px) scale(${sc}) rotate(${r}deg)`;};
+  const dur=reduce?80:700, mid={x:(A.x+B.x)/2,y:Math.min(A.y,B.y)-90};
+  put(A,.5,0); el.getBoundingClientRect(); cardSwish(0.5,0,0.25);
+  requestAnimationFrame(()=>{el.style.transition=`transform ${dur/2}ms ease-out`; put(mid,1.35,k==='crown'?0:220);
+    setTimeout(()=>{el.style.transition=`transform ${dur/2}ms ease-in`; put(B,1.1,k==='crown'?0:420);},dur/2);});
+  setTimeout(()=>{cardTap(1); if(soundOn&&AC) burst(AC.currentTime,0.16,{type:'lowpass',f0:k==='rain'?2400:500,vol:0.2});
+    el.classList.add(k==='crown'?'land':'splat'); setTimeout(()=>el.remove(),1100);},dur);
+}
 const QUICK_EXTRA=["Pass the hot sauce, this hand is spicy 🌶️","Unc, you reneged!","Go sit at the kids' table","Book. Book. Book. Book.","Y'all done or nah?","Run me my books"];
 const fmt=n=>Number(n).toLocaleString('en-US');
 function coinIcon(){return `<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="11" fill="#e9b949"/><circle cx="12" cy="12" r="8.6" fill="#f6d36b" stroke="#b8862b" stroke-width="1"/><path d="M12 6.6c1.6 2 4 3.2 4 5.2 0 1.4-1.2 2-2.2 1.6-.5-.2-.9-.6-1.2-1 .1 1.2.5 2.2 1.3 3H10c.8-.8 1.2-1.8 1.3-3-.3.4-.7.8-1.2 1-1 .4-2.2-.2-2.2-1.6 0-2 2.4-3.2 4-5.2z" fill="#7a5512"/></svg>`;}
@@ -2218,6 +2262,8 @@ function playerActions(p){
   const avSrc=os?os.av:((OPP_SETS.flat().find(o=>o.n===name)||{}).av||BOT_AV[p]);
   const v=sheet(`<div class="prof"><div class="big" style="--tier:${RANKS.find(r=>r.n===info[1]).c}"><div class="pic">${avatarSVG(avSrc)}</div><span class="lv">${info[0]}</span></div>
       <div class="who"><div style="font:700 24px var(--f-display)">${esc(name)}</div><div class="ttl">Level ${info[0]} · ${info[1]} badge${isPartner(p)?' · Your partner':''}</div></div></div>
+    ${G&&!ONL.spec?`<h4>Throw something <span class="thrc">${coinIcon()}${fmt(PROFILE.coins)}</span></h4>
+    <div class="thr">${THROWS.map(t=>`<button data-k="${t.k}" ${PROFILE.coins<t.c?'class="cant"':''}><span>${t.e}</span><small>${t.n}</small><em>${coinIcon()}${t.c}</em></button>`).join('')}</div>`:''}
     <div class="pa">
       <button id="pMute">${muted?'Unmute':'Mute'} chat</button>
       <button id="pBlock">${blocked?'Unblock':'Block'}</button>
@@ -2228,6 +2274,15 @@ function playerActions(p){
       <div class="rr">${['Hate speech or slurs','Harassment or threats','Cheating or teaming up','Inappropriate name or avatar','Something else'].map((r,i)=>`<label><input type="radio" name="rr" value="${i}" ${i===0?'checked':''}><span>${r}</span></label>`).join('')}</div>
       <button class="btn" id="pSend">Send report</button>
     </div>`,{mid:true});
+  v.querySelectorAll('.thr button').forEach(b=>b.onclick=()=>{
+    const t=THROWS.find(x=>x.k===b.dataset.k), now=Date.now();
+    if(now-(throwAt.last||0)<3000){toast('Easy, one at a time 😂');return;}
+    if(PROFILE.coins<t.c){toast(`You need ${t.c} coins for that. Grab more in the Shop.`,2600);return;}
+    PROFILE.coins-=t.c; saveProfile(); refreshMeta(); throwAt.last=now; v.remove(); audio();
+    throwAt(0,p,t.k);
+    if(ONL.on) post('t.'+now.toString(36)+Math.random().toString(36).slice(2,6),{s:ONL.me,to:toA(p),k:t.k});
+    else later(()=>say(p,pick(THROW_BACK[t.k]||THROW_BACK.tomato),2400),900);
+  });
   v.querySelector('#pMute').onclick=()=>{if(muted)MUTED.delete(p);else MUTED.add(p);toast(muted?`${name} unmuted`:`${name} muted. You won’t see their chat.`);v.remove();};
   v.querySelector('#pBlock').onclick=()=>{let b=PROFILE.blocked||[]; b=blocked?b.filter(n=>n!==name):b.concat(name); PROFILE.blocked=b; saveProfile();
     toast(blocked?`${name} unblocked`:`${name} blocked. You won’t be seated with them online.`);v.remove();};
@@ -2320,7 +2375,7 @@ const mySeatInfo=()=>({uid:FB.uid,name:String(PROFILE.name||'Player').slice(0,14
 
 /* write an event once; if it already exists, someone beat us to it and theirs stands */
 async function post(id,data){
-  if(!FB||!ONL.code) return false;
+  if(!FB||!ONL.code||ONL.spec) return false;
   const {F,db}=FB, ref=F.doc(db,'tables',ONL.code,'ev',id);
   try{ await F.runTransaction(db,async tx=>{const s=await tx.get(ref); if(s.exists()) return; tx.set(ref,Object.assign({by:FB.uid,at:F.serverTimestamp()},data));}); return true; }
   catch(e){ console.warn('post',id,e); return false; }
@@ -2328,11 +2383,16 @@ async function post(id,data){
 function waitFor(id,cb){
   const tok=ONL.tok; ONL.wait=null;
   if(ONL.ev[id]){const d=ONL.ev[id]; setTimeout(()=>{if(tok===ONL.tok)cb(d);},0); return;}
-  ONL.wait={id,cb,tok};
+  ONL.wait={id,cb,tok}; ffEnd();
+}
+function ffEnd(){
+  if(!FF) return; FF=false; soundOn=ONL.snd;
+  if(G&&ONL.on){renderSeats(); renderHand(); if(!ONL.spec) toast('You’re back in. It’s live now.',2200);}
 }
 function onEv(id,d){
   if(ONL.host&&typeof d.s==='number'&&ONL.seats[d.s]&&d.by===ONL.seats[d.s].uid) ONL.miss[d.s]=0;
   if(id.startsWith('c.')) return chatIn(d);
+  if(id.startsWith('t.')) return throwIn(d);
   if(id.startsWith('left.')) return leftIn(d.s);
   if(ONL.handWait) ONL.handWait();
   if(ONL.watch) ONL.watch(id,d);
@@ -2343,6 +2403,12 @@ function onEv(id,d){
     const p=toL(d.s); if(G.bids[p]===null){G.bids[p]=0;G.blind[p]=true;renderSeats();say(p,pick(VOTE_LINES.go),2200,true);snap(0.3,1400);}
   }
 }
+function throwIn(d){
+  if(FF||!G||d.s===ONL.me&&!ONL.spec) return;
+  if(![0,1,2,3].includes(d.s)||![0,1,2,3].includes(d.to)||!THROWS.some(t=>t.k===d.k)) return;
+  const f=toL(d.s); if(MUTED.has(f)||(PROFILE.blocked||[]).includes(NAMES[f])) return;
+  throwAt(f,toL(d.to),d.k);
+}
 function chatIn(d){
   const ok=QUICK.concat(QUICK_EXTRA); if(typeof d.s!=='number'||!ok.includes(d.t)) return;
   say(toL(d.s),d.t,2800,true); if(d.s!==ONL.me) cardTap(0.25);
@@ -2351,7 +2417,7 @@ function leftIn(a){
   if(typeof a!=='number'||ONL.gone.has(a)) return;
   ONL.gone.add(a);
   if(!ONL.on) return;
-  if(a===ONL.me){toast('You were away too long, so a bot took your seat.',4200); onlineLeave(false); openLobby(); return;}
+  if(a===ONL.me&&!ONL.spec){toast('You were away too long, so a bot took your seat.',4200); onlineLeave(false); openLobby(); return;}
   if(ONL.table&&a===0){toast('The host left, so the table closed.',4200); onlineLeave(false); openLobby(); return;}
   const p=toL(a); toast(`${NAMES[p]} left. A bot plays their seat now.`,3200);
   NAMES[p]=NAMES[p]+' 🤖'; renderSeats();
@@ -2360,7 +2426,7 @@ function leftIn(a){
 
 /* host plays bots right away, and covers a real player after they run out of time */
 function drive(kind,p,id){
-  if(!ONL.host) return; clearTimeout(ONL.fbT); const a=toA(p); if(a===ONL.me) return;
+  if(!ONL.host||ONL.spec) return; clearTimeout(ONL.fbT); const a=toA(p); if(a===ONL.me) return;
   ONL.drv=[kind,p,id];
   const bot=oBot(a), tok=ONL.tok;
   const auto=()=>{
@@ -2392,10 +2458,10 @@ function onlineNames(){
 function onlineDeal(){
   const tok=ONL.tok, H=G.handNo+1, did=`${ONL.g}.${H}.deal`;
   status('Shuffling…');
-  if(ONL.host){
+  if(ONL.host&&!ONL.ev[did]){
     dealHand();
     const {F,db}=FB, b=F.writeBatch(db);
-    for(let a=1;a<4;a++) if(!oBot(a)) b.set(F.doc(db,'tables',ONL.code,'hands',`${ONL.g}-${H}-${a}`),{uid:ONL.seats[a].uid,cards:G.hands[a].map(c=>c.id)});
+    for(let a=0;a<4;a++) b.set(F.doc(db,'tables',ONL.code,'hands',`${ONL.g}-${H}-${a}`),{uid:oBot(a)||a===ONL.me?FB.uid:ONL.seats[a].uid,cards:G.hands[toL(a)].map(c=>c.id)});
     b.commit().then(()=>post(did,{s:0,d:G.dealer})).then(ok=>{
       if(tok!==ONL.tok) return; if(!ok){toast('Connection problem. Check your internet.',3000);return;}
       ONL.dealt=true; startHand();
@@ -2404,17 +2470,19 @@ function onlineDeal(){
   }
   const go=()=>{
     if(tok!==ONL.tok) return true;
-    const ev=ONL.ev[did], mine=ONL.myHands[`${ONL.g}-${H}-${ONL.me}`];
-    if(!ev||!mine) return false;
+    const ev=ONL.ev[did], key=a=>`${ONL.g}-${H}-${a}`;
+    if(!ev) return false;
+    const need=ONL.spec?[]:[ONL.me].concat(ONL.host?[0,1,2,3].filter(a=>a!==ONL.me&&oBot(a)):[]);
+    if(need.some(a=>!ONL.myHands[key(a)])) return false;
     ONL.handWait=null;
     G.deck=makeDeck(); const byId=Object.fromEntries(G.deck.map(c=>[c.id,c]));
-    const ph=()=>Array.from({length:mine.length},(_,i)=>({id:'?'+i,s:'?',r:0}));
-    G.hands=[sortHand(mine.map(id=>byId[id]).filter(Boolean)),ph(),ph(),ph()];
+    const ph=()=>Array.from({length:13},(_,i)=>({id:'?'+i,s:'?',r:0}));
+    G.hands=[0,1,2,3].map(p=>{const c=ONL.myHands[key(toA(p))]; return c?sortHand(c.map(id=>byId[id]).filter(Boolean)):ph();});
     G.bids=[null,null,null,null]; G.tricks=[0,0,0,0]; G.trick=[]; G.broken=false; G.played=new Set(); G.lastTrick=null;
     G.blind=[false,false,false,false]; G.hideHand=false; G.handNo=H; G.dealer=toL(ev.d);
     ONL.dealt=true; startHand(); return true;
   };
-  if(!go()) ONL.handWait=go;
+  if(!go()){ONL.handWait=go; if(!ONL.ev[did]) ffEnd();}
 }
 function applyBid(p,d){
   G.bids[p]=d.v; if(d.blind) G.blind[p]=true;
@@ -2422,7 +2490,7 @@ function applyBid(p,d){
 }
 function onlineBidTurn(p){
   const id=evId('b'+toA(p));
-  if(p===0){showBid();userClock();} else {status(NAMES[p]+' is bidding…'); startClock(p);}
+  if(p===0&&!ONL.spec){showBid();userClock();} else {status((p===0?NAMES[0]:NAMES[p])+' is bidding…'); startClock(p);}
   drive('b',p,id);
   waitFor(id,d=>{
     stopClock(); if(p===0) $('#bidPanel').hidden=true;
@@ -2437,7 +2505,7 @@ function onlineBid(v){
 }
 function onlineTurn(){
   const p=G.turn, id=evId('p'+G.played.size);
-  if(p===0){busy=false; status(G.trick.length?'Your play':'Your lead'); renderHand(); userClock();}
+  if(p===0&&!ONL.spec){busy=false; status(G.trick.length?'Your play':'Your lead'); renderHand(); userClock();}
   else {busy=true; status(''); renderHand(); startClock(p);}
   drive('p',p,id);
   waitFor(id,d=>{const c=G.deck.find(x=>x.id===d.c); if(!c){console.warn('unknown card',d);return;} sel=null; playCard(p,c);});
@@ -2471,25 +2539,42 @@ function onlineVote(done){
   ONL.watch=id=>{if(id.startsWith(ONL.g+'.v')) check();};
   const cast=y=>{stopClock(); status(''); if(votes[0]===undefined) $('#vpAct').innerHTML='<div class="vp-res" style="flex:1;font-size:14px">Waiting for the table…</div>'; post(vid(ONL.me),{s:ONL.me,v:y});};
   $('#vpYes').onclick=()=>{audio();cast(true);}; $('#vpNo').onclick=()=>{audio();cast(false);};
-  startClock(0,()=>cast(false),'Your vote');
+  if(ONL.spec) $('#vpAct').innerHTML='<div class="vp-res" style="flex:1;font-size:14px">Watching the vote…</div>';
+  else startClock(0,()=>cast(false),'Your vote');
   if(ONL.host) for(let a=1;a<4;a++){const bot=oBot(a);
-    later(()=>{if(!ONL.ev[vid(a)]) post(vid(a),{s:a,v:bot?Math.random()<0.6:false});}, bot?(reduce?100:900+a*700):TURN_MS+8000);}
+    const tk=ONL.tok; (bot?later:setTimeout)(()=>{if(tk===ONL.tok&&!ONL.ev[vid(a)]) post(vid(a),{s:a,v:bot?Math.random()<0.6:false});}, bot?(reduce?100:900+a*700):TURN_MS+8000);}
   check();
+  if(!finished){ if(votes[0]!==undefined&&!ONL.spec){stopClock(); $('#vpAct').innerHTML='<div class="vp-res" style="flex:1;font-size:14px">Waiting for the table…</div>';} ffEnd(); }
 }
 function onlineResults(v,over){
   const nx=v.querySelector('#goNext'), gr=v.querySelector('#goRules'); if(gr) gr.remove();
   const nextH=G.handNo+1, did=`${ONL.g}.${nextH}.deal`;
   const advance=()=>{if(ONL.advanced===`${ONL.g}.${nextH}`) return; ONL.advanced=`${ONL.g}.${nextH}`; v.remove(); G.dealer=(G.dealer+1)%4; startHand();};
   if(over){
-    nx.textContent=ONL.host?'Play again with this table':'Waiting on the host to start again…'; nx.disabled=!ONL.host;
+    ffEnd(); seriesNote(v,nx);
+    nx.textContent=ONL.host?'Run it back with this table':'Waiting on the host to run it back…'; nx.disabled=!ONL.host;
     nx.onclick=()=>{if(!ONL.host) return; nx.disabled=true; FB.F.updateDoc(tRef(),{g:ONL.g+1}).catch(e=>{console.warn(e);nx.disabled=false;});};
     const lv=document.createElement('button'); lv.className='btn ghost'; lv.textContent='Leave table';
     lv.onclick=()=>{v.remove(); onlineLeave(true); openLobby();}; nx.after(lv);
     return;
   }
   if(ONL.host){nx.textContent='Deal next hand'; nx.onclick=advance; later(advance,25000);}
-  else {nx.textContent='Ready'; nx.onclick=()=>{nx.disabled=true; nx.textContent='Waiting on the deal…';};
-    ONL.watchDeal=[did,advance]; if(ONL.ev[did]) advance();}
+  else {nx.textContent=ONL.spec?'Waiting on the next deal…':'Ready'; nx.onclick=()=>{nx.disabled=true; nx.textContent='Waiting on the deal…';};
+    ONL.watchDeal=[did,advance]; if(ONL.ev[did]) advance(); else ffEnd();}
+}
+/* running series record for this table, kept on the table so everyone sees the same thing */
+function seriesNote(v,nx){
+  if(G.lastWinner==null||G.lastWinner<0) return;
+  const P=partnersOn(), key=P?'T'+(toA(G.lastWinner)%2):'S'+toA(G.lastWinner);
+  const ser=Object.assign({},(ONL.table&&ONL.table.series)||{},{[ONL.g]:key});
+  if(ONL.host&&!(ONL.table&&ONL.table.series&&ONL.table.series[ONL.g])) FB.F.updateDoc(tRef(),{['series.'+ONL.g]:key}).catch(e=>console.warn(e));
+  const cnt={}; Object.values(ser).forEach(k=>{cnt[k]=(cnt[k]||0)+1;}); const games=Object.keys(ser).length;
+  let txt;
+  if(P){const us=cnt['T'+(ONL.me%2)]||0, them=cnt['T'+((ONL.me+1)%2)]||0;
+    txt=games<2?`Game 1 goes to ${us?'your team':'them'}. Run it back?`:(us===them?`Series tied ${us}–${them}`:(us>them?`Your team leads the series ${us}–${them}`:`They lead the series ${them}–${us}`));}
+  else txt='Series: '+[0,1,2,3].map(a=>`${a===ONL.me?'You':esc(NAMES[toL(a)]).replace(' 🤖','')} ${cnt['S'+a]||0}`).join(' · ');
+  const el=document.createElement('div'); el.className='series'; el.innerHTML=`🏆 ${txt}<small>${games} game${games>1?'s':''} at this table</small>`;
+  nx.before(el);
 }
 
 /* ---------- create, join, waiting room ---------- */
@@ -2546,27 +2631,28 @@ async function joinTable(code){
     const s=await F.getDoc(F.doc(db,'tables',code));
     if(!s.exists()){toast('No table with that code. Check it and try again.',3200);return false;}
     const d=s.data();
-    if(d.status!=='lobby'){toast('That game already started. Ask for a new code.',3200);return false;}
+    if(d.status==='playing') return rejoinTable(code,true);
+    if(d.status!=='lobby'){toast('That table closed. Ask for a new code.',3200);return false;}
     ONL.code=code; ONL.host=d.host===FB.uid; ONL.me=-1;
     enterRoom(); return true;
   }catch(e){console.warn(e); toast('Couldn’t join. Try again.',3000); ONL.code=null; return false;}
 }
 function onlineUnsub(){ONL.unsubs.forEach(u=>{try{u();}catch(e){}}); ONL.unsubs=[];}
-function enterRoom(){
+function enterRoom(quiet){
   const {F,db}=FB; onlineUnsub();
-  ONL.seats=[null,null,null,null]; ONL.gone=new Set(); ONL.table=null;
-  const v=sheet('<div id="room"></div>',{mid:true,noClose:true}); ONL.room=v;
+  if(!quiet){ ONL.seats=[null,null,null,null]; ONL.gone=new Set(); ONL.table=null;
+    const v=sheet('<div id="room"></div>',{mid:true,noClose:true}); ONL.room=v; }
   ONL.unsubs.push(F.onSnapshot(F.collection(db,'tables',ONL.code,'seats'),snap=>{
     const seats=[null,null,null,null];
     snap.forEach(d=>{const x=d.data(), i=+d.id; if(i>=0&&i<4) seats[i]={uid:x.uid,name:String(x.name||'Player').slice(0,14),av:cleanAv(x.av),lvl:Math.max(1,Math.min(99,x.lvl|0)),rk:Math.max(0,Math.min(RANKS.length-1,x.rk|0))};});
     if(ONL.on){ for(let a=0;a<4;a++) if(ONL.seats[a]&&!seats[a]) leftIn(a); return; }
-    ONL.seats=seats; ONL.me=seats.findIndex(x=>x&&x.uid===FB.uid); drawRoom();
+    ONL.seats=seats; ONL.me=seats.findIndex(x=>x&&x.uid===FB.uid); if(ONL.spec&&ONL.me<0) ONL.me=0; drawRoom();
   },e=>console.warn(e)));
   ONL.unsubs.push(F.onSnapshot(tRef(),s=>{
     if(!s.exists()) return;
     const d=s.data(), was=ONL.table; ONL.table=d;
     if(d.status==='playing'&&!ONL.on){
-      if(ONL.me<0){toast('The game started before you picked a seat.',3600); roomLeave(); return;}
+      if(ONL.me<0&&!ONL.spec){toast('The game started before you picked a seat.',3600); roomLeave(); return;}
       return beginOnline();
     }
     if(d.status==='closed'&&!ONL.host){toast('The host closed the table.',3200); if(ONL.on){onlineLeave(false);openLobby();} else roomLeave(); return;}
@@ -2604,13 +2690,34 @@ function copyText(t){
   const done=()=>toast('Copied. Paste it in a text to your friends.',2600);
   if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(done,()=>prompt('Copy this:',t)); else prompt('Copy this:',t);
 }
+async function rejoinTable(code,watch){
+  if(!await connect()) return false;
+  const {F,db}=FB;
+  try{
+    const s=await F.getDoc(F.doc(db,'tables',code));
+    if(!s.exists()||s.data().status!=='playing'){onlForget(); if(watch) toast('That game is over. Ask for a new code.',3000); return false;}
+    const d=s.data(), ss=await F.getDocs(F.collection(db,'tables',code,'seats')), seats=[null,null,null,null];
+    ss.forEach(x=>{const v=x.data(), i=+x.id; if(i>=0&&i<4) seats[i]={uid:v.uid,name:String(v.name||'Player').slice(0,14),av:cleanAv(v.av),lvl:Math.max(1,Math.min(99,v.lvl|0)),rk:Math.max(0,Math.min(RANKS.length-1,v.rk|0))};});
+    const me=seats.findIndex(x=>x&&x.uid===FB.uid);
+    if(me<0&&!watch){onlForget(); return false;}
+    document.querySelectorAll('.veil').forEach(v=>v.remove());
+    ONL.code=code; ONL.host=d.host===FB.uid; ONL.spec=me<0; ONL.me=me<0?0:me; ONL.seats=seats; ONL.gone=new Set(); ONL.table=null; ONL.room=null;
+    ONL.snd=soundOn; soundOn=false; FF=true; setTimeout(ffEnd,15000);
+    enterRoom(true); return true;
+  }catch(e){console.warn(e); FF=false; soundOn=ONL.snd; toast('Couldn’t get back to that table.',3000); return false;}
+}
+function onlRemember(){try{localStorage.setItem('bb-online',JSON.stringify({code:ONL.code,at:Date.now()}));}catch(e){}}
+function onlForget(){try{localStorage.removeItem('bb-online');}catch(e){}}
+function onlKey(){return `${ONL.code}.${ONL.g}.${G.handNo}`;}
+function onlCredited(){try{return (JSON.parse(localStorage.getItem('bb-onl-cred')||'[]')).includes(onlKey());}catch(e){return false;}}
+function onlCredit(){try{const a=JSON.parse(localStorage.getItem('bb-onl-cred')||'[]'); a.push(onlKey()); localStorage.setItem('bb-onl-cred',JSON.stringify(a.slice(-80)));}catch(e){}}
 function roomLeave(byUser){
   const {F}=FB||{};
   if(F&&ONL.code){
     if(ONL.host&&byUser) F.updateDoc(tRef(),{status:'closed'}).catch(()=>{});
     else if(ONL.me>=0) F.deleteDoc(tRef('seats',String(ONL.me))).catch(()=>{});
   }
-  onlineUnsub(); if(ONL.room){ONL.room.remove(); ONL.room=null;} ONL.code=null; ONL.me=0; ONL.host=false;
+  onlineUnsub(); if(ONL.room){ONL.room.remove(); ONL.room=null;} ONL.code=null; ONL.me=0; ONL.host=false; ONL.spec=false; onlForget();
 }
 function beginOnline(){
   const d=ONL.table, {F,db}=FB;
@@ -2618,21 +2725,30 @@ function beginOnline(){
   ONL.saved=Object.assign({},opts); Object.assign(opts,d.rules||{},{mode:d.mode,target:d.target});
   ONL.on=true; ONL.g=d.g||0; ONL.ev={}; ONL.myHands={}; ONL.gone=new Set(); ONL.miss={}; ONL.advanced=null;
   (d.bots||[]).forEach(a=>{ONL.seats[a]=null;});
+  if(!ONL.spec) onlRemember();
+  if(!ONL.spec) ONL.unsubs.push(F.onSnapshot(F.query(F.collection(db,'tables',ONL.code,'hands'),F.where('uid','==',FB.uid)),snap=>{
+    snap.forEach(x=>{ONL.myHands[x.id]=x.data().cards;}); if(ONL.handWait) ONL.handWait();
+  },e=>console.warn(e)));
   ONL.unsubs.push(F.onSnapshot(F.collection(db,'tables',ONL.code,'ev'),snap=>{
     snap.docChanges().forEach(ch=>{if(ch.type!=='added') return; const id=ch.doc.id, x=ch.doc.data(); if(ONL.ev[id]) return; ONL.ev[id]=x; onEv(id,x);});
   },e=>{console.warn(e); toast('Lost the connection to the table.',3000);}));
-  if(!ONL.host) ONL.unsubs.push(F.onSnapshot(F.query(F.collection(db,'tables',ONL.code,'hands'),F.where('uid','==',FB.uid)),snap=>{
-    snap.forEach(x=>{ONL.myHands[x.id]=x.data().cards;}); if(ONL.handWait) ONL.handWait();
-  },e=>console.warn(e)));
   const lb=document.getElementById('lobby'); if(lb) lb.hidden=true;
-  renderMe(); onlineNewGame();
+  renderMe(); onlineNewGame(); specTag();
   const bots=4-ONL.seats.filter(Boolean).length;
+  if(ONL.spec){toast(`Watching table ${ONL.code}. You see every play, but nobody’s cards.`,3400); return;}
+  if(FF) return;
   toast(bots?`Table ${ONL.code} · ${bots} bot${bots>1?'s':''} fill the empty seats 🤖`:`Table ${ONL.code} · full table. Good luck!`,3000);
+}
+function specTag(){
+  let t=document.getElementById('specTag');
+  if(!ONL.on||!ONL.spec){if(t) t.remove(); return;}
+  if(!t){t=document.createElement('div'); t.id='specTag'; stage.appendChild(t);}
+  t.innerHTML=`👀 Watching · bottom seat is ${esc(ONL.seats[0]?ONL.seats[0].name:'the host')}`;
 }
 function onlineLeave(announce){
   if(ONL.on&&announce&&ONL.me>=0){ if(ONL.host) FB.F.updateDoc(tRef(),{status:'closed'}).catch(()=>{}); else post('left.'+ONL.me,{s:ONL.me}); }
   onlineUnsub(); if(ONL.room){ONL.room.remove(); ONL.room=null;}
-  ONL.on=false; ONL.code=null; ONL.tok++; ONL.wait=null; ONL.watch=null; ONL.watchDeal=null; ONL.handWait=null; clearTimeout(ONL.fbT); ONL.me=0; ONL.host=false;
+  ONL.on=false; ONL.code=null; ONL.tok++; if(FF){FF=false; soundOn=ONL.snd;} ONL.spec=false; specTag(); onlForget(); ONL.wait=null; ONL.watch=null; ONL.watchDeal=null; ONL.handWait=null; clearTimeout(ONL.fbT); ONL.me=0; ONL.host=false;
   if(ONL.saved){Object.assign(opts,ONL.saved); ONL.saved=null;}
   NAMES[2]='Nae'; $('#pic2').innerHTML=avatarSVG(BOT_AV[2]);
   clearTimers(); stopClock(); clearTrick(true); $('#votePanel').hidden=true; $('#bidPanel').hidden=true;
@@ -2640,9 +2756,13 @@ function onlineLeave(announce){
   G=newGameState(); dealHand(); G.phase='idle'; setOpps(0); renderSeats(); renderHand(); status('');
 }
 /* invite links: ?t=CODE opens the join screen */
+/* and if you were mid-game when the page closed, you go right back to your seat */
 {const qc=(new URLSearchParams(location.search).get('t')||'').toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,5);
- if(qc) setTimeout(()=>{if(!document.querySelector('.veil')) crewSheet(qc);},700);}
+ let saved=null; try{saved=JSON.parse(localStorage.getItem('bb-online')||'null');}catch(e){}
+ if(saved&&saved.code&&Date.now()-saved.at<3*3600e3&&(!qc||qc===saved.code)) setTimeout(()=>{toast('Getting you back to your table…',2000); rejoinTable(saved.code,false).then(ok=>{if(!ok&&qc) crewSheet(qc);});},700);
+ else if(qc) setTimeout(()=>{if(!document.querySelector('.veil')) crewSheet(qc);},700);}
 </script>
+
 
 </body>
 </html>
