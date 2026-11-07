@@ -212,7 +212,7 @@ button:focus-visible,input:focus-visible+span{outline:2px solid var(--brass);out
 
 /* ---------- cards ---------- */
 .card{position:absolute;left:0;top:0;width:var(--cw);height:calc(var(--cw) * 1.4);border-radius:calc(var(--cw) * .085);box-sizing:border-box;
-  background:linear-gradient(180deg,#fffdf8,var(--card));border:1px solid var(--card-edge);
+  background:linear-gradient(180deg,var(--card-hi,#fffdf8),var(--card));border:1px solid var(--card-edge);
   box-shadow:0 1px 1px rgba(0,0,0,.25), 0 4px 10px rgba(0,0,0,.35);color:var(--card-black);font-family:var(--f-display);overflow:hidden}
 .card.red{color:var(--card-red)}
 .card .idx{position:absolute;top:3.5%;left:5%;width:20%;display:flex;flex-direction:column;align-items:center;line-height:.86;font-weight:700;font-size:calc(var(--cw) * .25);letter-spacing:-.04em}
@@ -603,6 +603,12 @@ button:focus-visible,input:focus-visible+span{outline:2px solid var(--brass);out
   .seat.n .info,.seat.s .info{align-items:flex-start!important}
   .seat.n .nm{display:flex;align-items:baseline;gap:5px}
 }
+.av .nerd{position:absolute;right:-8px;top:-6px;z-index:3;font-size:17px;line-height:1;filter:drop-shadow(0 2px 3px rgba(0,0,0,.5))}
+.decks .dk .dmini{position:relative;height:44px;border-radius:8px;background:var(--card);border:1px solid var(--card-edge);display:flex;align-items:center;justify-content:center;gap:8px;font:700 15px var(--f-display);color:var(--card-black);overflow:hidden}
+.decks .dk .dmini .red{color:var(--card-red)}.decks .dk .dmini i{position:absolute;right:-10px;top:4px;width:26px;height:36px;border-radius:5px;background:repeating-linear-gradient(45deg,var(--back-a) 0 4px,var(--back-b) 4px 8px);transform:rotate(12deg);border:1px solid rgba(255,255,255,.5)}
+.decks .dk.locked{opacity:.6}.th.hol .nm2{color:var(--brass)}
+body.deck-easy .card .idx{transform:scale(1.25);transform-origin:top left;font-family:var(--f-ui)}body.deck-easy .card .idx.b{transform-origin:bottom right}
+body.deck-neon .card{box-shadow:0 0 0 1px var(--card-edge),0 0 10px rgba(122,60,255,.45),0 4px 10px rgba(0,0,0,.4)}
 .dealno{float:right;font:600 10.5px var(--f-ui);letter-spacing:.02em;text-transform:none;opacity:.75}
 .hrow{padding:8px 0;border-top:1px solid var(--panel-line)}.hrow b{font-size:14px}.hrow span{float:right;font-size:12px;opacity:.75}
 .hcards{display:flex;flex-wrap:wrap;gap:4px 12px;margin-top:4px;font-size:13.5px}.hcards i{font-style:normal;font-weight:600}.hcards i.red{color:#ff8a8a}
@@ -1077,10 +1083,47 @@ const THEMES=[
  {id:'royal',name:'Royal Purple',lvl:7,v:{'--felt-bg':'radial-gradient(ellipse at 50% 40%, #6b3fa3 0%, #4a2878 45%, #22103d 100%)','--rail-bg':'radial-gradient(ellipse at 50% 0%, rgba(255,255,255,.12), transparent 60%), linear-gradient(180deg,#1f1726,#09060c)','--stitch':'rgba(230,196,106,.3)','--wood':'#b08a3a','--line':'rgba(230,196,106,.32)','--brass':'#e6c46a','--brass-dim':'#8e7638','--page':'#140a22','--page-hi':'#221338','--panel':'#170c27','--panel-line':'#3a2a52','--chip':'#24163a','--back-a':'#3d1f63','--back-b':'#56308a','--muted':'#c3b3d9'}},
  {id:'gold',name:'Gold Room',lvl:99,vip:true,v:{'--felt-bg':'radial-gradient(ellipse at 50% 40%, #2c2a26 0%, #171614 50%, #070707 100%)','--rail-bg':'radial-gradient(ellipse at 50% 0%, rgba(255,255,255,.35), transparent 55%), linear-gradient(180deg,#e8c35c,#8a6420)','--stitch':'rgba(0,0,0,.35)','--wood':'#1a1a1a','--line':'rgba(232,195,92,.42)','--brass':'#f0cd6a','--brass-dim':'#9a7a30','--page':'#0a0a0a','--page-hi':'#1c1912','--panel':'#121110','--panel-line':'#36322a','--chip':'#1f1d18','--back-a':'#111','--back-b':'#2a2414','--muted':'#cbc2aa'}}
 ];
+function holidayTheme(id,name,from,to,c){return {id,name,lvl:1,season:{from,to},v:{
+  '--felt-bg':(c.pattern?c.pattern+', ':'')+`radial-gradient(ellipse at 50% 40%, ${c.felt[0]} 0%, ${c.felt[1]} 45%, ${c.felt[2]} 100%)`,
+  '--rail-bg':`radial-gradient(ellipse at 50% 0%, rgba(255,255,255,.14), transparent 60%), linear-gradient(180deg,${c.rail[0]},${c.rail[1]})`,
+  '--stitch':c.stitch||'rgba(255,230,190,.3)','--wood':c.wood,'--line':c.line||'rgba(255,220,150,.3)','--brass':c.brass,'--brass-dim':c.brassDim||c.brass,
+  '--page':c.page,'--page-hi':c.pageHi,'--panel':c.panel,'--panel-line':c.panelLine,'--chip':c.chip,'--back-a':c.back[0],'--back-b':c.back[1],'--muted':c.muted||'#c9c1b0'}};}
+THEMES.push(
+  holidayTheme('harvest','Harvest Table','11-01','11-30',{felt:['#b5652a','#7f3f17','#3d1c09'],rail:['#4a2a14','#24130a'],wood:'#9a6a33',brass:'#f0b25e',page:'#2a170b',pageHi:'#3a2112',panel:'#24150b',panelLine:'#5a3a22',chip:'#3a2414',back:['#8a3b12','#a64e1c'],
+    pattern:'radial-gradient(circle at 20% 30%, rgba(255,190,90,.08) 0 18px, transparent 19px), radial-gradient(circle at 75% 65%, rgba(255,140,60,.07) 0 22px, transparent 23px)'}),
+  holidayTheme('holiday','Holiday Lights','12-01','12-25',{felt:['#1f7a4a','#135533','#072815'],rail:['#7a1420','#3e0910'],wood:'#b3262f',brass:'#f3d27a',page:'#0a2416',pageHi:'#113422',panel:'#0c2618',panelLine:'#2c5440',chip:'#173a28',back:['#a3152a','#c22036'],
+    pattern:'radial-gradient(circle, rgba(255,255,255,.22) 1.2px, transparent 1.6px) 0 0/34px 34px'}),
+  holidayTheme('newyear','New Year Gold','12-26','01-07',{felt:['#2b2b30','#17171b','#060607'],rail:['#e3c068','#8c6b25'],wood:'#d9b45a',brass:'#f5d77e',page:'#0c0c0e',pageHi:'#18181c',panel:'#121214',panelLine:'#3a3528',chip:'#22201a',back:['#1c1c22','#2e2a20'],
+    pattern:'radial-gradient(circle, rgba(245,215,126,.35) 1px, transparent 1.5px) 0 0/26px 26px'}),
+  holidayTheme('valentine','Sweetheart','02-01','02-14',{felt:['#c43a64','#8f1f45','#4a0b22'],rail:['#5a1028','#2a0612'],wood:'#d65a82',brass:'#ffc2d4',page:'#2a0a17',pageHi:'#3a1020',panel:'#260915',panelLine:'#5a2238',chip:'#3a1222',back:['#b0204c','#d13a66']}),
+  holidayTheme('juneteenth','Juneteenth','06-12','06-21',{felt:['#1e7a3e','#12522a','#062612'],rail:['#a3131f','#3d070c'],wood:'#c9262f',brass:'#f2c94c',page:'#0a1f12',pageHi:'#12301c',panel:'#0b2214',panelLine:'#2c4a33',chip:'#163220',back:['#141414','#2a2a2a'],
+    pattern:'linear-gradient(90deg, rgba(200,30,40,.10) 0 33%, rgba(0,0,0,.12) 33% 66%, rgba(30,140,70,.08) 66%)'}),
+  holidayTheme('july4','Fourth of July','06-28','07-07',{felt:['#244f9e','#163374','#08163a'],rail:['#a3182a','#4a0a12'],wood:'#c8283a',brass:'#f4f4f4',brassDim:'#c9c9c9',page:'#0a1430',pageHi:'#122046',panel:'#0c1734',panelLine:'#2a3a66',chip:'#16244a',back:['#b0182c','#1e3a8a'],
+    pattern:'radial-gradient(circle, rgba(255,255,255,.25) 1.2px, transparent 1.6px) 0 0/30px 30px'}),
+  holidayTheme('halloween','Haunted House','10-01','10-31',{felt:['#5b2a86','#3a1760','#160628'],rail:['#e0721f','#6b300a'],wood:'#e0721f',brass:'#ffa646',page:'#120720',pageHi:'#1d0d30',panel:'#140822',panelLine:'#3a2452',chip:'#24123a',back:['#1a1a1a','#e0721f']}));
+function inSeason(t,d){ if(!t.season) return true; d=d||new Date(); const md=String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  const {from,to}=t.season; return from<=to?(md>=from&&md<=to):(md>=from||md<=to); }
+const seasonEnd=t=>{const [m,d]=t.season.to.split('-').map(Number); return new Date(2000,m-1,d).toLocaleDateString(undefined,{month:'short',day:'numeric'});};
+/* card decks: earn them by leveling up or buy them with coins */
+const DECKS=[
+  {id:'classic',name:'Classic',lvl:1,v:{'--card-hi':'#fffdf8','--card':'#fbf8f1','--card-edge':'#d9d2c3','--card-red':'#b3202d','--card-black':'#16161b'}},
+  {id:'easy',name:'Easy Read',lvl:3,cls:'deck-easy',v:{'--card-hi':'#ffffff','--card':'#ffffff','--card-black':'#000000','--card-red':'#d0101e'}},
+  {id:'ivory',name:'Ivory & Gold',lvl:6,cost:800,v:{'--card-hi':'#fcf5e3','--card':'#f6ecd2','--card-edge':'#c9a752','--card-red':'#9a1b22','--card-black':'#2a1f0e','--back-a':'#6b5418','--back-b':'#a8842c'}},
+  {id:'midnight',name:'Midnight',lvl:12,cost:1200,cls:'deck-dark',v:{'--card-hi':'#273049','--card':'#1c2233','--card-edge':'#3b4766','--card-red':'#ff6b7a','--card-black':'#e9edf7','--back-a':'#0e1426','--back-b':'#24315a'}},
+  {id:'neon',name:'Neon Nights',lvl:20,cost:2000,cls:'deck-dark deck-neon',v:{'--card-hi':'#1e1830','--card':'#14101f','--card-edge':'#7a3cff','--card-red':'#ff4fd8','--card-black':'#4fe3ff','--back-a':'#2a0f4a','--back-b':'#7a3cff'}},
+];
+const deckOpen=(d,L)=>d.lvl<=L||owns('deck:'+d.id);
+function applyDeck(id){
+  const L=lvlInfo(PROFILE.xp).L; let d=DECKS.find(x=>x.id===id)||DECKS[0]; if(!deckOpen(d,L)) d=DECKS[0];
+  const r=document.documentElement.style; Object.entries(d.v).forEach(([k,v])=>r.setProperty(k,v));
+  document.body&&DECKS.forEach(x=>(x.cls||'').split(' ').filter(Boolean).forEach(c=>document.body.classList.remove(c)));
+  document.body&&(d.cls||'').split(' ').filter(Boolean).forEach(c=>document.body.classList.add(c));
+  PROFILE.deck=d.id;
+}
 const DEFAULT_PROFILE={name:'You',av:{skin:3,hair:'waves',hc:0,facial:'none',acc:'none',shirt:1},xp:0,wins:0,losses:0,streak:0,best:0,hands:0,nils:0,sets:0,bostons:0,theme:'classic',
   coins:250,rp:0,shield:true,lastPlayed:null,decayRef:null,daily:null,login:{last:null,day:0},owned:[],ads:{date:null,n:0},notice:null,trophies:0,blocked:[],voice:false,voicePartner:false,tut:false,modeStats:{}};
 const owns=id=>PROFILE.owned.includes(id);
-const themeOpen=(t,L)=>t.lvl<=L||owns('theme:'+t.id);
+const themeOpen=(t,L)=>t.season?inSeason(t):(t.lvl<=L||owns('theme:'+t.id));
 let PROFILE=JSON.parse(JSON.stringify(DEFAULT_PROFILE));
 try{const s=JSON.parse(localStorage.getItem('bb-profile')||'null'); if(s){PROFILE=Object.assign(PROFILE,s);PROFILE.av=Object.assign({},DEFAULT_PROFILE.av,s.av||{});}}catch(e){}
 function saveProfile(){try{localStorage.setItem('bb-profile',JSON.stringify(PROFILE));}catch(e){}}
@@ -1088,9 +1131,10 @@ function applyTheme(id){
   const L=lvlInfo(PROFILE.xp).L;
   let t=THEMES.find(x=>x.id===id)||THEMES[0]; if(!themeOpen(t,L)) t=THEMES[0];
   const r=document.documentElement.style; Object.entries(t.v).forEach(([k,v])=>r.setProperty(k,v));
-  PROFILE.theme=t.id;
+  PROFILE.theme=t.id; applyDeck(PROFILE.deck||'classic');
 }
 applyTheme(PROFILE.theme);
+document.addEventListener('DOMContentLoaded',()=>applyDeck(PROFILE.deck||'classic'));
 </script>
 
 <script id="ui">
@@ -1517,6 +1561,7 @@ function playerSheet(after){
     <h4>Extras</h4><div class="pk" data-k="acc">${ch(ACC)}</div>
     <h4>Shirt</h4><div class="pk" data-k="shirt">${sw('Shirt color',SHIRT)}</div>
     <h4>Table</h4><div class="themes" id="pThemes"></div>
+    <h4>Cards</h4><div class="themes decks" id="pDecks"></div>
     <button class="btn" id="pDone">Done</button>`,{noClose:!!after});
   const sync=()=>{
     const li=lvlInfo(PROFILE.xp);
@@ -1527,12 +1572,24 @@ function playerSheet(after){
     v.querySelector('#pBar').style.width=Math.round(li.into/li.need*100)+'%';
     v.querySelector('#pXp').innerHTML=`<span><em>${li.into}</em> / ${li.need} XP to level ${li.L+1}</span>${PROFILE.streak?`<span>🔥 Win streak boost <em>×${boostMult()}</em></span>`:'<span>Win a game to start an XP boost</span>'}`;
     v.querySelectorAll('.pk').forEach(g=>{const k=g.dataset.k;g.querySelectorAll('button').forEach(b=>b.classList.toggle('on',String(PROFILE.av[k])===b.dataset.v));});
-    v.querySelector('#pThemes').innerHTML=THEMES.map(t=>{const lock=!themeOpen(t,li.L);
+    v.querySelector('#pThemes').innerHTML=THEMES.filter(t=>!t.season||inSeason(t)).map(t=>{const lock=!themeOpen(t,li.L);
       const why=t.vip?'VIP Club table':`Level ${t.lvl}${SHOP_THEMES[t.id]?` or ${SHOP_THEMES[t.id].toLocaleString()} coins`:''}`;
+      if(t.season) return `<button class="th hol${PROFILE.theme===t.id?' on':''}" data-t="${t.id}"><div class="mini" style="background:${t.v['--rail-bg']}"><i style="background:${t.v['--felt-bg']}"></i></div>
+        <span class="nm2">🎉 ${t.name}</span><span class="lk">${PROFILE.theme===t.id?'At the table':'Free until '+seasonEnd(t)}</span></button>`;
       return `<button class="th${PROFILE.theme===t.id?' on':''}" data-t="${t.id}" ${lock?'disabled':''} style="--twood:${t.v['--wood']}">
         <div class="mini" style="background:${t.v['--rail-bg']}"><i style="background:${t.v['--felt-bg']}"></i></div>
         <span class="nm2">${t.name}</span><span class="lk">${lock?why:(PROFILE.theme===t.id?'At the table':'Unlocked')}</span></button>`;}).join('');
-    v.querySelectorAll('.th').forEach(b=>b.onclick=()=>{applyTheme(b.dataset.t);saveProfile();sync();});
+    v.querySelectorAll('#pThemes .th').forEach(b=>b.onclick=()=>{applyTheme(b.dataset.t);saveProfile();sync();});
+    v.querySelector('#pDecks').innerHTML=DECKS.map(d=>{const open=deckOpen(d,li.L), on=(PROFILE.deck||'classic')===d.id;
+      const why=`Level ${d.lvl}${d.cost?` or ${d.cost.toLocaleString()} coins`:''}`;
+      return `<button class="th dk${on?' on':''}${open?'':' locked'}" data-d="${d.id}" style="${Object.entries(d.v).map(([k,x])=>k+':'+x).join(';')}">
+        <div class="dmini ${d.cls||''}"><span class="red">A♥</span><span>K♠</span><i></i></div>
+        <span class="nm2">${d.name}</span><span class="lk">${on?'In your hand':(open?'Unlocked':why)}</span></button>`;}).join('');
+    v.querySelectorAll('#pDecks .th').forEach(b=>b.onclick=()=>{const d=DECKS.find(x=>x.id===b.dataset.d);
+      if(!deckOpen(d,li.L)){ if(!d.cost){toast(`Reach level ${d.lvl} to earn this deck.`);return;}
+        if(PROFILE.coins<d.cost){toast(`You need ${d.cost.toLocaleString()} coins, or reach level ${d.lvl}.`,2600);return;}
+        PROFILE.coins-=d.cost; PROFILE.owned.push('deck:'+d.id); refreshMeta(); toast(`${d.name} deck unlocked!`); }
+      PROFILE.deck=d.id; applyTheme(PROFILE.theme); saveProfile(); sync(); if(G) renderHand();});
     renderMe();
   };
   v.querySelectorAll('.pk').forEach(g=>g.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
@@ -1573,7 +1630,7 @@ function newGame(extra){
 }
 function startHand(){
   if(ONL.on&&!ONL.dealt) return onlineDeal();
-  if(!ONL.on) dealHand(); ONL.dealt=false; sel=null; busy=false; clearTrick(true); G.recap=[];
+  if(!ONL.on) dealHand(); ONL.dealt=false; sel=null; busy=false; clearTrick(true); G.recap=[]; clearTrackers();
   G.phase='bid'; G.turn=(G.dealer+1)%4;
   G.hideHand=ONL.spec||blindEligible(0);
   renderSeats(); const sh=reduce||FF?0:1500; if(sh) shuffleFx(G.dealer); renderHand(true,reduce?0:sh+300); riffle(0); if(sh) setTimeout(()=>riffle(0),700); if(!reduce&&!FF) G.hands[0].forEach((_,i)=>dealFwip(sh/1000+0.3+i*0.07)); status(`${G.dealer===0?'You’re':NAMES[G.dealer]+' is'} shuffling…`);
@@ -1890,7 +1947,7 @@ function endHand(){
   if(over){track('games'); if(won) track('gameWin');}
   saveProfile();
   if(keepP){PROFILE=JSON.parse(keepP);saveProfile();} else if(ONL.on) onlCredit();
-  const after=lvlInfo(PROFILE.xp), leveled=after.L>before.L, unlocked=THEMES.filter(t=>!t.vip&&t.lvl>before.L&&t.lvl<=after.L);
+  const after=lvlInfo(PROFILE.xp), leveled=after.L>before.L, unlocked=THEMES.filter(t=>!t.vip&&!t.season&&t.lvl>before.L&&t.lvl<=after.L).concat(DECKS.filter(d=>d.lvl>1&&d.lvl>before.L&&d.lvl<=after.L).map(d=>({id:'deck-'+d.id,name:d.name+' cards'})));
   if(gain) later(()=>floatXP(gain),reduce?0:500);
   renderMe();
   const xpHtml=`<div class="xp"><div class="xph"><span>Lv ${after.L} · ${titleFor(after.L)}</span><b>+${gain} XP</b></div>
@@ -1996,8 +2053,24 @@ function rulesSheet(after){
     v.remove(); if(after) after();
   };
 }
+const TRACK_COST=20;
 function trackerSheet(){
   if(!G) return;
+  if(G.tour){ sheet(`<h2>Card tracker</h2><p class="lede">The tracker is off in the Weekend Cup. Everybody counts cards for themselves, so it’s a fair fight.</p>`,{mid:true}); return; }
+  G.trackers=G.trackers||new Set();
+  if(!G.trackers.has(0)){
+    const v=sheet(`<h2>Card tracker</h2><p class="lede">See every card that’s still out this hand, plus the last book. Real ones count in their head… so the whole table will see a 🤓 on your seat while you use it.</p>
+      <button class="btn" id="tkBuy">Use it this hand · ${coinIcon()} ${TRACK_COST}</button>
+      <p class="fine">You have ${fmt(PROFILE.coins)} coins. Resets every hand. Not allowed in the Weekend Cup.</p>`,{mid:true});
+    v.querySelector('#tkBuy').onclick=()=>{
+      if(PROFILE.coins<TRACK_COST){toast(`You need ${TRACK_COST} coins. Grab more in the Shop.`,2400);return;}
+      PROFILE.coins-=TRACK_COST; saveProfile(); refreshMeta(); v.remove();
+      markTracker(0);
+      if(ONL.on) post(evId('k'+ONL.me),{s:ONL.me}); else later(()=>say(pick([1,3]),pick(TRACK_TEASE)),700);
+      trackerSheet();
+    };
+    return;
+  }
   const mine=new Set(G.hands[0].map(c=>c.id));
   const rows=['S','H','C','D'].map(s=>{
     const cards=G.deck.filter(c=>c.s===s).sort((a,b)=>power(b)-power(a));
@@ -2006,7 +2079,7 @@ function trackerSheet(){
       return `<i class="${cls}">${c.joker?(c.joker==='big'?'BJ':'LJ'):rankLabel(c)+(c.ds?SYM[c.ds]:'')}</i>`;}).join('');
     return `<div class="trow"><div class="s ${s==='H'||s==='D'?'red':''}">${SYM[s]}</div><div class="chips">${chips}</div><div class="n">${outN} out</div></div>`;
   }).join('');
-  const v=sheet(`<h2>Card tracker</h2><p class="lede">Free for every player. Shows what's still out there this hand.</p>
+  const v=sheet(`<h2>Card tracker 🤓</h2><p class="lede">What’s still out this hand. The table can see you’re using it.</p>
     <div class="trk">${rows}</div>
     <div class="legend"><span><i style="background:var(--card)"></i>Still out</span><span><i style="background:#c9b88f"></i>In your hand</span><span><i style="border:1px dashed #33503f"></i>Played</span></div>
     <h4>Last book</h4><div class="last" id="lastBook">${G.lastTrick?'':'<p class="lede">No books taken yet.</p>'}</div>`);
@@ -2017,6 +2090,12 @@ function trackerSheet(){
     box.style.height='104px';
   }
 }
+const TRACK_TEASE=['Newbie alert 🤓','Can’t count? 😂','Training wheels on 🚲','Use your brain, not the app','OG’s count in they head'];
+function markTracker(p){
+  if(!G) return; G.trackers=G.trackers||new Set(); G.trackers.add(p);
+  const av=document.querySelector(`#seat${p} .av`); if(av&&!av.querySelector('.nerd')){const t=document.createElement('span'); t.className='nerd'; t.textContent='🤓'; t.title='Using the card tracker'; av.appendChild(t);}
+}
+function clearTrackers(){ document.querySelectorAll('.av .nerd').forEach(x=>x.remove()); if(G) G.trackers=new Set(); }
 function chatSheet(){
   const list=QUICK.concat(owns('talk:cookout')?QUICK_EXTRA:[]);
   const v=sheet(`<h2>Talk your talk</h2><p class="lede">Quick lines the whole table sees.</p>
@@ -2594,6 +2673,7 @@ function onEv(id,d){
   if(id.startsWith('c.')) return chatIn(d);
   if(id.startsWith('t.')) return throwIn(d);
   if(id.startsWith('left.')) return leftIn(d.s);
+  if(/\.k\d$/.test(id)){ if(G&&id.startsWith(`${ONL.g}.${G.handNo}.`)&&[0,1,2,3].includes(d.s)&&!FF){const p=toL(d.s); if(p!==0){markTracker(p); toast(`🤓 ${nmOf(p)} paid for the card tracker. Newbie!`,2600);} } return; }
   if(ONL.handWait) ONL.handWait();
   if(ONL.watch) ONL.watch(id,d);
   if(ONL.watchDeal&&id===ONL.watchDeal[0]){const f=ONL.watchDeal[1]; ONL.watchDeal=null; f();}
