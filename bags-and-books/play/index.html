@@ -2301,7 +2301,8 @@ async function fb(){
   if(FB) return FB;
   const base=`https://www.gstatic.com/firebasejs/${FBV}/`;
   const [A,U,F]=await Promise.all([import(base+'firebase-app.js'),import(base+'firebase-auth.js'),import(base+'firebase-firestore.js')]);
-  const app=A.initializeApp(FB_CFG), auth=U.getAuth(app), db=F.getFirestore(app);
+  const app=A.initializeApp(FB_CFG), db=F.getFirestore(app);
+  const auth=/[?&#]fresh/.test(location.href)?U.initializeAuth(app,{persistence:U.inMemoryPersistence}):U.getAuth(app); // ?fresh = a separate test player in the same browser
   await auth.authStateReady();
   if(!auth.currentUser) await U.signInAnonymously(auth);
   FB={F,db,uid:auth.currentUser.uid};
