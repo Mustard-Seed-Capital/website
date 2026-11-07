@@ -1,0 +1,49 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+
+    match /tables/{code} {
+      function tbl() { return get(/databases/$(database)/documents/tables/$(code)).data; }
+      function isHost() { return signedIn() && tbl().host == request.auth.uid; }
+      function seated(s) {
+        let p = /databases/$(database)/documents/tables/$(code)/seats/$(s);
+        return exists(p) && get(p).data.uid == request.auth.uid;
+      }
+
+      allow get: if signedIn();
+      allow list, delete: if false;
+      allow create: if signedIn() && code.size() == 5
+        && request.resource.data.host == request.auth.uid
+        && request.resource.data.status == 'lobby'
+        && request.resource.data.keys().hasOnly(['host','status','mode','target','rules','g','bots','created']);
+      allow update: if signedIn() && resource.data.host == request.auth.uid
+        && request.resource.data.host == resource.data.host;
+
+      match /seats/{s} {
+        allow read: if signedIn();
+        allow create: if signedIn() && s in ['0','1','2','3']
+          && request.resource.data.uid == request.auth.uid
+          && request.resource.data.name is string && request.resource.data.name.size() <= 14
+          && tbl().status == 'lobby';
+        allow delete: if signedIn() && (resource.data.uid == request.auth.uid || isHost());
+        allow update: if false;
+      }
+
+      match /ev/{id} {
+        allow read: if signedIn();
+        allow create: if signedIn() && id.size() <= 40
+          && request.resource.data.by == request.auth.uid
+          && request.resource.data.s is int
+          && (isHost() || seated(string(request.resource.data.s)));
+        allow update, delete: if false;
+      }
+
+      match /hands/{id} {
+        allow read: if signedIn() && resource.data.uid == request.auth.uid;
+        allow create: if isHost();
+        allow update, delete: if false;
+      }
+    }
+  }
+}
