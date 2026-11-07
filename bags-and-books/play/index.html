@@ -1191,7 +1191,7 @@ const FLY=reduce?60:340;
 let sel=null, busy=false, soundOn=true, AC=null, trickEls=[], timers=[];
 let FF=false; // fast-forward while catching up on a table (rejoin / watching)
 const later=(fn,ms)=>{const t=setTimeout(fn,FF?0:ms);timers.push(t);return t;};
-const ONL={on:false,code:null,me:0,host:false,seats:[null,null,null,null],gone:new Set(),g:0,ev:{},myHands:{},wait:null,watch:null,watchDeal:null,handWait:null,unsubs:[],fbT:null,spec:false,snd:true,drv:null,saved:null,sent:null,tok:0,dealt:false,miss:{},table:null,room:null,advanced:null};
+const ONL={on:false,code:null,me:0,host:false,seats:[null,null,null,null],gone:new Set(),bye:new Set(),leftN:{},backN:{},goneG:{},g:0,ev:{},myHands:{},wait:null,watch:null,watchDeal:null,handWait:null,unsubs:[],fbT:null,spec:false,snd:true,drv:null,saved:null,sent:null,tok:0,dealt:false,miss:{},table:null,room:null,advanced:null};
 function clearTimers(){timers.forEach(clearTimeout);timers=[];}
 
 /* felt noise texture */
