@@ -2836,7 +2836,7 @@ function onlineDeal(){
     dealHand();
     const {F,db}=FB, b=F.writeBatch(db);
     for(let a=0;a<4;a++) b.set(F.doc(db,'tables',ONL.code,'hands',`${ONL.g}-${H}-${a}`),{uid:oBot(a)||a===ONL.me?FB.uid:ONL.seats[a].uid,cards:G.hands[toL(a)].map(c=>c.id)});
-    b.commit().then(()=>post(did,{s:0,d:G.dealer})).then(ok=>{
+    b.commit().then(()=>post(did,{s:ONL.me,d:toA(G.dealer)})).then(ok=>{
       if(tok!==ONL.tok) return; if(!ok){toast('Connection problem. Check your internet.',3000);return;}
       ONL.dealt=true; startHand();
     }).catch(e=>{console.warn(e);toast('Connection problem. Check your internet.',3000);});
@@ -2916,7 +2916,7 @@ function onlineVote(done){
   $('#vpYes').onclick=()=>{audio();cast(true);}; $('#vpNo').onclick=()=>{audio();cast(false);};
   if(ONL.spec) $('#vpAct').innerHTML='<div class="vp-res" style="flex:1;font-size:14px">Watching the vote…</div>';
   else startClock(0,()=>cast(false),'Your vote');
-  if(ONL.host) for(let a=1;a<4;a++){const bot=oBot(a);
+  if(ONL.host) for(let a=0;a<4;a++){ if(a===ONL.me) continue; const bot=oBot(a);
     const tk=ONL.tok; (bot?later:setTimeout)(()=>{if(tk===ONL.tok&&!ONL.ev[vid(a)]) post(vid(a),{s:a,v:bot?Math.random()<0.6:false});}, bot?(reduce?100:900+a*700):TURN_MS+8000);}
   check();
   if(!finished){ if(votes[0]!==undefined&&!ONL.spec){stopClock(); $('#vpAct').innerHTML='<div class="vp-res" style="flex:1;font-size:14px">Waiting for the table…</div>';} ffEnd(); }
