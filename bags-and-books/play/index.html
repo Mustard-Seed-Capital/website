@@ -700,16 +700,19 @@ button:focus-visible,input:focus-visible+span{outline:2px solid var(--brass);out
   .rail::before{inset:5px;border-radius:19.6% / 45%}
   #felt{border-radius:19% / 44%}
   #felt::after{inset:9% 7%;border-radius:18% / 42%}
-  .av{width:46px;height:46px}
-  .seat.s .av{width:48px;height:48px}
-  .seat.n{flex-direction:row;width:auto;top:8px;gap:8px;transform:translateX(-25px)}
+  .av{width:42px;height:42px}
+  .seat.s .av{width:42px;height:42px}
+  .seat.n{flex-direction:column;width:auto;top:6px;gap:1px;transform:translateX(-50%)}
   .seat.n .nm i{display:inline;margin-left:5px}
   .seat.n .bub{top:50%;left:100%;translate:8px -50%}
+  .seat .nm{font-size:12.5px;line-height:1.15}
+  .seat .ch{font-size:11px;padding:1px 8px}
   /* side players sit at the middle of the open felt, halfway between your partner and you */
-  .seat.w,.seat.e{top:var(--cy,50%);transform:translateY(-25px)}
+  .seat.w,.seat.e{top:var(--cy,50%);transform:translateY(-38px)}
   .seat.w{left:2%}.seat.e{right:2%}
-  .seat.s{left:50%;transform:translateX(-27px);bottom:calc(var(--ov,0px) + 4px);flex-direction:row;gap:8px}
-  .seat.s .info{align-items:flex-start}
+  .seat.s{left:50%;transform:translateX(-50%);bottom:calc(var(--ov,0px) + 4px);flex-direction:column;gap:1px}
+  .seat.s .info{align-items:center}
+  .seat.s .me-nm{font-size:12.5px}
   #status{left:auto;right:10%;transform:none;bottom:calc(var(--ov,0px) + 14px)}
   #bidPanel{width:min(440px,72%);padding:10px 12px}
   #bidPanel h3{font-size:19px}
@@ -1327,14 +1330,14 @@ function visFelt(){
 }
 function slotPt(p){
   const c=visFelt(), w=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--tcw'))||58, h=w*1.4;
-  const land=LAND.matches, dx=w*(land?1.25:0.8), dy=h*(land?0.22:0.48);
+  const land=LAND.matches, dx=w*(land?1.0:0.8), dy=h*(land?0.17:0.48);
   if(land){const f=felt.getBoundingClientRect(), st=stage.getBoundingClientRect(); c.y=f.top-st.top+midY();}
   return [{x:c.x,y:c.y+dy},{x:c.x-dx,y:c.y},{x:c.x,y:c.y-dy},{x:c.x+dx,y:c.y}][p];
 }
 function place(d,pt,rot,sc){const w=d.offsetWidth,h=d.offsetHeight;d.style.transform=`translate(${pt.x-w/2}px,${pt.y-h/2}px) rotate(${rot}deg) scale(${sc})`;}
 function sizeTable(){
   const v=visFelt();
-  const tcw=Math.round(Math.max(44,LAND.matches?Math.min(66,v.w/8,midGap()/2.3):Math.min(74,v.w/6.2,v.h/5.6)));
+  const tcw=Math.round(Math.max(LAND.matches?36:44,LAND.matches?Math.min(64,v.w/8,(midGap()-6)/(1.4*1.34)):Math.min(74,v.w/6.2,v.h/5.6)));
   document.documentElement.style.setProperty('--tcw',tcw+'px');
   felt.style.setProperty('--cy',midY()+'px');
 }
@@ -1345,9 +1348,9 @@ function midGap(){
 }
 /* halfway between your partner's picture and yours, so all four players sit evenly around the table */
 function midY(){
-  const f=felt.getBoundingClientRect(), a=document.querySelector('#seat2 .av').getBoundingClientRect(), b=document.querySelector('#seat0 .av').getBoundingClientRect();
+  const f=felt.getBoundingClientRect(), a=document.querySelector('#seat2').getBoundingClientRect(), b=document.querySelector('#seat0 .av').getBoundingClientRect();
   if(!a.height||!b.height) return visFelt().h/2;
-  return ((a.top+a.height/2)+(b.top+b.height/2))/2-f.top;
+  return (a.bottom+b.top)/2-f.top;
 }
 
 /* ---------- rendering ---------- */
@@ -1357,9 +1360,9 @@ function renderHand(animate,offset=0){
   const h=G.hands[0], W=handEl.clientWidth;
   const land=LAND.matches;
   const cw=Math.round(Math.max(48,Math.min(80,W/(land?6.6:5.1),land?innerHeight*0.21:999)));
-  const ov=land?Math.round(cw*0.45):0;
+  const ov=land?Math.round(cw*0.22):0;
   handEl.style.marginTop=(land?-ov:4)+'px'; stage.style.setProperty('--ov',ov+'px');
-  handEl.style.setProperty('--cw',cw+'px'); handEl.style.height=(land?Math.round(cw*1.4*0.82+16):cw*1.4+20)+'px';
+  handEl.style.setProperty('--cw',cw+'px'); handEl.style.height=(land?Math.round(cw*1.4*0.78+14):cw*1.4+20)+'px';
   const n=h.length, step=n>1?Math.min(cw*0.62,(W-cw)/(n-1)):0, x0=(W-(cw+step*(n-1)))/2;
   const myTurn=G.phase==='play'&&G.turn===0&&!busy;
   const ok=myTurn?new Set(legal(0).map(c=>c.id)):null;
