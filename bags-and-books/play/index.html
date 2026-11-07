@@ -2722,6 +2722,36 @@ async function post(id,data){
   catch(e){ if(e&&e.code==='permission-denied'&&ONL.ev[id]&&ONL.ev[id].by!==FB.uid) return true; /* someone beat us to it; theirs stands */
     console.warn('post',id,e); return false; }
 }
+/* ---- table server (Cloud Function): deals, plays bots, covers timeouts; nobody's phone holds other players' cards ---- */
+const SRV_URL='https://us-central1-bags-and-books.cloudfunctions.net/table';
+let srvOk=null;
+async function srvUp(){
+  if(srvOk!==null) return srvOk;
+  try{ const c=new AbortController(); const t=setTimeout(()=>c.abort(),3500);
+    const r=await fetch(SRV_URL,{signal:c.signal}); clearTimeout(t); srvOk=r.ok&&!!(await r.json()).ok; }
+  catch(e){ srvOk=false; }
+  setTimeout(()=>{srvOk=null;},60e3); return srvOk;
+}
+function iLead(){return [0,1,2,3].find(a=>ONL.seats[a]&&!ONL.gone.has(a))===ONL.me;}
+function srvAsk(id,delay,lead){
+  if(!ONL.srv||ONL.spec||ONL.me<0) return Promise.resolve(false);
+  const tok=ONL.tok, code=ONL.code; let tries=0;
+  return new Promise(done=>{
+    const go=async()=>{
+      if(tok!==ONL.tok||ONL.code!==code) return done(false);
+      if(ONL.ev[id]) return done(true);
+      try{
+        const t=await FB.auth.currentUser.getIdToken();
+        const r=await fetch(SRV_URL,{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+t},body:JSON.stringify({code,id})}).then(x=>x.json());
+        if(r.wait&&!ONL.ev[id]) return setTimeout(go,Math.min(r.wait+150,20000));
+        if(r.ok||r.done) return done(true);
+        if(++tries<3&&r.err!=='not now'&&r.err!=='not seated') return setTimeout(go,1500);
+        done(false);
+      }catch(e){ console.warn('srv',e); if(++tries<5) setTimeout(go,2500); else done(false); }
+    };
+    setTimeout(go,(delay||0)+(lead===false||lead&&!iLead()?2500:0));
+  });
+}
 function waitFor(id,cb){
   const tok=ONL.tok; ONL.wait=null;
   if(ONL.ev[id]){const d=ONL.ev[id]; setTimeout(()=>{if(tok===ONL.tok)cb(d);},0); return;}
@@ -2771,7 +2801,7 @@ function leftIn(a,d){
     if(!FF){ if(Date.now()-(ONL.rejoinAt||0)<180e3) postBack(); else droppedBar(); }
     return; }
   const p=toL(a); toast(quit?`${NAMES[p]} quit. A bot plays their seat now.`:bye?`${NAMES[p]} left the table.${G&&!G.over?' A bot plays their seat now.':''}`:`${NAMES[p]} lost connection. A bot plays for them until they’re back.`,3400);
-  if(quit&&!FF&&ONL.table&&ONL.seats[a]&&ONL.table.host===ONL.seats[a].uid){ const tk=ONL.tok;
+  if(quit&&!FF&&!ONL.srv&&ONL.table&&ONL.seats[a]&&ONL.table.host===ONL.seats[a].uid){ const tk=ONL.tok;
     setTimeout(()=>{ if(tk!==ONL.tok||!ONL.on||ONL.host) return; if(ONL.table&&ONL.seats[a]&&ONL.table.host!==ONL.seats[a].uid) return;
       toast('The host left and the table couldn’t continue. No penalty for you.',4200); onlineLeave(false); openLobby(); },8000); }
   onlineNames();
@@ -2800,6 +2830,8 @@ function postBack(){
 
 /* host plays bots right away, and covers a real player after they run out of time */
 function drive(kind,p,id){
+  if(ONL.srv){ const a=toA(p); if(a===ONL.me||ONL.spec) return; const bot=oBot(a);
+    srvAsk(id,bot?(reduce?100:550):TURN_MS+1500,bot); return; }
   if(!ONL.host||ONL.spec) return; clearTimeout(ONL.fbT); const a=toA(p); if(a===ONL.me) return;
   ONL.drv=[kind,p,id];
   const bot=oBot(a), tok=ONL.tok;
@@ -2832,7 +2864,7 @@ function onlineNames(){
 function onlineDeal(){
   const tok=ONL.tok, H=G.handNo+1, did=`${ONL.g}.${H}.deal`;
   status('Shuffling…');
-  if(ONL.host&&!ONL.ev[did]){
+  if(ONL.host&&!ONL.srv&&!ONL.ev[did]){
     dealHand();
     const {F,db}=FB, b=F.writeBatch(db);
     for(let a=0;a<4;a++) b.set(F.doc(db,'tables',ONL.code,'hands',`${ONL.g}-${H}-${a}`),{uid:oBot(a)||a===ONL.me?FB.uid:ONL.seats[a].uid,cards:G.hands[toL(a)].map(c=>c.id)});
@@ -2846,7 +2878,7 @@ function onlineDeal(){
     if(tok!==ONL.tok) return true;
     const ev=ONL.ev[did], key=a=>`${ONL.g}-${H}-${a}`;
     if(!ev) return false;
-    const need=ONL.spec?[]:[ONL.me].concat(ONL.host?[0,1,2,3].filter(a=>a!==ONL.me&&oBot(a)):[]);
+    const need=ONL.spec?[]:[ONL.me].concat(ONL.host&&!ONL.srv?[0,1,2,3].filter(a=>a!==ONL.me&&oBot(a)):[]);
     if(need.some(a=>!ONL.myHands[key(a)])) return false;
     ONL.handWait=null;
     G.deck=makeDeck(); const byId=Object.fromEntries(G.deck.map(c=>[c.id,c]));
@@ -2856,7 +2888,7 @@ function onlineDeal(){
     G.blind=[false,false,false,false]; G.hideHand=false; G.handNo=H; G.dealer=toL(ev.d);
     ONL.dealt=true; startHand(); return true;
   };
-  if(!go()){ONL.handWait=go; if(!ONL.ev[did]) ffEnd();}
+  if(!go()){ONL.handWait=go; if(!ONL.ev[did]){ ffEnd(); if(ONL.srv) srvAsk(did,0,true); }}
 }
 function applyBid(p,d){
   G.bids[p]=d.v; if(d.blind) G.blind[p]=true;
@@ -2916,7 +2948,8 @@ function onlineVote(done){
   $('#vpYes').onclick=()=>{audio();cast(true);}; $('#vpNo').onclick=()=>{audio();cast(false);};
   if(ONL.spec) $('#vpAct').innerHTML='<div class="vp-res" style="flex:1;font-size:14px">Watching the vote…</div>';
   else startClock(0,()=>cast(false),'Your vote');
-  if(ONL.host) for(let a=0;a<4;a++){ if(a===ONL.me) continue; const bot=oBot(a);
+  if(ONL.srv) for(let a=0;a<4;a++){ if(a===ONL.me) continue; const bot=oBot(a); srvAsk(vid(a),bot?(reduce?100:900+a*500):TURN_MS+8000,bot); }
+  if(ONL.host&&!ONL.srv) for(let a=0;a<4;a++){ if(a===ONL.me) continue; const bot=oBot(a);
     const tk=ONL.tok; (bot?later:setTimeout)(()=>{if(tk===ONL.tok&&!ONL.ev[vid(a)]) post(vid(a),{s:a,v:bot?Math.random()<0.6:false});}, bot?(reduce?100:900+a*700):TURN_MS+8000);}
   check();
   if(!finished){ if(votes[0]!==undefined&&!ONL.spec){stopClock(); $('#vpAct').innerHTML='<div class="vp-res" style="flex:1;font-size:14px">Waiting for the table…</div>';} ffEnd(); }
@@ -2933,8 +2966,9 @@ function onlineResults(v,over){
     lv.onclick=()=>{v.remove(); onlineLeave(true); openLobby();}; nx.after(lv);
     return;
   }
-  if(ONL.host){nx.textContent='Deal next hand'; nx.onclick=advance; later(advance,25000);}
-  else {nx.textContent=ONL.spec?'Waiting on the next deal…':'Ready'; nx.onclick=()=>{nx.disabled=true; nx.textContent='Waiting on the deal…';};
+  if(ONL.host&&!ONL.srv){nx.textContent='Deal next hand'; nx.onclick=advance; later(advance,25000);}
+  else {nx.textContent=ONL.spec?'Waiting on the next deal…':(ONL.srv?'Deal next hand':'Ready'); nx.onclick=()=>{nx.disabled=true; nx.textContent='Dealing…'; if(ONL.srv) srvAsk(did,0);};
+    if(ONL.srv&&!ONL.spec) later(()=>srvAsk(did,0,true),25000);
     ONL.watchDeal=[did,advance]; if(ONL.ev[did]) advance(); else ffEnd();}
 }
 /* running series record for this table, kept on the table so everyone sees the same thing */
@@ -2995,7 +3029,8 @@ async function createTable(mode,target,pub){
     for(let i=0;i<6;i++){code=Array.from({length:5},()=>CODE_AB[Math.floor(Math.random()*CODE_AB.length)]).join('');
       if(!(await F.getDoc(F.doc(db,'tables',code))).exists()) break;}
     const rules=pub?Object.assign({},RND_RULES):{jokers:!!opts.jokers,deuce:!!opts.deuce,nil:!!opts.nil,bags:!!opts.bags,timer:!!opts.timer,blind:!!opts.blind,teamBid:!!opts.teamBid};
-    await F.setDoc(F.doc(db,'tables',code),Object.assign({host:FB.uid,status:'lobby',mode,target,rules,g:0,bots:[],created:F.serverTimestamp()},pub?{pub:true,ping:F.serverTimestamp()}:{}));
+    const srv=await srvUp();
+    await F.setDoc(F.doc(db,'tables',code),Object.assign({host:FB.uid,status:'lobby',mode,target,rules,g:0,bots:[],created:F.serverTimestamp()},pub?{pub:true,ping:F.serverTimestamp()}:{},srv?{srv:true}:{}));
     if(pub){RND.made=Date.now(); RND.starting=false;}
     ONL.code=code; ONL.host=true; ONL.me=0;
     await F.setDoc(tRef('seats','0'),mySeatInfo());
@@ -3112,7 +3147,7 @@ function beginOnline(){
   const d=ONL.table, {F,db}=FB;
   if(ONL.room){ONL.room.remove(); ONL.room=null;}
   ONL.saved=Object.assign({},opts); Object.assign(opts,{teamBid:false},d.rules||{},{mode:d.mode,target:d.target});
-  ONL.on=true; ONL.g=d.g||0; ONL.ev={}; ONL.myHands={}; ONL.gone=new Set(); ONL.miss={}; ONL.advanced=null; ONL.leftN={}; ONL.backN={}; ONL.goneG={}; ONL.bye=new Set(); if(!FF) ONL.evReady=true; ONL.dropped=false; ONL.lastEv=Date.now();
+  ONL.on=true; ONL.srv=!!d.srv; ONL.g=d.g||0; ONL.ev={}; ONL.myHands={}; ONL.gone=new Set(); ONL.miss={}; ONL.advanced=null; ONL.leftN={}; ONL.backN={}; ONL.goneG={}; ONL.bye=new Set(); if(!FF) ONL.evReady=true; ONL.dropped=false; ONL.lastEv=Date.now();
   (d.bots||[]).forEach(a=>{ONL.seats[a]=null;});
   if(!ONL.spec) onlRemember();
   if(!ONL.spec) ONL.unsubs.push(F.onSnapshot(F.query(F.collection(db,'tables',ONL.code,'hands'),F.where('uid','==',FB.uid)),snap=>{
@@ -3417,7 +3452,7 @@ async function mergeCheck(){
    Losing connection is not a quit if you come back before the game ends (a bot covers your seat meanwhile).
    No penalty if your partner already left, or if the host's connection died and the table froze. */
 function gameLive(){return !!(ONL.on&&!ONL.spec&&G&&!G.over&&(G.phase==='bid'||G.phase==='play'||G.phase==='between'||G.phase==='idle'));}
-function stalled(){return Date.now()-(ONL.lastEv||Date.now())>45e3;}
+function stalled(){return !ONL.srv&&Date.now()-(ONL.lastEv||Date.now())>45e3;}
 function partnerGone(){return partnersOn()&&ONL.gone.has((ONL.me+2)%4);}
 function quitCounts(){return gameLive()&&!stalled()&&!partnerGone();}
 function leaveGame(){
@@ -3452,7 +3487,8 @@ function quitRatings(){
     const mk=`${ONL.g}.q${a}`;
     const file=()=>F.setDoc(F.doc(db,'users',s.uid,'rates',`q_${ONL.code}_${ONL.g}`),{from:FB.uid,stars:1,at:F.serverTimestamp(),code:ONL.code,g:ONL.g,fs:ONL.me,ts:a}).then(()=>{delete RCACHE[s.uid];}).catch(()=>{});
     if(ONL.ev[mk]) file();
-    else if(ONL.host&&ONL.gone.has(a)&&ONL.goneG[a]===ONL.g&&!ONL.bye.has(a)) post(mk,{s:a,drop:1}).then(ok=>{if(ok) file();}); /* dropped and never came back */
+    else if(ONL.srv&&ONL.gone.has(a)&&ONL.goneG[a]===ONL.g&&!ONL.bye.has(a)) srvAsk(mk,0,true).then(ok=>{if(ok) file();});
+    else if(ONL.host&&!ONL.srv&&ONL.gone.has(a)&&ONL.goneG[a]===ONL.g&&!ONL.bye.has(a)) post(mk,{s:a,drop:1}).then(ok=>{if(ok) file();}); /* dropped and never came back */
   }
 }
 
@@ -3461,7 +3497,7 @@ function handHost(a){
   const s=ONL.seats[a]; if(!s||!FB) return Promise.resolve();
   /* grab everything now: the leave clears the table state right after this call */
   const {F,db}=FB, code=ONL.code, g=ONL.g, H=G?G.handNo:0, copies=[];
-  if(G&&(G.phase==='bid'||G.phase==='play')) for(let x=0;x<4;x++){ if(x===a) continue;
+  if(G&&!ONL.srv&&(G.phase==='bid'||G.phase==='play')) for(let x=0;x<4;x++){ if(x===a) continue;
     const cards=(G.hands[toL(x)]||[]).filter(c=>c&&c.s!=='?'&&!G.played.has(c.id)).map(c=>c.id);
     if(cards.length) copies.push([x,cards]); }
   const b=F.writeBatch(db);
@@ -3469,7 +3505,9 @@ function handHost(a){
   return b.commit().then(()=>F.updateDoc(F.doc(db,'tables',code),{host:s.uid,hs:a})).catch(e=>console.warn('handoff',e));
 }
 function takeHost(){
-  ONL.host=true; toast('The host left. Your phone runs the table now.',3200);
+  ONL.host=true;
+  if(ONL.srv){ toast('The host left. You can run it back when the game ends.',3000); return; }
+  toast('The host left. Your phone runs the table now.',3200);
   const tok=ONL.tok, start=Date.now();
   const go=()=>{
     if(tok!==ONL.tok||!ONL.on) return;
