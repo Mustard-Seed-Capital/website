@@ -539,6 +539,20 @@ button:focus-visible,input:focus-visible+span{outline:2px solid var(--brass);out
 @media (max-width:420px){ .rank-chip span{display:none} .lb2 .lb-who span{font-size:12px} .dock button{font-size:10.5px} .lb-sec small{display:none} }
 @media (max-height:430px){ .mc-tags{display:none} .mc{gap:6px;padding:10px} .mc-t{font-size:17px} .mc-cta{height:32px;font-size:12.5px} .lb2 .lb-me .av{width:42px;height:42px} .lb2 .lb-bar{padding-block:6px 0} .dock button{padding:5px 2px} .dock svg{width:19px;height:19px} }
 
+/* landscape phones: one big swipeable card at a time (art left, details right), same feel as portrait */
+@media (orientation:landscape) and (max-height:600px){
+  .modes{gap:16px;scroll-snap-type:x mandatory;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:22vw}
+  .mc{height:100%;max-height:none;aspect-ratio:auto;width:min(62vw,600px);max-width:none;
+    grid-template-columns:minmax(0,46%) minmax(0,1fr);grid-template-rows:minmax(0,1fr) auto;column-gap:16px;row-gap:10px;padding:12px 16px 12px 12px;scroll-snap-align:start}
+  .mc>.mc-art{grid-row:1 / 3;grid-column:1;height:100%}
+  .mc>div:not(.mc-art):not(.mc-cta){grid-column:2;grid-row:1;align-self:center;min-width:0}
+  .mc>.mc-cta{grid-column:2;grid-row:2}
+  .mc-t{font-size:clamp(20px,6.4vh,30px)}
+  .mc-s{font-size:13.5px;margin-top:5px}
+  .mc-tags{display:flex;margin-top:9px}
+  .mc-art .card{--cw:clamp(34px,11vh,62px)}
+}
+
 /* table screen */
 .tinfo{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .tinfo div{background:rgba(0,0,0,.22);border:1px solid var(--panel-line);border-radius:12px;padding:8px 10px;min-width:0}
