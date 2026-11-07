@@ -3241,7 +3241,14 @@ const RCACHE={};
 let namedQ=[];
 
 function needsName(){return !PROFILE.handle;}
-function whenNamed(f){ if(!needsName()) return f(); namedQ.push(f); if(!document.getElementById('onb')) onboard(); }
+function previewNote(){ /* the Claude app's preview can't reach the online server */
+  const v=sheet(`<h2>Online play</h2><p class="lede">Online games, usernames and friends don’t work inside this preview. Open the real game to play online:</p>
+    <p style="text-align:center;font-weight:800;font-size:17px;margin:10px 0">mcombizz.com/bags-and-books/play</p>
+    <button class="btn" id="pvCopy">Copy link</button><button class="btn ghost" id="pvOk">Keep playing offline</button>`,{mid:true});
+  v.querySelector('#pvCopy').onclick=()=>copyText('https://mcombizz.com/bags-and-books/play/');
+  v.querySelector('#pvOk').onclick=()=>v.remove();
+}
+function whenNamed(f){ if(PREVIEW){ previewNote(); return; } if(!needsName()) return f(); namedQ.push(f); if(!document.getElementById('onb')) onboard(); }
 function runNamedQ(){const q=namedQ; namedQ=[]; q.forEach(f=>{try{f();}catch(e){console.warn(e);}});}
 
 /* ---------- first launch: pick a username (or sign in) ---------- */
