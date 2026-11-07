@@ -595,6 +595,14 @@ button:focus-visible,input:focus-visible+span{outline:2px solid var(--brass);out
 .deckfx{position:absolute;z-index:7;width:0;height:0;pointer-events:none}
 .deckfx .card{position:absolute;box-shadow:0 2px 4px rgba(0,0,0,.35)}
 @media (orientation:landscape) and (max-height:360px){.tools button{width:28px!important;height:28px!important}.tools svg{width:16px;height:16px}.tools{gap:4px!important;padding-bottom:6px!important}.team .det{font-size:10px}#bar{gap:6px!important;padding-block:4px!important}}
+/* short sideways screens (Safari bars, Claude app): you and your partner go slim, picture centered with name and bid beside it,
+   so the middle of the table stays open for the cards */
+@media (orientation:landscape) and (max-height:380px){
+  .seat.n{flex-direction:row!important;gap:8px!important;top:4px!important;transform:translateX(-21px)!important}
+  .seat.s{flex-direction:row!important;gap:8px!important;transform:translateX(-21px)!important}
+  .seat.n .info,.seat.s .info{align-items:flex-start!important}
+  .seat.n .nm{display:flex;align-items:baseline;gap:5px}
+}
 .dealno{float:right;font:600 10.5px var(--f-ui);letter-spacing:.02em;text-transform:none;opacity:.75}
 .hrow{padding:8px 0;border-top:1px solid var(--panel-line)}.hrow b{font-size:14px}.hrow span{float:right;font-size:12px;opacity:.75}
 .hcards{display:flex;flex-wrap:wrap;gap:4px 12px;margin-top:4px;font-size:13.5px}.hcards i{font-style:normal;font-weight:600}.hcards i.red{color:#ff8a8a}
@@ -1375,7 +1383,7 @@ function renderHand(animate,offset=0){
   handEl.innerHTML='';
   const h=G.hands[0], W=handEl.clientWidth;
   const land=LAND.matches;
-  const cw=Math.round(Math.max(44,Math.min(80,W/(land?6.6:5.1),land?innerHeight*0.19:999)));
+  const cw=Math.round(Math.max(44,Math.min(80,W/(land?6.6:5.1),land?innerHeight*(innerHeight<320?0.16:0.19):999)));
   const ov=land?Math.round(cw*0.22):0;
   handEl.style.marginTop=(land?-ov:4)+'px'; stage.style.setProperty('--ov',ov+'px');
   handEl.style.setProperty('--cw',cw+'px'); handEl.style.height=Math.round(cw*1.4+(land?30:28))+'px';
