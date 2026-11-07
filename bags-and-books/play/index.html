@@ -2743,7 +2743,9 @@ async function fb(){
   if(FB) return FB;
   const base=`https://www.gstatic.com/firebasejs/${FBV}/`;
   const [A,U,F]=await Promise.all([import(base+'firebase-app.js'),import(base+'firebase-auth.js'),import(base+'firebase-firestore.js')]);
-  const app=A.initializeApp(FB_CFG), db=F.initializeFirestore(app,{experimentalAutoDetectLongPolling:true}); /* falls back when a network holds up the live stream */
+  const app=A.initializeApp(FB_CFG), ua=navigator.userAgent||'', webkit=/[?&]lp=1/.test(location.search)||/iP(hone|ad|od)/.test(ua)||(/Safari/.test(ua)&&!/Chrome|Chromium|CriOS|Android/.test(ua));
+  /* iPhone Safari's live stream can freeze for ~20s at a time; long polling doesn't */
+  const db=F.initializeFirestore(app,webkit?{experimentalForceLongPolling:true}:{experimentalAutoDetectLongPolling:true});
   const auth=/[?&#]fresh/.test(location.href)?U.initializeAuth(app,{persistence:U.inMemoryPersistence}):U.getAuth(app); // ?fresh = a separate test player in the same browser
   await auth.authStateReady();
   if(!auth.currentUser) await U.signInAnonymously(auth);
@@ -2773,6 +2775,38 @@ async function post(id,data){
 /* ---- table server (Cloud Function): deals, plays bots, covers timeouts; nobody's phone holds other players' cards ---- */
 const SRV_URL='https://us-central1-bags-and-books.cloudfunctions.net/table';
 const GRACE=2500; /* the server gives a real player this much extra before it moves for them */
+/* every table event comes through here, from the live listener or from a direct check */
+function pollHand(key,tok){
+  if(ONL.spec||ONL.me<0) return; const code=ONL.code, t0=Date.now();
+  const tick=async()=>{ if(tok!==ONL.tok||ONL.code!==code||ONL.myHands[key]||Date.now()-t0>60e3) return;
+    try{ const {F,db}=FB, d=await F.getDoc(F.doc(db,'tables',code,'hands',key)); if(d.exists()&&tok===ONL.tok){ ONL.myHands[key]=d.data().cards; if(ONL.handWait) ONL.handWait(); return; } }catch(e){}
+    setTimeout(tick,1800); };
+  setTimeout(tick,2500);
+}
+function evIn(id,x){ const have=ONL.ev[id];
+  if(have){ if(have.local) confirmMine(id,x); return; }
+  ONL.ev[id]=x; onEv(id,x); }
+/* if the live connection stalls, ask the database directly for the move we're waiting on */
+function pollEv(id){
+  if(!FB||!ONL.code) return; const tok=ONL.tok, code=ONL.code, t0=Date.now();
+  const tick=async()=>{
+    if(tok!==ONL.tok||ONL.code!==code||(ONL.ev[id]&&!ONL.ev[id].local)||Date.now()-t0>90e3) return;
+    try{ const {F,db}=FB, d=await F.getDoc(F.doc(db,'tables',code,'ev',id));
+      if(d.exists()&&tok===ONL.tok&&ONL.code===code){ LAG.saves=(LAG.saves||0)+1; evIn(id,d.data({serverTimestamps:'estimate'})); return; } }catch(e){}
+    setTimeout(tick,1800);
+  };
+  setTimeout(tick,2500);
+}
+/* my move hasn't reached the database after a few seconds: hand it to the table server directly */
+function relayMine(id,d){
+  const tok=ONL.tok, code=ONL.code;
+  setTimeout(async()=>{
+    if(tok!==ONL.tok||!ONL.srv||!(ONL.ev[id]&&ONL.ev[id].local)) return;
+    try{ const t=await FB.auth.currentUser.getIdToken(); LAG.relays=(LAG.relays||0)+1;
+      await fetch(SRV_URL,{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+t},body:JSON.stringify({code,id,mv:d})}); }catch(e){}
+    pollEv(id);
+  },3000);
+}
 /* my own bid or card shows the moment I tap it; the server's copy confirms it a beat later */
 function mineNow(id,d){ const loc=Object.assign({by:FB.uid,local:true},d); ONL.ev[id]=loc; onEv(id,loc); }
 function confirmMine(id,x){
@@ -2810,8 +2844,8 @@ function stats(a){ if(!a.length) return {n:0}; const b=a.slice().sort((x,y)=>x-y
 function sendLag(){
   if(FF||ONL.spec||ONL.me<0||!G) return;
   const c=navigator.connection||{};
-  post(`lag.${ONL.g}.${G.handNo}.${ONL.me}`,{s:ONL.me,up:stats(LAG.up),dn:stats(LAG.dn),net:c.effectiveType||'',rtt:c.rtt||0,app:appKind(),v:2});
-  LAG.up=LAG.up.slice(-6); LAG.dn=[];
+  post(`lag.${ONL.g}.${G.handNo}.${ONL.me}`,{s:ONL.me,up:stats(LAG.up),dn:stats(LAG.dn),net:c.effectiveType||'',rtt:c.rtt||0,app:appKind(),saves:LAG.saves||0,relays:LAG.relays||0,v:3});
+  LAG.up=LAG.up.slice(-6); LAG.dn=[]; LAG.saves=0; LAG.relays=0;
 }
 let srvOk=null;
 async function srvUp(){
@@ -2846,7 +2880,7 @@ function srvAsk(id,delay,lead){
 function waitFor(id,cb){
   const tok=ONL.tok; ONL.wait=null;
   if(ONL.ev[id]){const d=ONL.ev[id]; setTimeout(()=>{if(tok===ONL.tok)cb(d);},0); return;}
-  ONL.wait={id,cb,tok}; ffEnd();
+  ONL.wait={id,cb,tok}; ffEnd(); if(!FF) pollEv(id);
 }
 function ffEnd(){
   if(!FF||!ONL.evReady) return; FF=false; soundOn=ONL.snd;
@@ -3011,7 +3045,7 @@ function onlineDeal(){
     G.blind=[false,false,false,false]; G.hideHand=false; G.handNo=H; G.dealer=toL(ev.d);
     ONL.dealt=true; startHand(); return true;
   };
-  if(!go()){ONL.handWait=go; if(!ONL.ev[did]){ ffEnd(); if(ONL.srv) srvAsk(did,0,true); }}
+  if(!go()){ONL.handWait=go; if(!ONL.ev[did]){ ffEnd(); if(ONL.srv) srvAsk(did,0,true); } if(!FF){ pollEv(did); pollHand(`${ONL.g}-${H}-${ONL.me}`,tok); }}
 }
 function applyBid(p,d){
   G.bids[p]=d.v; if(d.blind) G.blind[p]=true;
@@ -3031,7 +3065,7 @@ function onlineBidTurn(p){
 function onlineBid(v){
   const id=evId('b'+ONL.me); if(ONL.sent===id) return; ONL.sent=id;
   stopClock(); $('#bidPanel').hidden=true; status('');
-  const d={s:ONL.me,v}; mineNow(id,d);
+  const d={s:ONL.me,v}; mineNow(id,d); relayMine(id,d);
   post(id,Object.assign({ms:LAG.me||0},d)).then(ok=>{ if(ok) srvNext(); else if(ONL.ev[id]&&ONL.ev[id].local){ toast('Couldn’t send your bid. Getting the table back in sync…',3000); resync(); } });
 }
 function onlineTurn(){
@@ -3045,7 +3079,7 @@ function playMine(c){
   if(!ONL.on) return playCard(0,c);
   const id=evId('p'+G.played.size); if(ONL.sent===id) return; ONL.sent=id;
   busy=true; stopClock(); cardSwish(0.3,0,0.05);
-  const d={s:ONL.me,c:c.id}; mineNow(id,d); /* the card flies now, not after the round trip */
+  const d={s:ONL.me,c:c.id}; mineNow(id,d); relayMine(id,d); /* the card flies now, not after the round trip */
   post(id,Object.assign({ms:LAG.me||0},d)).then(ok=>{ if(ok) srvNext(); else if(ONL.ev[id]&&ONL.ev[id].local){ toast('Couldn’t send your card. Getting the table back in sync…',3000); resync(); } });
 }
 function onlineVote(done){
@@ -3306,9 +3340,7 @@ function beginOnline(){
       if(ch.type==='removed') return;
       /* game moves count once the server has them (chat and gifts show instantly) */
       if(ch.doc.metadata.hasPendingWrites&&!/^[ct]\./.test(id)) return;
-      const x=ch.doc.data({serverTimestamps:'estimate'}), have=ONL.ev[id];
-      if(have){ if(have.local) confirmMine(id,x); return; }
-      ONL.ev[id]=x; onEv(id,x);});
+      evIn(id,ch.doc.data({serverTimestamps:'estimate'}));});
     if(!ONL.evReady){ONL.evReady=true; setTimeout(()=>{ if(!FF) return;
       if((ONL.wait&&!ONL.ev[ONL.wait.id])||(ONL.watchDeal&&!ONL.ev[ONL.watchDeal[0]])) ffEnd(); },0);}
   },e=>{console.warn(e); toast('Lost the connection to the table.',3000);}));
