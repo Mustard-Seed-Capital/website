@@ -2181,7 +2181,7 @@ function menuSheet(){
     <button class="btn ghost" id="mMe">Your player &amp; tables</button>`);
   v.querySelector('#mMe').onclick=()=>{v.remove();playerSheet();};
   v.querySelector('#mS').onchange=e=>{soundOn=e.target.checked;audio();};
-  v.querySelector('#mNew').onclick=()=>{v.remove();if(ONL.on)onlineLeave(true);openLobby();};
+  v.querySelector('#mNew').onclick=()=>{v.remove(); if(ONL.on) return leaveGame(); openLobby();};
   v.querySelector('#mSet').onclick=()=>{v.remove();settingsSheet();};
   v.querySelector('#mHelp').onclick=()=>{v.remove();helpSheet();};
 }
@@ -2492,7 +2492,7 @@ function openTable(m){
 }
 
 function startTable(t){
-  if(ONL.on) onlineLeave(true);
+  if(ONL.on){ const q=quitCounts(); if(q) noteQuit(); onlineLeave(true,q); }
   const go=()=>{
     opts.mode=t.mode; opts.target=t.target; try{localStorage.setItem('bb-opts',JSON.stringify(opts));}catch(e){}
     const lb=document.getElementById('lobby'); if(lb) lb.hidden=true; $('#bidPanel').hidden=true;
@@ -2729,13 +2729,15 @@ function waitFor(id,cb){
 }
 function ffEnd(){
   if(!FF) return; FF=false; soundOn=ONL.snd;
-  if(G&&ONL.on){renderSeats(); renderHand(); if(!ONL.spec) toast('You’re back in. It’s live now.',2200);}
+  if(G&&ONL.on){renderSeats(); renderHand(); if(!ONL.spec) toast('You’re back in. It’s live now.',2200); if(ONL.dropped) postBack();}
 }
 function onEv(id,d){
   if(ONL.host&&typeof d.s==='number'&&ONL.seats[d.s]&&d.by===ONL.seats[d.s].uid) ONL.miss[d.s]=0;
   if(id.startsWith('c.')) return chatIn(d);
   if(id.startsWith('t.')) return throwIn(d);
-  if(id.startsWith('left.')) return leftIn(d.s);
+  ONL.lastEv=Date.now();
+  if(id.startsWith('left.')) return leftIn(d.s,d);
+  if(id.startsWith('back.')) return backIn(d.s);
   if(/\.k\d$/.test(id)){ if(G&&id.startsWith(`${ONL.g}.${G.handNo}.`)&&[0,1,2,3].includes(d.s)&&!FF){const p=toL(d.s); if(p!==0){markTracker(p); toast(`🤓 ${nmOf(p)} paid for the card tracker. Newbie!`,2600);} } return; }
   if(ONL.handWait) ONL.handWait();
   if(ONL.watch) ONL.watch(id,d);
@@ -2756,15 +2758,38 @@ function chatIn(d){
   const ok=QUICK.concat(QUICK_EXTRA); if(typeof d.s!=='number'||!ok.includes(d.t)) return;
   say(toL(d.s),d.t,2800,true); if(d.s!==ONL.me) cardTap(0.25);
 }
-function leftIn(a){
-  if(typeof a!=='number'||ONL.gone.has(a)) return;
-  ONL.gone.add(a);
+function leftIn(a,d){
+  if(typeof a!=='number') return;
+  ONL.leftN[a]=(ONL.leftN[a]||0)+1;
+  if(ONL.gone.has(a)) return;
+  ONL.gone.add(a); ONL.goneG[a]=ONL.g;
   if(!ONL.on) return;
-  if(a===ONL.me&&!ONL.spec){toast('You were away too long, so a bot took your seat.',4200); onlineLeave(false); openLobby(); return;}
-  if(ONL.table&&a===0){toast('The host left, so the table closed.',4200); onlineLeave(false); openLobby(); return;}
-  const p=toL(a); toast(`${NAMES[p]} left. A bot plays their seat now.`,3200);
-  NAMES[p]=NAMES[p]+' 🤖'; renderSeats();
+  const quit=!!(d&&d.q);
+  if(a===ONL.me&&!ONL.spec){ if(quit) return; /* we left on purpose */
+    ONL.dropped=true; if(!FF) droppedBar(); onlineNames(); return; }
+  const p=toL(a); toast(quit?`${NAMES[p]} quit. A bot plays their seat now.`:`${NAMES[p]} lost connection. A bot plays for them until they’re back.`,3400);
+  onlineNames();
   if(ONL.host&&ONL.drv&&toA(ONL.drv[1])===a) drive(...ONL.drv);
+}
+function backIn(a){
+  if(typeof a!=='number') return;
+  ONL.backN[a]=(ONL.backN[a]||0)+1;
+  if(!ONL.gone.has(a)) return;
+  ONL.gone.delete(a); ONL.miss[a]=0;
+  if(!ONL.on) return;
+  if(a===ONL.me){ONL.dropped=false; const b=document.getElementById('dropBar'); if(b) b.remove(); if(!FF) toast('You’re back in your seat.',2200); onlineNames(); renderHand(); return;}
+  onlineNames(); if(!FF) toast(`${NAMES[toL(a)]} is back.`,2200);
+}
+function droppedBar(){
+  if(document.getElementById('dropBar')) return;
+  const b=document.createElement('div'); b.id='dropBar'; b.className='invban';
+  b.innerHTML='<span>⏸️</span><div>You missed 3 turns, so a bot is playing your seat.</div><button class="btn sm" id="dbBack">I’m back</button>';
+  document.body.appendChild(b);
+  b.querySelector('#dbBack').onclick=()=>{b.remove(); postBack();};
+}
+function postBack(){
+  if(!ONL.on||ONL.spec||ONL.me<0) return;
+  post(`back.${ONL.g}.${ONL.me}.${ONL.backN[ONL.me]||0}`,{s:ONL.me});
 }
 
 /* host plays bots right away, and covers a real player after they run out of time */
@@ -2774,7 +2799,7 @@ function drive(kind,p,id){
   const bot=oBot(a), tok=ONL.tok;
   const auto=()=>{
     if(tok!==ONL.tok||ONL.ev[id]||!G) return;
-    if(!bot){ ONL.miss[a]=(ONL.miss[a]||0)+1; if(ONL.miss[a]>=3){post('left.'+a,{s:a});} }
+    if(!bot){ ONL.miss[a]=(ONL.miss[a]||0)+1; if(ONL.miss[a]>=3){post(`left.${ONL.g}.${a}.${ONL.leftN[a]||0}`,{s:a,q:0});} }
     post(id,Object.assign({s:a},kind==='b'?{v:suggestBid(p)}:{c:botChoose(p).id}));
   };
   ONL.fbT=setTimeout(auto, bot?(reduce?120:650+Math.random()*450):(opts.timer?TURN_MS+8000:120000));
@@ -2895,7 +2920,7 @@ function onlineResults(v,over){
   const nextH=G.handNo+1, did=`${ONL.g}.${nextH}.deal`;
   const advance=()=>{if(ONL.advanced===`${ONL.g}.${nextH}`) return; ONL.advanced=`${ONL.g}.${nextH}`; v.remove(); G.dealer=(G.dealer+1)%4; startHand();};
   if(over){
-    ffEnd(); seriesNote(v,nx); rateBlock(v,nx);
+    ffEnd(); seriesNote(v,nx); rateBlock(v,nx); quitRatings();
     nx.textContent=ONL.host?'Run it back with this table':'Waiting on the host to run it back…'; nx.disabled=!ONL.host;
     nx.onclick=()=>{if(!ONL.host) return; nx.disabled=true; FB.F.updateDoc(tRef(),{g:ONL.g+1}).catch(e=>{console.warn(e);nx.disabled=false;});};
     const lv=document.createElement('button'); lv.className='btn ghost'; lv.textContent='Leave table';
@@ -3003,6 +3028,7 @@ function enterRoom(quiet){
       return beginOnline();
     }
     if(d.status==='closed'&&!ONL.host){toast('The host closed the table.',3200); if(ONL.on){onlineLeave(false);openLobby();} else roomLeave(); return;}
+    if(ONL.on&&d.host===FB.uid&&!ONL.host&&!ONL.spec) takeHost();
     if(ONL.on&&d.g!==ONL.g){ONL.g=d.g; onlineNewGame();}
     if(!ONL.on&&!was) drawRoom();
   },e=>console.warn(e)));
@@ -3075,11 +3101,11 @@ function beginOnline(){
   const d=ONL.table, {F,db}=FB;
   if(ONL.room){ONL.room.remove(); ONL.room=null;}
   ONL.saved=Object.assign({},opts); Object.assign(opts,{teamBid:false},d.rules||{},{mode:d.mode,target:d.target});
-  ONL.on=true; ONL.g=d.g||0; ONL.ev={}; ONL.myHands={}; ONL.gone=new Set(); ONL.miss={}; ONL.advanced=null;
+  ONL.on=true; ONL.g=d.g||0; ONL.ev={}; ONL.myHands={}; ONL.gone=new Set(); ONL.miss={}; ONL.advanced=null; ONL.leftN={}; ONL.backN={}; ONL.goneG={}; ONL.dropped=false; ONL.lastEv=Date.now();
   (d.bots||[]).forEach(a=>{ONL.seats[a]=null;});
   if(!ONL.spec) onlRemember();
   if(!ONL.spec) ONL.unsubs.push(F.onSnapshot(F.query(F.collection(db,'tables',ONL.code,'hands'),F.where('uid','==',FB.uid)),snap=>{
-    snap.forEach(x=>{ONL.myHands[x.id]=x.data().cards;}); if(ONL.handWait) ONL.handWait();
+    snap.forEach(x=>{const id=x.id.replace(/-x$/,''); if(x.id!==id&&ONL.myHands[id]) return; ONL.myHands[id]=x.data().cards;}); if(ONL.handWait) ONL.handWait();
   },e=>console.warn(e)));
   ONL.unsubs.push(F.onSnapshot(F.collection(db,'tables',ONL.code,'ev'),snap=>{
     snap.docChanges().forEach(ch=>{const id=ch.doc.id;
@@ -3100,8 +3126,14 @@ function specTag(){
   if(!t){t=document.createElement('div'); t.id='specTag'; stage.appendChild(t);}
   t.innerHTML=`👀 Watching · bottom seat is ${esc(ONL.seats[0]?ONL.seats[0].name:'the host')}`;
 }
-function onlineLeave(announce){
-  if(ONL.on&&announce&&ONL.me>=0){ if(ONL.host) FB.F.updateDoc(tRef(),{status:'closed'}).catch(()=>{}); else post('left.'+ONL.me,{s:ONL.me}); }
+function onlineLeave(announce,quit){
+  if(ONL.on&&announce&&ONL.me>=0&&!ONL.spec){
+    if(quit) post(`${ONL.g}.q${ONL.me}`,{s:ONL.me});
+    const next=[0,1,2,3].find(a=>a!==ONL.me&&ONL.seats[a]&&!ONL.gone.has(a));
+    if(ONL.host&&next===undefined) FB.F.updateDoc(tRef(),{status:'closed'}).catch(()=>{});
+    else { if(ONL.host) handHost(next); post(`left.${ONL.g}.${ONL.me}.${ONL.leftN[ONL.me]||0}`,{s:ONL.me,q:quit?1:0}); }
+  }
+  {const b=document.getElementById('dropBar'); if(b) b.remove();}
   onlineUnsub(); if(ONL.room){ONL.room.remove(); ONL.room=null;}
   ONL.on=false; ONL.code=null; ONL.tok++; if(FF){FF=false; soundOn=ONL.snd;} ONL.spec=false; specTag(); onlForget(); ONL.wait=null; ONL.watch=null; ONL.watchDeal=null; ONL.handWait=null; clearTimeout(ONL.fbT); ONL.me=0; ONL.host=false;
   if(ONL.saved){Object.assign(opts,ONL.saved); ONL.saved=null;}
@@ -3297,6 +3329,11 @@ function randomsSheet(){ whenNamed(()=>{
     v.querySelectorAll('input[name="rm"]').forEach(i=>i.onchange=()=>{mode=i.value;PROFILE.rndMode=mode;saveProfile();draw();});
     myRatingLine(v.querySelector('#rMine'));
     const b=v.querySelector('#rFind');
+    const gate=r=>{const w=quitWait(r); clearInterval(v._qt); if(!w) {b.disabled=false; b.textContent='Find a table'; return;}
+      b.disabled=true; const upd=()=>{const ms=quitWait(r); if(ms<=0){clearInterval(v._qt); b.disabled=false; b.textContent='Find a table'; return;}
+        const m=Math.floor(ms/60e3), sec=Math.floor(ms%60e3/1000); b.textContent=`Timeout for quitting · ${m}:${String(sec).padStart(2,'0')}`;};
+      upd(); v._qt=setInterval(()=>{if(!v.isConnected){clearInterval(v._qt);return;} upd();},1000);};
+    gate(null); if(FB) ratingOf(FB.uid).then(gate);
     b.onclick=async()=>{audio(); b.disabled=true; b.textContent='Looking for players…';
       const ok=await findMatch(mode); if(ok) v.remove(); else {b.disabled=false; b.textContent='Find a table';}};
   };
@@ -3362,14 +3399,87 @@ async function mergeCheck(){
   RND.merging=false;
 }
 
+/* ---------- quitting ----------
+   Leaving mid-game = a quit: an automatic 1-star and a timeout from Play Online.
+   Losing connection is not a quit if you come back before the game ends (a bot covers your seat meanwhile).
+   No penalty if your partner already left, or if the host's connection died and the table froze. */
+function gameLive(){return !!(ONL.on&&!ONL.spec&&G&&!G.over&&(G.phase==='bid'||G.phase==='play'||G.phase==='between'||G.phase==='idle'));}
+function stalled(){return Date.now()-(ONL.lastEv||Date.now())>45e3;}
+function partnerGone(){return partnersOn()&&ONL.gone.has((ONL.me+2)%4);}
+function quitCounts(){return gameLive()&&!stalled()&&!partnerGone();}
+function leaveGame(){
+  if(!quitCounts()){ onlineLeave(true,false); openLobby(); return; }
+  const t=quitTimeoutFor(Date.now(),1);
+  const v=sheet(`<h2>Leave this game?</h2>
+    <p class="lede">Leaving before the game ends counts as a <b>quit</b>. You get an automatic <b>1-star</b> rating and a <b>${fmtDur(t)}</b> timeout from Play Online. A bot takes your seat.</p>
+    <ul class="notes"><li>Lost connection? That’s not a quit. Open the app again before the game ends and you get your seat back.</li><li>If your partner leaves first, you can go with no penalty.</li></ul>
+    <button class="btn" id="qStay">Stay and finish</button><button class="btn ghost warn" id="qGo">Leave anyway</button>`,{mid:true});
+  v.querySelector('#qStay').onclick=()=>v.remove();
+  v.querySelector('#qGo').onclick=()=>{v.remove(); noteQuit(); onlineLeave(true,true); openLobby(); toast(`You left the game. Play Online opens again in ${fmtDur(t)}.`,3600);};
+}
+function noteQuit(){const q=(PROFILE.quits||[]).filter(t=>Date.now()-t<864e5); q.push(Date.now()); PROFILE.quits=q.slice(-10); saveProfile();}
+const QUIT_STEPS=[5,15,60]; // minutes: 1st, 2nd, 3rd+ quit in 24 hours
+function quitTimeoutFor(now,extra){
+  const n=(PROFILE.quits||[]).filter(t=>now-t<864e5).length+(extra||0);
+  return n?QUIT_STEPS[Math.min(n,QUIT_STEPS.length)-1]*60e3:0;
+}
+function quitWait(r){
+  const now=Date.now();
+  (r&&r.qAt||[]).forEach(t=>{if(!(PROFILE.quits||[]).some(x=>Math.abs(x-t)<5*60e3)) PROFILE.quits=(PROFILE.quits||[]).concat(t);});
+  const q=(PROFILE.quits||[]).filter(t=>now-t<864e5).sort((a,b)=>a-b); if(!q.length) return 0;
+  const dur=QUIT_STEPS[Math.min(q.length,QUIT_STEPS.length)-1]*60e3;
+  return Math.max(0,q[q.length-1]+dur-now);
+}
+function fmtDur(ms){const m=Math.ceil(ms/60e3); return m>=60?`${Math.round(m/60)} hour${m>=120?'s':''}`:`${m} minute${m>1?'s':''}`;}
+/* at game over, anyone still at the table files the 1-star for each quit (first write wins, so it only counts once) */
+function quitRatings(){
+  if(ONL.spec||!FB) return;
+  const {F,db}=FB;
+  for(let a=0;a<4;a++){ const s=ONL.seats[a]; if(!s||a===ONL.me||s.uid===FB.uid) continue;
+    const mk=`${ONL.g}.q${a}`;
+    const file=()=>F.setDoc(F.doc(db,'users',s.uid,'rates',`q_${ONL.code}_${ONL.g}`),{from:FB.uid,stars:1,at:F.serverTimestamp(),code:ONL.code,g:ONL.g,fs:ONL.me,ts:a}).then(()=>{delete RCACHE[s.uid];}).catch(()=>{});
+    if(ONL.ev[mk]) file();
+    else if(ONL.host&&ONL.gone.has(a)&&ONL.goneG[a]===ONL.g) post(mk,{s:a,drop:1}).then(ok=>{if(ok) file();}); /* dropped and never came back */
+  }
+}
+
+/* ---------- host hand-off: if the host leaves, the next player runs the table ---------- */
+async function handHost(a){
+  const s=ONL.seats[a]; if(!s) return; const {F,db}=FB;
+  try{
+    const H=G.handNo, b=F.writeBatch(db);
+    if(G&&ONL.dealt&&(G.phase==='bid'||G.phase==='play')) for(let x=0;x<4;x++){ if(x===a) continue;
+      const cards=(G.hands[toL(x)]||[]).filter(c=>c&&c.s!=='?'&&!G.played.has(c.id)).map(c=>c.id);
+      if(cards.length) b.set(F.doc(db,'tables',ONL.code,'hands',`${ONL.g}-${H}-${x}-x`),{uid:s.uid,cards}); }
+    await b.commit();
+    await F.updateDoc(tRef(),{host:s.uid,hs:a});
+  }catch(e){console.warn('handoff',e);}
+}
+function takeHost(){
+  ONL.host=true; toast('The host left. Your phone runs the table now.',3200);
+  const tok=ONL.tok, start=Date.now();
+  const go=()=>{
+    if(tok!==ONL.tok||!ONL.on) return;
+    const key=a=>`${ONL.g}-${G.handNo}-${a}`, need=[0,1,2,3].filter(a=>a!==ONL.me&&(G.phase==='bid'||G.phase==='play'));
+    if(need.some(a=>!ONL.myHands[key(a)])&&Date.now()-start<4000) return setTimeout(go,300);
+    const byId=Object.fromEntries((G.deck||[]).map(c=>[c.id,c]));
+    need.forEach(a=>{const c=ONL.myHands[key(a)]; if(c) G.hands[toL(a)]=sortHand(c.filter(id=>!G.played.has(id)).map(id=>byId[id]).filter(Boolean));});
+    const w=ONL.wait&&ONL.wait.id;
+    if(w){ const mb=w.match(/\.b(\d)$/); if(mb) drive('b',toL(+mb[1]),w); else if(/\.p\d+$/.test(w)) drive('p',G.turn,w); }
+    if(ONL.watchDeal){ const f=ONL.watchDeal[1]; setTimeout(()=>{if(ONL.watchDeal&&ONL.watchDeal[1]===f){ONL.watchDeal=null; f();}},2500); }
+  };
+  go();
+}
+
 /* ---------- player ratings: 1 to 5 stars, average of the last 50 games you were rated in ---------- */
 async function ratingOf(uid){
   const c=RCACHE[uid]; if(c&&(c.p||Date.now()-c.t<300e3)) return c.p||c;
   if(!FB) return null;
   const {F,db}=FB;
   const p=F.getDocs(F.query(F.collection(db,'users',uid,'rates'),F.orderBy('at','desc'),F.limit(50))).then(s=>{
-    let sum=0,n=0; s.forEach(d=>{const x=d.data().stars; if(Number.isInteger(x)&&x>=1&&x<=5){sum+=x;n++;}});
-    return RCACHE[uid]={avg:n?sum/n:0,n,t:Date.now()};
+    let sum=0,n=0,q=0; const qAt=[]; s.forEach(d=>{const x=d.data().stars; if(Number.isInteger(x)&&x>=1&&x<=5){sum+=x;n++;}
+      if(d.id.startsWith('q_')){q++; const t=d.data().at; if(t&&t.toMillis) qAt.push(t.toMillis());}});
+    return RCACHE[uid]={avg:n?sum/n:0,n,q,qAt,t:Date.now()};
   }).catch(e=>{console.warn(e); delete RCACHE[uid]; return null;});
   RCACHE[uid]={p}; return p;
 }
@@ -3377,7 +3487,7 @@ function starRow(avg){const f=Math.round(avg*2)/2; return [1,2,3,4,5].map(i=>`<i
 function rtHtml(r,long){
   if(!r||r.p) return '';
   if(r.n<3) return `<span class="rt new">${long?'New player · not enough ratings yet':'New'}</span>`;
-  return `<span class="rt">${long?starRow(r.avg)+' ':'★ '}${r.avg.toFixed(1)}${long?` <small>from ${r.n} recent rating${r.n>1?'s':''}</small>`:''}</span>`;
+  return `<span class="rt">${long?starRow(r.avg)+' ':'★ '}${r.avg.toFixed(1)}${long?` <small>from ${r.n} recent rating${r.n>1?'s':''}${r.q?` · quit ${r.q} game${r.q>1?'s':''}`:''}</small>`:''}</span>`;
 }
 function rtTag(uid,long){
   if(!uid||!FB) return '';
