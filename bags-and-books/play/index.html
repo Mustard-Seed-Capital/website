@@ -2986,7 +2986,7 @@ async function joinTable(code){
 }
 function onlineUnsub(){ONL.unsubs.forEach(u=>{try{u();}catch(e){}}); ONL.unsubs=[];}
 function enterRoom(quiet){
-  const {F,db}=FB; onlineUnsub();
+  const {F,db}=FB; onlineUnsub(); document.querySelectorAll('.invban').forEach(x=>x.remove());
   if(!quiet){ ONL.seats=[null,null,null,null]; ONL.gone=new Set(); ONL.table=null;
     const v=sheet('<div id="room"></div>',{mid:true,noClose:true}); ONL.room=v; }
   ONL.unsubs.push(F.onSnapshot(F.collection(db,'tables',ONL.code,'seats'),snap=>{
