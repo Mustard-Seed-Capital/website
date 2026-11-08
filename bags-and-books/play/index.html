@@ -851,6 +851,13 @@ h4.hr{color:#8fd0ff}.hrbtn{margin-top:8px;font-size:13px}
 .rbk button{min-width:38px}.rsu button{min-width:0}
 body.realsp #bRen{border-color:#e05a4f;color:#ff8a80}
 .wkb{font-size:12.5px;font-weight:700;color:var(--brass);margin:2px 0}
+#feltDeco{position:absolute;inset:0;pointer-events:none;z-index:0}
+#feltDeco span{position:absolute;transform:translate(-50%,-50%);font-size:clamp(18px,4.2vmin,34px);opacity:.22;filter:saturate(.8)}
+.sban{display:flex;align-items:center;gap:10px;width:100%;max-width:1100px;margin:6px auto 2px;padding:8px 12px;border-radius:14px;border:1px solid var(--brass-dim);
+  background:linear-gradient(90deg,rgba(240,178,94,.18),rgba(240,178,94,.05));color:inherit;text-align:left;cursor:pointer;font:inherit}
+.sban .sb-e{font-size:26px}.sban b{display:block;font-size:14px}.sban small{display:block;font-size:12px;opacity:.8}
+.sban .sb-go{margin-left:auto;padding:6px 12px;border-radius:999px;background:var(--brass);color:#1d1407;font-weight:800;font-size:12.5px;white-space:nowrap}.sban.on .sb-go{background:transparent;color:var(--brass);border:1px solid var(--brass-dim)}
+@media (max-height:430px){.sban{padding:5px 10px;margin-top:2px}.sban .sb-e{font-size:20px}.sban small{display:none}}
 </style>
 
 <div id="app">
@@ -1232,24 +1239,24 @@ const THEMES=[
  {id:'royal',name:'Royal Purple',lvl:7,v:{'--felt-bg':'radial-gradient(ellipse at 50% 40%, #6b3fa3 0%, #4a2878 45%, #22103d 100%)','--rail-bg':'radial-gradient(ellipse at 50% 0%, rgba(255,255,255,.12), transparent 60%), linear-gradient(180deg,#1f1726,#09060c)','--stitch':'rgba(230,196,106,.3)','--wood':'#b08a3a','--line':'rgba(230,196,106,.32)','--brass':'#e6c46a','--brass-dim':'#8e7638','--page':'#140a22','--page-hi':'#221338','--panel':'#170c27','--panel-line':'#3a2a52','--chip':'#24163a','--back-a':'#3d1f63','--back-b':'#56308a','--muted':'#c3b3d9'}},
  {id:'gold',name:'Gold Room',lvl:99,vip:true,v:{'--felt-bg':'radial-gradient(ellipse at 50% 40%, #2c2a26 0%, #171614 50%, #070707 100%)','--rail-bg':'radial-gradient(ellipse at 50% 0%, rgba(255,255,255,.35), transparent 55%), linear-gradient(180deg,#e8c35c,#8a6420)','--stitch':'rgba(0,0,0,.35)','--wood':'#1a1a1a','--line':'rgba(232,195,92,.42)','--brass':'#f0cd6a','--brass-dim':'#9a7a30','--page':'#0a0a0a','--page-hi':'#1c1912','--panel':'#121110','--panel-line':'#36322a','--chip':'#1f1d18','--back-a':'#111','--back-b':'#2a2414','--muted':'#cbc2aa'}}
 ];
-function holidayTheme(id,name,from,to,c){return {id,name,lvl:1,season:{from,to},v:{
+function holidayTheme(id,name,from,to,c){return {id,name,lvl:1,season:{from,to},deco:c.deco,hl:c.hl,v:{
   '--felt-bg':(c.pattern?c.pattern+', ':'')+`radial-gradient(ellipse at 50% 40%, ${c.felt[0]} 0%, ${c.felt[1]} 45%, ${c.felt[2]} 100%)`,
   '--rail-bg':`radial-gradient(ellipse at 50% 0%, rgba(255,255,255,.14), transparent 60%), linear-gradient(180deg,${c.rail[0]},${c.rail[1]})`,
   '--stitch':c.stitch||'rgba(255,230,190,.3)','--wood':c.wood,'--line':c.line||'rgba(255,220,150,.3)','--brass':c.brass,'--brass-dim':c.brassDim||c.brass,
   '--page':c.page,'--page-hi':c.pageHi,'--panel':c.panel,'--panel-line':c.panelLine,'--chip':c.chip,'--back-a':c.back[0],'--back-b':c.back[1],'--muted':c.muted||'#c9c1b0'}};}
 THEMES.push(
-  holidayTheme('harvest','Harvest Table','11-01','11-30',{felt:['#b5652a','#7f3f17','#3d1c09'],rail:['#4a2a14','#24130a'],wood:'#9a6a33',brass:'#f0b25e',page:'#2a170b',pageHi:'#3a2112',panel:'#24150b',panelLine:'#5a3a22',chip:'#3a2414',back:['#8a3b12','#a64e1c'],
+  holidayTheme('harvest','Thanksgiving Table','11-01','11-30',{deco:['🍂','🦃','🥧','🌽'],hl:'Thanksgiving is at the table 🦃',felt:['#b5652a','#7f3f17','#3d1c09'],rail:['#4a2a14','#24130a'],wood:'#9a6a33',brass:'#f0b25e',page:'#2a170b',pageHi:'#3a2112',panel:'#24150b',panelLine:'#5a3a22',chip:'#3a2414',back:['#8a3b12','#a64e1c'],
     pattern:'radial-gradient(circle at 20% 30%, rgba(255,190,90,.08) 0 18px, transparent 19px), radial-gradient(circle at 75% 65%, rgba(255,140,60,.07) 0 22px, transparent 23px)'}),
-  holidayTheme('holiday','Holiday Lights','12-01','12-25',{felt:['#1f7a4a','#135533','#072815'],rail:['#7a1420','#3e0910'],wood:'#b3262f',brass:'#f3d27a',page:'#0a2416',pageHi:'#113422',panel:'#0c2618',panelLine:'#2c5440',chip:'#173a28',back:['#a3152a','#c22036'],
+  holidayTheme('holiday','Holiday Lights','12-01','12-25',{deco:['🎄','❄️','🎁','✨'],hl:'Holiday Lights are on 🎄',felt:['#1f7a4a','#135533','#072815'],rail:['#7a1420','#3e0910'],wood:'#b3262f',brass:'#f3d27a',page:'#0a2416',pageHi:'#113422',panel:'#0c2618',panelLine:'#2c5440',chip:'#173a28',back:['#a3152a','#c22036'],
     pattern:'radial-gradient(circle, rgba(255,255,255,.22) 1.2px, transparent 1.6px) 0 0/34px 34px'}),
-  holidayTheme('newyear','New Year Gold','12-26','01-07',{felt:['#2b2b30','#17171b','#060607'],rail:['#e3c068','#8c6b25'],wood:'#d9b45a',brass:'#f5d77e',page:'#0c0c0e',pageHi:'#18181c',panel:'#121214',panelLine:'#3a3528',chip:'#22201a',back:['#1c1c22','#2e2a20'],
+  holidayTheme('newyear','New Year Gold','12-26','01-07',{deco:['🎆','🥂','✨','🎉'],hl:'Ring in the new year 🎆',felt:['#2b2b30','#17171b','#060607'],rail:['#e3c068','#8c6b25'],wood:'#d9b45a',brass:'#f5d77e',page:'#0c0c0e',pageHi:'#18181c',panel:'#121214',panelLine:'#3a3528',chip:'#22201a',back:['#1c1c22','#2e2a20'],
     pattern:'radial-gradient(circle, rgba(245,215,126,.35) 1px, transparent 1.5px) 0 0/26px 26px'}),
-  holidayTheme('valentine','Sweetheart','02-01','02-14',{felt:['#c43a64','#8f1f45','#4a0b22'],rail:['#5a1028','#2a0612'],wood:'#d65a82',brass:'#ffc2d4',page:'#2a0a17',pageHi:'#3a1020',panel:'#260915',panelLine:'#5a2238',chip:'#3a1222',back:['#b0204c','#d13a66']}),
-  holidayTheme('juneteenth','Juneteenth','06-12','06-21',{felt:['#1e7a3e','#12522a','#062612'],rail:['#a3131f','#3d070c'],wood:'#c9262f',brass:'#f2c94c',page:'#0a1f12',pageHi:'#12301c',panel:'#0b2214',panelLine:'#2c4a33',chip:'#163220',back:['#141414','#2a2a2a'],
+  holidayTheme('valentine','Sweetheart','02-01','02-14',{deco:['💘','🌹','💌','❤️'],hl:'Sweetheart table is here 💘',felt:['#c43a64','#8f1f45','#4a0b22'],rail:['#5a1028','#2a0612'],wood:'#d65a82',brass:'#ffc2d4',page:'#2a0a17',pageHi:'#3a1020',panel:'#260915',panelLine:'#5a2238',chip:'#3a1222',back:['#b0204c','#d13a66']}),
+  holidayTheme('juneteenth','Juneteenth','06-12','06-21',{deco:['✊🏾','🟥','🟩','⭐'],hl:'Celebrate Juneteenth ✊🏾',felt:['#1e7a3e','#12522a','#062612'],rail:['#a3131f','#3d070c'],wood:'#c9262f',brass:'#f2c94c',page:'#0a1f12',pageHi:'#12301c',panel:'#0b2214',panelLine:'#2c4a33',chip:'#163220',back:['#141414','#2a2a2a'],
     pattern:'linear-gradient(90deg, rgba(200,30,40,.10) 0 33%, rgba(0,0,0,.12) 33% 66%, rgba(30,140,70,.08) 66%)'}),
-  holidayTheme('july4','Fourth of July','06-28','07-07',{felt:['#244f9e','#163374','#08163a'],rail:['#a3182a','#4a0a12'],wood:'#c8283a',brass:'#f4f4f4',brassDim:'#c9c9c9',page:'#0a1430',pageHi:'#122046',panel:'#0c1734',panelLine:'#2a3a66',chip:'#16244a',back:['#b0182c','#1e3a8a'],
+  holidayTheme('july4','Fourth of July','06-28','07-07',{deco:['🎆','🇺🇸','🌭','⭐'],hl:'Fourth of July cookout 🎆',felt:['#244f9e','#163374','#08163a'],rail:['#a3182a','#4a0a12'],wood:'#c8283a',brass:'#f4f4f4',brassDim:'#c9c9c9',page:'#0a1430',pageHi:'#122046',panel:'#0c1734',panelLine:'#2a3a66',chip:'#16244a',back:['#b0182c','#1e3a8a'],
     pattern:'radial-gradient(circle, rgba(255,255,255,.25) 1.2px, transparent 1.6px) 0 0/30px 30px'}),
-  holidayTheme('halloween','Haunted House','10-01','10-31',{felt:['#5b2a86','#3a1760','#160628'],rail:['#e0721f','#6b300a'],wood:'#e0721f',brass:'#ffa646',page:'#120720',pageHi:'#1d0d30',panel:'#140822',panelLine:'#3a2452',chip:'#24123a',back:['#1a1a1a','#e0721f']}));
+  holidayTheme('halloween','Haunted House','10-01','10-31',{deco:['🎃','👻','🦇','🕸️'],hl:'Haunted House is open 🎃',felt:['#5b2a86','#3a1760','#160628'],rail:['#e0721f','#6b300a'],wood:'#e0721f',brass:'#ffa646',page:'#120720',pageHi:'#1d0d30',panel:'#140822',panelLine:'#3a2452',chip:'#24123a',back:['#1a1a1a','#e0721f']}));
 function inSeason(t,d){ if(!t.season) return true; d=d||new Date(); const md=String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
   const {from,to}=t.season; return from<=to?(md>=from&&md<=to):(md>=from||md<=to); }
 const seasonEnd=t=>{const [m,d]=t.season.to.split('-').map(Number); return new Date(2000,m-1,d).toLocaleDateString(undefined,{month:'short',day:'numeric'});};
@@ -1278,12 +1285,20 @@ try{const s=JSON.parse(localStorage.getItem('bb-profile')||'null'); if(s){PROFIL
 function saveProfile(){try{localStorage.setItem('bb-profile',JSON.stringify(PROFILE));}catch(e){}}
 function applyTheme(id){
   const L=lvlInfo(PROFILE.xp).L;
-  let t=THEMES.find(x=>x.id===id)||THEMES[0]; if(!themeOpen(t,L)) t=THEMES[0];
+  let t=THEMES.find(x=>x.id===id)||THEMES[0];
+  if(!themeOpen(t,L)){ const p=THEMES.find(x=>x.id===PROFILE.prevTheme); t=p&&themeOpen(p,L)?p:THEMES[0]; } /* a holiday ended: back to the table you had before */
   const r=document.documentElement.style; Object.entries(t.v).forEach(([k,v])=>r.setProperty(k,v));
   PROFILE.theme=t.id; applyDeck(PROFILE.deck||'classic');
+  /* holiday tables get a few faint decorations around the felt */
+  const f=document.getElementById('felt'); if(f){ let d=document.getElementById('feltDeco');
+    if(!t.deco){ if(d) d.remove(); }
+    else { if(!d){ d=document.createElement('div'); d.id='feltDeco'; f.prepend(d); }
+      d.innerHTML=[[9,14],[91,14],[9,86],[91,86],[50,8],[50,92]].map(([x,y],i)=>`<span style="left:${x}%;top:${y}%">${t.deco[i%t.deco.length]}</span>`).join(''); } }
 }
+/* the holiday table that's in season right now, if any */
+const seasonTheme=()=>THEMES.find(t=>t.season&&inSeason(t));
 applyTheme(PROFILE.theme);
-document.addEventListener('DOMContentLoaded',()=>applyDeck(PROFILE.deck||'classic'));
+document.addEventListener('DOMContentLoaded',()=>{applyDeck(PROFILE.deck||'classic'); applyTheme(PROFILE.theme);});
 </script>
 
 <script id="ui">
@@ -2386,7 +2401,7 @@ function botBanter(id,fromA,t){
 }
 
 function chatSheet(){
-  const list=(realOn()?QUICK_REAL:[]).concat(QUICK,owns('talk:cookout')?QUICK_EXTRA:[]);
+  const list=seasonLines().concat(realOn()?QUICK_REAL:[],QUICK,owns('talk:cookout')?QUICK_EXTRA:[]);
   const v=sheet(`<h2>Talk your talk</h2><p class="lede">Type your own or tap a quick line. The whole table sees it.</p>
     <div class="chatin"><input id="chT" maxlength="60" placeholder="Say something…" autocomplete="off" enterkeyhint="send" aria-label="Chat message"><button class="btn sm" id="chGo">Send</button></div>
     <div class="chhint" id="chH">Keep it friendly. Cussing, slurs and links are blocked.</div>
@@ -2495,6 +2510,10 @@ async function srvCall(t,b,u){
     return await fetch(SRV_URL,{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+tk},body:JSON.stringify({code:ONL.code,id:`${ONL.g}.${G.handNo}.rc`,call:{t,b,u}})}).then(r=>r.json()); }
   catch(e){ return {err:'offline'}; }
 }
+const SEASON_LINES={harvest:["Who brought the mac & cheese? 🦃","Thankful for these books 🙏","Pass the sweet potato pie 🥧","Y'all getting carved like a turkey 🦃"],
+  holiday:["All I want is books 🎄","Ho ho ho, you're set 🎅","Unwrap that bid 🎁"],newyear:["New year, same set 😂","Resolution: more books 🎆"],
+  valentine:["Partner, you complete me 💘","Roses are red, you got set 🌹"],juneteenth:["Freedom and books ✊🏾"],july4:["Fireworks on this hand 🎆","Cookout rules apply 🌭"],halloween:["Boo! You got set 👻","Scary bid 🎃"]};
+const seasonLines=()=>{const st=seasonTheme(); return st?(SEASON_LINES[st.id]||[]):[];};
 const QUICK_REAL=["Count your cards before you call it 👀","Y'all can't count","I'm watching every card","Renege? Prove it.","Scared money don't make money","This ain't the kids' table","Pay attention or pay up","That book is ours"];
 function coachHint(){
   if(realOn()){toast('Real Spades: no coach. You’re on your own.',2600);return;}
@@ -2721,6 +2740,7 @@ function renderLobby0(){
       <button class="coin-pill big" id="lbCoins" aria-label="Coins, open shop">${coinIcon()}${fmt(PROFILE.coins)}<span class="plus">+</span></button>
       <button class="gear" id="lbSet" aria-label="Settings">${ic('gear')}</button>
     </header>
+    ${(()=>{const st=seasonTheme(); return st?`<button class="sban${PROFILE.theme===st.id?' on':''}" id="lbSeason"><span class="sb-e">${st.deco[1]||st.deco[0]}</span><span><b>${st.hl}</b><small>${PROFILE.theme===st.id?`You’re at the ${st.name}. Free until ${seasonEnd(st)}.`:`Free ${st.name} until ${seasonEnd(st)}. Tap to set your table.`}</small></span><span class="sb-go">${PROFILE.theme===st.id?'✓':'Use it'}</span></button>`:'';})()}
     <div class="lb-sec"><h2><span style="color:var(--brass)">♠</span> Bags &amp; Books</h2><div class="lb-sec-r"><small>Swipe for more modes →</small><button class="playnow" id="lbNow">▶ Play Now</button></div></div>
     <div class="modes" id="modes">${cards.join('')}</div>
     <nav class="dock">
@@ -2754,6 +2774,9 @@ function renderLobby0(){
     if(m==='weekly'){if(ONL.on){closeLobby();return;} whenNamed(()=>tourSheet());return;}
     openTable(m);});
   el.querySelector('#lbMe').onclick=()=>playerSheet(renderLobby);
+  {const sb=el.querySelector('#lbSeason'); if(sb) sb.onclick=()=>{ const st=seasonTheme(); if(!st) return; audio();
+    if(PROFILE.theme===st.id){ playerSheet(renderLobby); return; }
+    PROFILE.prevTheme=PROFILE.theme; applyTheme(st.id); saveProfile(); chime(true); toast(`${st.name} is set. Happy holidays! ${st.deco[0]}`,2600); renderLobby(); };}
   el.querySelector('#lbNow').onclick=()=>{audio(); if(!MODES[opts.mode]) opts.mode='classic';
     startTable({mode:opts.mode,target:okTarget(opts.mode,opts.target),stake:0,tour:0});};
   el.querySelector('#lbRank').onclick=badgeSheet; el.querySelector('#dBadge').onclick=badgeSheet;
@@ -3205,7 +3228,7 @@ function throwIn(d){
   throwAt(f,toL(d.to),d.k);
 }
 function chatIn(d,id){
-  const ok=QUICK.concat(QUICK_EXTRA,QUICK_REAL); if(typeof d.s!=='number'||typeof d.t!=='string') return;
+  const ok=QUICK.concat(QUICK_EXTRA,QUICK_REAL,...Object.values(SEASON_LINES)); if(typeof d.s!=='number'||typeof d.t!=='string') return;
   if(!ok.includes(d.t)&&chatBad(d.t)) return; /* typed messages are checked again here, so a tampered phone can't get around the filter */
   const p=toL(d.s); if(MUTED.has(p)||(PROFILE.blocked||[]).includes(NAMES[p])) return;
   say(p,d.t,2800,true); if(d.s!==ONL.me) cardTap(0.25);
