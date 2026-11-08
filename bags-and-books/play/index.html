@@ -842,6 +842,8 @@ h4.hr{color:#8fd0ff}.hrbtn{margin-top:8px;font-size:13px}
 .chhint{font-size:12px;opacity:.75;margin-bottom:10px}.chhint.bad{color:#ff8a80;opacity:1}
 .gotr{margin-top:14px}.gotlist{display:grid;gap:6px}.grow{display:flex;justify-content:space-between;align-items:center;font-size:14px}
 .grow .gst{opacity:.7;font-size:13px}.grow .gst.in{opacity:1;color:var(--gold,#e8c252);letter-spacing:1px}
+.rbk button{min-width:38px}.rsu button{min-width:0}
+body.realsp #bRen{border-color:#e05a4f;color:#ff8a80}
 </style>
 
 <div id="app">
@@ -849,6 +851,7 @@ h4.hr{color:#8fd0ff}.hrbtn{margin-top:8px;font-size:13px}
     <div class="team us"><b id="scUs">0</b><span class="lbl" id="lbUs">Us</span><span class="det" id="dtUs">0 bags</span></div>
     <div class="tools">
       <button id="bTrack" aria-label="Card tracker"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="7" height="10" rx="1.5"/><rect x="14" y="4" width="7" height="10" rx="1.5"/><path d="M4 19h16"/></svg></button>
+      <button id="bRen" aria-label="Call renege" hidden><svg viewBox="0 0 24 24"><path d="M5 21V4h11l-1.5 4L16 12H5"/></svg></button>
       <button id="bHint" aria-label="Coach hint"><svg viewBox="0 0 24 24"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/></svg></button>
       <button id="bGift" aria-label="Throw something"><svg viewBox="0 0 24 24"><rect x="3.5" y="9" width="17" height="11.5" rx="1.5"/><path d="M3.5 13h17M12 9v11.5M12 9C10 5 6.5 4.8 6.5 7S9.5 9 12 9s5.5-.2 5.5-2S14 5 12 9"/></svg></button>
       <button id="bChat" aria-label="Trash talk"><svg viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/></svg></button>
@@ -955,7 +958,28 @@ function dealHand(){
   G.dealNo=dealCode(d.map(c=>c.id)); G.start=G.hands.map(h=>h.slice());
   G.bids=[null,null,null,null]; G.tricks=[0,0,0,0]; G.trick=[]; G.broken=false; G.played=new Set(); G.lastTrick=null;
   G.blind=[false,false,false,false]; G.hideHand=false; G.teamBid=null;
-  G.handNo++;
+  G.handNo++; renReset(); realButtons();
+}
+/* ===== Real Spades: no coach, no tracker, any card can be played. Reneges are allowed;
+   get caught and your team loses 100 and its books for the hand. A wrong call costs the caller's team 50. ===== */
+const realOn=()=>!!opts.real;
+function realButtons(){ const r=realOn(); $('#bRen').hidden=!r; $('#bHint').hidden=r; $('#bTrack').hidden=r; document.body.classList.toggle('realsp',r); }
+const SUIT_N={S:'spades',H:'hearts',C:'clubs',D:'diamonds'}, SUIT_I={S:'♠',H:'♥',C:'♣',D:'♦'};
+/* penalties per hand, kept by hand number so a replay can't mix hands up; team indexes are this phone's view */
+function renOf(H){ G.renH=G.renH||{}; return G.renH[H]||(G.renH[H]={ok:[],bad:[]}); }
+function renReset(){ G.ren=[]; G.showOut=[{},{},{},{}]; G.renCalls=0; G.renCalled=new Set(); }
+/* note who didn't follow suit, and whether it was a renege (they still had that suit) */
+function renTrack(p,c){
+  if(!realOn()||!G.trick.length) return null;
+  if(!G.ren) renReset();
+  const led=G.trick[0].c.s, book=G.tricks.reduce((a,b)=>a+b,0)+1, so=G.showOut[p];
+  let evident=null;
+  if(so[c.s]!==undefined&&c.s!==led) evident={p,b:so[c.s],u:c.s};      /* played a suit they showed out of before */
+  else if(c.s===led&&so[led]!==undefined) evident={p,b:so[led],u:led};
+  if(c.s!==led){ if(so[led]===undefined) so[led]=book;
+    const had=G.hands[p].some(x=>x.id!==c.id&&x.s===led&&x.s!=='?');
+    if(had) G.ren.push({p,b:book,u:led,called:false}); }
+  return evident;
 }
 function legal(p){
   const h=G.hands[p];
@@ -1070,6 +1094,7 @@ function botChoose(p){
 }
 function scoreTeam(t){
   const ps=members(t); let pts=0,contract=0,books=0; const notes=[];
+  const rp=renOf(G.handNo), caught=rp.ok.filter(x=>x===t).length, wrong=rp.bad.filter(x=>x===t).length;
   const tb=G.teamBid&&G.teamBid[t]!=null?G.teamBid[t]:null;
   ps.forEach(p=>{books+=G.tricks[p];
     if(G.bids[p]===0){ const bl=G.blind&&G.blind[p], v=bl?200:100, kind=bl?'blind nil':'nil';
@@ -1077,6 +1102,8 @@ function scoreTeam(t){
     else contract+=G.bids[p];
   });
   if(tb!=null) contract=tb;
+  if(caught){ books=0; pts-=100*caught; notes.push(`Renege caught  −${100*caught} and the books`); }
+  if(wrong){ pts-=50*wrong; notes.push(`Wrong renege call  −${50*wrong}`); }
   let bagsAdd=0, set=false;
   if(contract>0){
     if(books>=contract){pts+=contract*10; bagsAdd=books-contract; pts+=bagsAdd;}
@@ -1552,7 +1579,7 @@ function renderHand(animate,offset=0){
   handEl.style.setProperty('--cw',cw+'px'); handEl.style.height=Math.round(cw*1.4+(land?30:28))+'px';
   const n=h.length, step=n>1?Math.min(cw*(land?0.74:0.62),(W-cw)/(n-1)):0, x0=(W-(cw+step*(n-1)))/2;
   const myTurn=G.phase==='play'&&G.turn===0&&!busy;
-  const ok=myTurn?new Set(legal(0).map(c=>c.id)):null;
+  const ok=myTurn&&!realOn()?new Set(legal(0).map(c=>c.id)):null;
   h.forEach((c,i)=>{
     const d=G.hideHand?Object.assign(document.createElement('div'),{className:'card back'}):cardEl(c); d.style.left=(x0+i*step)+'px'; d.style.top='18px'; d.style.zIndex=i;
     if(ok){ if(ok.has(c.id)) d.classList.add('playable'); else d.classList.add('dim'); }
@@ -1964,7 +1991,7 @@ function nextTurn(){
 }
 function tapCard(c){
   if(!G||G.phase!=='play'||G.turn!==0||busy){ if(G&&G.phase==='bid') toast('Bid first, then play.'); return; }
-  const ok=legal(0).some(x=>x.id===c.id);
+  const ok=realOn()?(G.trick.length||legal(0).some(x=>x.id===c.id)):legal(0).some(x=>x.id===c.id);
   if(!ok){
     if(G.trick.length) toast(`You have to follow ${({S:'spades',H:'hearts',C:'clubs',D:'diamonds'})[G.trick[0].c.s]}.`);
     else toast("Spades aren't broken yet. Lead another suit.");
@@ -1975,6 +2002,7 @@ function tapCard(c){
 }
 function playCard(p,c){
   busy=true; stopClock();
+  const ev=renTrack(p,c); if(ev&&!ONL.on) botCallLater(ev);
   let from;
   if(p===0){const el=handEl.querySelector(`[data-id="${c.id}"]`); from=el?rel(el):{x:stage.clientWidth/2,y:stage.clientHeight};}
   else from=seatPt(p);
@@ -2049,6 +2077,7 @@ function clearTrick(now){trickEls.forEach(d=>d.remove());trickEls=[];}
 
 function endHand(){
   stopClock(); G.phase='between'; status('');
+  if(realOn()&&!ONL.on) renConfess((G.ren||[]).filter(r=>!r.called));
   const noCredit=ONL.on&&(ONL.spec||onlCredited()), keepP=noCredit?JSON.stringify(PROFILE):null;
   const P=partnersOn(), n=teamCount(), R=[];
   for(let t=0;t<n;t++) R.push(scoreTeam(t));
@@ -2242,6 +2271,7 @@ function rulesSheet(after){
 const TRACK_COST=20;
 function trackerSheet(){
   if(!G) return;
+  if(realOn()){ sheet(`<h2>Card tracker</h2><p class="lede">Real Spades: no tracker and no last-book peek. Count the cards yourself.</p>`,{mid:true}); return; }
   if(G.tour){ sheet(`<h2>Card tracker</h2><p class="lede">The tracker is off in the Weekend Cup. Everybody counts cards for themselves, so it’s a fair fight.</p>`,{mid:true}); return; }
   G.trackers=G.trackers||new Set();
   if(!G.trackers.has(0)){
@@ -2349,7 +2379,7 @@ function botBanter(id,fromA,t){
 }
 
 function chatSheet(){
-  const list=QUICK.concat(owns('talk:cookout')?QUICK_EXTRA:[]);
+  const list=(realOn()?QUICK_REAL:[]).concat(QUICK,owns('talk:cookout')?QUICK_EXTRA:[]);
   const v=sheet(`<h2>Talk your talk</h2><p class="lede">Type your own or tap a quick line. The whole table sees it.</p>
     <div class="chatin"><input id="chT" maxlength="60" placeholder="Say something…" autocomplete="off" enterkeyhint="send" aria-label="Chat message"><button class="btn sm" id="chGo">Send</button></div>
     <div class="chhint" id="chH">Keep it friendly. Cussing, slurs and links are blocked.</div>
@@ -2395,8 +2425,72 @@ function menuSheet(){
 [0,1,2,3].forEach(p=>document.querySelector(`#seat${p} .av`).insertAdjacentHTML('beforeend',`<svg class="ring" id="ring${p}" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="46" pathLength="100"/></svg>`));
 $('#meAv').onclick=()=>playerSheet(); $('#meAv').onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();playerSheet();}};
 renderMe();
-$('#bGift').onclick=()=>giftSheet(); $('#bHint').onclick=()=>coachHint();
+$('#bGift').onclick=()=>giftSheet(); $('#bHint').onclick=()=>coachHint(); $('#bRen').onclick=()=>renegeSheet();
+/* ---------- calling a renege ---------- */
+function renegeSheet(){
+  if(!G||!realOn()||G.phase!=='play'){ toast('You can call a renege while the hand is being played.'); return; }
+  if(ONL.on&&ONL.spec){ toast('Spectators can’t call reneges.'); return; }
+  if(G.renCalls>=2){ toast('That’s 2 calls this hand. Watch close next hand.'); return; }
+  const done=G.tricks.reduce((a,b)=>a+b,0)+(G.trick.length?1:0);
+  if(!done){ toast('Nobody’s played yet.'); return; }
+  const who=[1,2,3].filter(q=>!partnersOn()||!isPartner(q));
+  let tp=who[0], tb=done, tu=null;
+  const v=sheet(`<div id="renS"></div>`,{mid:true});
+  const draw=()=>{
+    v.querySelector('#renS').innerHTML=`<h2>🚩 Call a renege</h2>
+      <p class="lede">Name who did it, which book, and the suit they didn’t follow.<br><b>Right:</b> their team loses 100 and their books this hand. <b>Wrong:</b> your team loses 50.</p>
+      <h4>Who</h4><div class="seg tseg">${who.map(q=>`<label><input type="radio" name="rp" value="${q}" ${q===tp?'checked':''}><span>${esc(String(NAMES[q]).replace(' 🤖',''))}</span></label>`).join('')}</div>
+      <h4>Book</h4><div class="pk rbk">${Array.from({length:done},(_,i)=>i+1).map(b=>`<button data-b="${b}" class="${b===tb?'on':''}">${b}</button>`).join('')}</div>
+      <h4>Suit they didn’t follow</h4><div class="pk rsu">${['H','C','D','S'].map(u=>`<button data-u="${u}" class="${u===tu?'on':''}">${SUIT_I[u]} ${SUIT_N[u]}</button>`).join('')}</div>
+      <button class="btn" id="rGo" ${tu?'':'disabled'}>Call it</button>`;
+    v.querySelectorAll('input[name="rp"]').forEach(i=>i.onchange=()=>{tp=+i.value;draw();});
+    v.querySelectorAll('.rbk button').forEach(b=>b.onclick=()=>{tb=+b.dataset.b;draw();});
+    v.querySelectorAll('.rsu button').forEach(b=>b.onclick=()=>{tu=b.dataset.u;draw();});
+    v.querySelector('#rGo').onclick=async()=>{ const go=v.querySelector('#rGo'); go.disabled=true; go.textContent='Checking…';
+      G.renCalls++; say(0,`Renege! ${String(NAMES[tp]).replace(' 🤖','')}, book ${tb}, ${SUIT_N[tu]}.`,2600);
+      if(ONL.on){ const r=await srvCall(toA(tp),tb,tu); v.remove(); if(!r.ok&&r.err) toast(r.err==='late'?'Too late, that hand is over.':'Couldn’t send the call. Try again.',2600); return; }
+      v.remove(); renResolve(0,tp,tb,tu);
+    };
+  };
+  draw();
+}
+/* offline: check the call against what really happened */
+function renResolve(caller,tp,b,u){
+  const hit=(G.ren||[]).find(r=>r.p===tp&&r.b===b&&r.u===u&&!r.called);
+  renShow(caller,tp,b,u,!!hit,G.handNo,false); if(hit) hit.called=true;
+}
+/* show a call's result and book the penalty (same on every phone) */
+function renShow(caller,tp,b,u,ok,H,quiet){
+  const R=renOf(H); if(ok) R.ok.push(teamOf(tp)); else R.bad.push(teamOf(caller));
+  if(quiet||FF) return;
+  const nm=q=>String(NAMES[q]).replace(' 🤖','');
+  if(ok){ fireFx('RENEGE!'); later(()=>say(tp,pick(['Man… you caught that 😩','Okay okay, I renegged.','Y’all really counting cards huh 😤'])),900);
+    toast(`Renege caught! ${nm(tp)} didn’t follow ${SUIT_N[u]} on book ${b}. −100 and their books.`,3400); chime(teamOf(tp)!==0); }
+  else { later(()=>say(tp,pick(['Wrong! Pay up 😂','I followed suit. Check again 👀','False alarm. That’s −50 for y’all.'])),900);
+    toast(`Wrong call. ${nm(caller)}’s team loses 50.`,3000); chime(teamOf(caller)!==0); }
+  renderSeats();
+}
+/* offline bots call a renege once it's provable from the cards on the table */
+function botCallLater(ev){
+  const real=(G.ren||[]).find(r=>r.p===ev.p&&r.b===ev.b&&r.u===ev.u&&!r.called); if(!real) return;
+  const callers=[1,2,3].filter(q=>q!==ev.p&&teamOf(q)!==teamOf(ev.p)); if(!callers.length||Math.random()>0.75) return;
+  const c=pick(callers), H=G.handNo;
+  later(()=>{ if(!G||G.handNo!==H||real.called) return; say(c,`Hold up. RENEGE! ${String(NAMES[ev.p]).replace(' 🤖','')} on book ${ev.b}. You were out of ${SUIT_N[ev.u]}?`,2800);
+    later(()=>{ if(G&&G.handNo===H&&!real.called){ real.called=true; renShow(c,ev.p,ev.b,ev.u,true,H,false);} },1200); },1400+Math.random()*1200);
+}
+/* end of hand: anyone who got away with it says so (no penalty) */
+function renConfess(list){
+  if(FF) return; let d=600;
+  list.forEach(r=>{ later(()=>say(r.p,`I renegged 😏 Didn’t follow ${SUIT_N[r.u]} on book ${r.b}. Nobody caught it.`,3400),d); d+=1600; });
+}
+async function srvCall(t,b,u){
+  try{ const tk=await FB.auth.currentUser.getIdToken();
+    return await fetch(SRV_URL,{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+tk},body:JSON.stringify({code:ONL.code,id:`${ONL.g}.${G.handNo}.rc`,call:{t,b,u}})}).then(r=>r.json()); }
+  catch(e){ return {err:'offline'}; }
+}
+const QUICK_REAL=["Count your cards before you call it 👀","Y'all can't count","I'm watching every card","Renege? Prove it.","Scared money don't make money","This ain't the kids' table","Pay attention or pay up","That book is ours"];
 function coachHint(){
+  if(realOn()){toast('Real Spades: no coach. You’re on your own.',2600);return;}
   if(ONL.on){toast('Coach is off at online tables so every game stays fair.',2800);return;}
   if(!G||G.phase==='bid'){ if(G&&G.phase==='bid'&&G.turn===0) toast(`Coach counts about ${suggestBid(0)===0?'Nil':suggestBid(0)} for this hand.`,2600); else toast('Coach helps on your turn.'); return;}
   if(G.phase!=='play'||G.turn!==0||busy){toast('Coach helps on your turn.');return;}
@@ -2665,7 +2759,7 @@ function openTable(m){
   if(m==='random'){mode=pick(['classic','jjdd','ffa']);picked=true;}
   const M=MODES[mode];
   let target=tour?100:(opts.mode===mode?okTarget(mode,opts.target):okTarget(mode,0));
-  let stake=tour?TOUR_FEE:0, high=false;
+  let stake=tour?TOUR_FEE:0, high=false, real=!tour&&!!opts.real;
   const v=sheet('<div id="tbl"></div>',{mid:true});
   const draw=()=>{
     const hier=withMode(mode,()=>hierarchy());
@@ -2683,6 +2777,8 @@ function openTable(m){
         <div class="w"><small>Card order (highest first)</small><b>${hier}</b></div>
         <div class="w"><small>Table rules</small><b>${rules}</b></div>
       </div>
+      ${!tour?`<h4>Rules</h4><div class="seg tseg"><label><input type="radio" name="trl" value="0" ${real?'':'checked'}><span>Standard</span></label><label><input type="radio" name="trl" value="1" ${real?'checked':''}><span>🚩 Real Spades</span></label></div>
+        ${real?'<p class="fine" style="margin-top:6px">No coach, no tracker, any card can be played. Reneges are allowed, but get called and your team loses 100 and its books. Wrong calls cost 50.</p>':''}`:''}
       ${!tour?`<h4>Play to</h4><div class="seg tseg">${targetsFor(mode).map(t=>`<label><input type="radio" name="ttg" value="${t}" ${t===target?'checked':''}><span>${t}</span></label>`).join('')}</div>`:''}
       ${tour?`<h4>Prizes</h4><div class="tinfo"><div><small>Champion</small><b>1,500 coins + 🏆</b></div><div><small>Finalist</small><b>300 coins</b></div></div>`
         :`<h4>Table stakes</h4><div class="stakes">${[0,100,500,2500].map(stBtn).join('')}</div>
@@ -2693,13 +2789,14 @@ function openTable(m){
       ${(mode!=='jjdd'&&!tour)?'<button class="btn ghost" id="tRules">House rules</button>':''}
       <p class="fine">Coins are for play only. They can’t be cashed out, traded or sent to other players.</p>`;
     v.querySelectorAll('input[name="ttg"]').forEach(i=>i.onchange=()=>{target=+i.value;draw();});
+    v.querySelectorAll('input[name="trl"]').forEach(i=>i.onchange=()=>{real=i.value==='1';draw();});
     v.querySelectorAll('[data-st]').forEach(b=>b.onclick=()=>{stake=+b.dataset.st;draw();});
     const th=v.querySelector('#tHigh'); if(th) th.onclick=()=>{high=true;draw();};
     const r=v.querySelector('#tRules'); if(r) r.onclick=()=>{v.remove();rulesSheet(()=>openTable(m));};
     v.querySelector('#tJoin').onclick=()=>{
       if(PROFILE.coins<stake) return;
       PROFILE.coins-=stake; saveProfile(); audio(); v.remove();
-      startTable({mode,target,stake:tour?0:stake,tour:tour?1:0});
+      startTable({mode,target,stake:tour?0:stake,tour:tour?1:0,real:!tour&&real});
     };
   };
   draw();
@@ -2708,7 +2805,7 @@ function openTable(m){
 function startTable(t){
   if(ONL.on){ const q=quitCounts(); if(q) noteQuit(); onlineLeave(true,q); }
   const go=()=>{
-    opts.mode=t.mode; opts.target=t.target; try{localStorage.setItem('bb-opts',JSON.stringify(opts));}catch(e){}
+    opts.mode=t.mode; opts.target=t.target; opts.real=!!t.real; try{localStorage.setItem('bb-opts',JSON.stringify(opts));}catch(e){}
     const lb=document.getElementById('lobby'); if(lb) lb.hidden=true; $('#bidPanel').hidden=true;
     newGame({stake:t.stake,tour:t.tour});
     if(t.tour) setTimeout(()=>toast(`${TOUR_ROUNDS[0]}: you and Nae vs ${NAMES[1]} and ${NAMES[3]}`,3000),300);
@@ -3067,6 +3164,9 @@ function evClock(id,d){
 }
 function onEv(id,d){
   if(id.startsWith('lag.')) return;
+  { const m=id.match(/^(\d+)\.(\d+)\.(rc\d+|cf)$/); if(m){ if(+m[1]!==ONL.g||!G) return;
+      if(m[3]==='cf'){ if(+m[2]===G.handNo) renConfess((d.list||[]).map(r=>({p:toL(r.a),b:r.b,u:r.u}))); return; }
+      renShow(toL(d.s),toL(d.t),d.b,d.u,!!d.ok,+m[2],false); return; } }
   evClock(id,d);
   if(d&&typeof d.ms==='number'&&typeof d.s==='number'&&d.s!==ONL.me&&!FF){ LAG.seat[d.s]=d.ms; }
   if(!FF&&/\.p51$/.test(id)) setTimeout(sendLag,1500);
@@ -3094,7 +3194,7 @@ function throwIn(d){
   throwAt(f,toL(d.to),d.k);
 }
 function chatIn(d,id){
-  const ok=QUICK.concat(QUICK_EXTRA); if(typeof d.s!=='number'||typeof d.t!=='string') return;
+  const ok=QUICK.concat(QUICK_EXTRA,QUICK_REAL); if(typeof d.s!=='number'||typeof d.t!=='string') return;
   if(!ok.includes(d.t)&&chatBad(d.t)) return; /* typed messages are checked again here, so a tampered phone can't get around the filter */
   const p=toL(d.s); if(MUTED.has(p)||(PROFILE.blocked||[]).includes(NAMES[p])) return;
   say(p,d.t,2800,true); if(d.s!==ONL.me) cardTap(0.25);
@@ -3215,7 +3315,7 @@ function onlineDeal(){
     const ph=()=>Array.from({length:13},(_,i)=>({id:'?'+i,s:'?',r:0}));
     G.hands=[0,1,2,3].map(p=>{const c=ONL.myHands[key(toA(p))]; return c?sortHand(c.map(id=>byId[id]).filter(Boolean)):ph();});
     G.bids=[null,null,null,null]; G.tricks=[0,0,0,0]; G.trick=[]; G.broken=false; G.played=new Set(); G.lastTrick=null;
-    G.blind=[false,false,false,false]; G.hideHand=false; G.handNo=H; G.dealer=toL(ev.d);
+    G.blind=[false,false,false,false]; G.hideHand=false; G.handNo=H; G.dealer=toL(ev.d); renReset(); realButtons();
     ONL.dealt=true; startHand(); return true;
   };
   if(!go()){ONL.handWait=go; if(!ONL.ev[did]){ ffEnd(); if(ONL.srv) srvAsk(did,0,true); } if(!FF){ pollEv(did); pollHand(`${ONL.g}-${H}-${ONL.me}`,tok); }}
@@ -3320,7 +3420,7 @@ function seriesNote(v,nx){
 
 /* ---------- create, join, waiting room ---------- */
 function crewSheet(prefill){
-  let mode='classic', target=300, nmv=PROFILE.name&&PROFILE.name!=='You'?PROFILE.name:'';
+  let mode='classic', target=300, crewReal=false, nmv=PROFILE.name&&PROFILE.name!=='You'?PROFILE.name:'';
   const v=sheet('<div id="crew"></div>',{mid:true});
   const draw=()=>{
     v.querySelector('#crew').innerHTML=`
@@ -3334,9 +3434,11 @@ function crewSheet(prefill){
       <h4>Or start a new table</h4>
       <div class="seg tseg">${[['classic','Classic'],['jjdd','JJDD'],['ffa','Free-for-All']].map(([m,l])=>`<label><input type="radio" name="cm" value="${m}" ${m===mode?'checked':''}><span>${l}</span></label>`).join('')}</div>
       <div class="seg tseg" style="margin-top:8px">${targetsFor(mode).map(t=>`<label><input type="radio" name="ct" value="${t}" ${t===target?'checked':''}><span>To ${t}</span></label>`).join('')}</div>
+      <div class="seg tseg" style="margin-top:8px"><label><input type="radio" name="crl" value="0" ${crewReal?'':'checked'}><span>Standard</span></label><label><input type="radio" name="crl" value="1" ${crewReal?'checked':''}><span>🚩 Real Spades</span></label></div>
       <button class="btn" id="cNew" style="margin-top:12px">Create table</button>
       <p class="fine">Your house rules from the Rules screen apply. Online tables are free and you still earn XP and coins.</p>`;
     v.querySelectorAll('input[name="cm"]').forEach(i=>i.onchange=()=>{mode=i.value; target=okTarget(mode,target); draw();});
+    v.querySelectorAll('input[name="crl"]').forEach(i=>i.onchange=()=>{crewReal=i.value==='1'; draw();});
     v.querySelectorAll('input[name="ct"]').forEach(i=>i.onchange=()=>{target=+i.value;});
     const nm=v.querySelector('#cName'); nm.oninput=()=>{nmv=nm.value;};
     const cf=v.querySelector('#cFriends'); if(cf) cf.onclick=()=>friendsSheet(false);
@@ -3345,7 +3447,7 @@ function crewSheet(prefill){
     v.querySelector('#cJoin').onclick=async e=>{const c=code.value.trim(); if(c.length!==5){toast('Codes are 5 letters and numbers.');return;} if(!named()) return;
       e.target.disabled=true; e.target.textContent='Joining…'; const ok=await joinTable(c); if(ok) v.remove(); else {e.target.disabled=false;e.target.textContent='Join';}};
     v.querySelector('#cNew').onclick=async e=>{if(!named()) return; e.target.disabled=true; e.target.textContent='Creating…';
-      const ok=await createTable(mode,okTarget(mode,target)); if(ok) v.remove(); else {e.target.disabled=false;e.target.textContent='Create table';}};
+      const ok=await createTable(mode,okTarget(mode,target),false,{real:crewReal}); if(ok) v.remove(); else {e.target.disabled=false;e.target.textContent='Create table';}};
   };
   draw();
 }
@@ -3357,14 +3459,14 @@ async function connect(quiet){
     if(!quiet) toast(PREVIEW?'Online play works in the Bags & Books app and at mcombizz.com, not in this preview.':'Couldn’t reach the game server. Check your internet and try again.',4200);
     return false; }
 }
-async function createTable(mode,target,pub){
+async function createTable(mode,target,pub,extra){
   if(!await connect()) return false;
   const {F,db}=FB;
   try{
     let code='';
     for(let i=0;i<6;i++){code=Array.from({length:5},()=>CODE_AB[Math.floor(Math.random()*CODE_AB.length)]).join('');
       if(!(await F.getDoc(F.doc(db,'tables',code))).exists()) break;}
-    const rules=pub?Object.assign({},RND_RULES):{jokers:!!opts.jokers,deuce:!!opts.deuce,nil:!!opts.nil,bags:!!opts.bags,timer:!!opts.timer,blind:!!opts.blind,teamBid:!!opts.teamBid};
+    const rules=Object.assign(pub?Object.assign({},RND_RULES):{jokers:!!opts.jokers,deuce:!!opts.deuce,nil:!!opts.nil,bags:!!opts.bags,timer:!!opts.timer,blind:!!opts.blind,teamBid:!!opts.teamBid},extra&&extra.real?{real:true}:{});
     const srv=await srvUp();
     await F.setDoc(F.doc(db,'tables',code),Object.assign({host:FB.uid,status:'lobby',mode,target,rules,g:0,bots:[],created:F.serverTimestamp()},pub?{pub:true,ping:F.serverTimestamp()}:{},srv?{srv:true}:{}));
     if(pub){RND.made=Date.now(); RND.starting=false;}
@@ -3500,7 +3602,7 @@ function roomLeave(byUser){
 function beginOnline(){
   const d=ONL.table, {F,db}=FB;
   if(ONL.room){ONL.room.remove(); ONL.room=null;}
-  ONL.saved=Object.assign({},opts); Object.assign(opts,{teamBid:false},d.rules||{},{mode:d.mode,target:d.target});
+  ONL.saved=Object.assign({},opts); Object.assign(opts,{teamBid:false,real:false},d.rules||{},{mode:d.mode,target:d.target});
   ONL.on=true; ONL.srv=!!d.srv; LAG.seat={}; LAG.dn=[]; ONL.heard={}; ONL.g=d.g||0; ONL.ev={}; ONL.myHands={}; ONL.gone=new Set(); ONL.miss={}; ONL.advanced=null; ONL.leftN={}; ONL.backN={}; ONL.goneG={}; ONL.bye=new Set(); if(!FF) ONL.evReady=true; ONL.dropped=false; ONL.lastEv=Date.now();
   ONL.botOrder=(d.bots||[]).slice(); ONL.seatDocs=ONL.seats.slice();
   (d.bots||[]).forEach(a=>{ONL.seats[a]=null;});
