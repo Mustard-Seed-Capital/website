@@ -649,6 +649,13 @@ button:focus-visible,input:focus-visible+span{outline:2px solid var(--brass);out
 .deckfx{position:absolute;z-index:7;width:0;height:0;pointer-events:none}
 .deckfx .card{position:absolute;box-shadow:0 2px 4px rgba(0,0,0,.35)}
 @media (orientation:landscape) and (max-height:360px){.tools button{width:28px!important;height:28px!important}.tools svg{width:16px;height:16px}.tools{gap:4px!important;padding-bottom:6px!important}.team .det{font-size:10px}#bar{gap:6px!important;padding-block:4px!important}}
+/* very short sideways screens (Safari with its tab bar): the five table buttons sit two across so none get cut off */
+@media (orientation:landscape) and (max-height:400px){
+  #bar{gap:8px!important;padding-block:4px!important}
+  .team b,.team.them b{font-size:21px!important}
+  .tools{display:grid!important;grid-template-columns:repeat(2,30px);justify-content:start;align-content:end;gap:6px!important;padding-bottom:4px!important}
+  .tools button{width:30px!important;height:30px!important}.tools svg{width:16px!important;height:16px!important}
+}
 /* short sideways screens (Safari bars, Claude app): you and your partner go slim, picture centered with name and bid beside it,
    so the middle of the table stays open for the cards */
 @media (orientation:landscape) and (max-height:380px){
