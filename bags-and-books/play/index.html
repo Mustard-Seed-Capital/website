@@ -819,6 +819,8 @@ h4.hr{color:#8fd0ff}.hrbtn{margin-top:8px;font-size:13px}
 .sig i{display:block;width:2.5px;border-radius:1px;background:rgba(255,255,255,.25)}
 .sig i:nth-child(1){height:4px}.sig i:nth-child(2){height:6.5px}.sig i:nth-child(3){height:9px}
 .sig.s3 i{background:#4ade80}.sig.s2 i:nth-child(-n+2){background:#facc15}.sig.s1 i:nth-child(1){background:#f87171}
+.onb-in.pin{justify-content:center;margin:8px auto;max-width:180px}
+.pinIn{text-align:center;letter-spacing:.5em;font-size:24px!important;font-weight:800}
 </style>
 
 <div id="app">
@@ -1634,7 +1636,7 @@ function playerSheet(after){
   const ch=arr=>arr.map(([v,l])=>`<button data-v="${v}">${PREMIUM[v]&&!owns('acc:'+v)?`🔒 ${l} · ${PREMIUM[v].toLocaleString()}`:l}</button>`).join('');
   const v=sheet(`
     <div class="prof"><div class="big" id="pBig"><div class="pic" id="pPic"></div><span class="lv" id="pLv"></span></div>
-      <div class="who"><div class="hdl">${PROFILE.handle?`<b>@${esc(PROFILE.handle)}</b>`:`<b>${esc(PROFILE.name)}</b>`}<button class="linkb" id="pChg">${PROFILE.handle?'Change':'Pick a username'}</button></div><div class="ttl" id="pTtl"></div><div class="myrt" id="pRt"></div></div></div>
+      <div class="who"><div class="hdl">${PROFILE.handle?`<b>@${esc(PROFILE.handle)}</b>`:`<b>${esc(PROFILE.name)}</b>`}<button class="linkb" id="pChg">${PROFILE.handle?'Change':'Pick a username'}</button>${PROFILE.handle?`<button class="linkb" id="pPin">${PROFILE.pinOn?'PIN':'Set PIN'}</button>`:''}</div><div class="ttl" id="pTtl"></div><div class="myrt" id="pRt"></div></div></div>
     <div class="bar"><i id="pBar"></i></div><div class="xpl" id="pXp"></div>
     <div class="stats"><div><b>${PROFILE.wins}</b><span>Wins</span></div><div><b>${PROFILE.losses}</b><span>Losses</span></div><div><b>${PROFILE.best}</b><span>Best streak</span></div><div><b>${PROFILE.nils}</b><span>Nils made</span></div></div>
     <div class="recs">${[['classic','Classic'],['jjdd','JJDD'],['ffa','Free-for-All'],['cup','Weekend Cup']].map(([k,l])=>{const r=(PROFILE.modeStats||{})[k]||{w:0,l:0};return `<span>${l} <b>${r.w}–${r.l}</b></span>`;}).join('')}${PROFILE.trophies?`<span>🏆 <b>${PROFILE.trophies}</b></span>`:''}</div>
@@ -1681,6 +1683,7 @@ function playerSheet(after){
     if(k==='acc'&&PREMIUM[val]&&!owns('acc:'+val)){v.remove();openShop();return;}
     PROFILE.av[k]=(k==='skin'||k==='hc'||k==='shirt')?+val:val; saveProfile(); sync();}));
   v.querySelector('#pChg').onclick=()=>{v.remove(); onboard(true);};
+  {const pp=v.querySelector('#pPin'); if(pp) pp.onclick=()=>{v.remove(); pinSheet(false);};}
   myRatingLine(v.querySelector('#pRt'));
   v.querySelector('#pDone').onclick=()=>{v.remove(); if(after) after();};
   sync();
@@ -3434,7 +3437,9 @@ function onboard(change){
     if(change&&PROFILE.handle&&n===PROFILE.handle){v.remove();return;}
     go.disabled=true; go.textContent='Checking…';
     const err=await claimName(n);
-    if(err){bad(err); go.disabled=false; go.textContent=change?'Save':'Let’s play'; return;}
+    if(err){ go.disabled=false; go.textContent=change?'Save':'Let’s play';
+      if(/is taken/.test(err)&&(await srvPin('has',{n})).has) return recoverBox(v,n);
+      bad(err); return;}
     v.remove(); chime(true); toast(`You’re @${n}. Welcome to the table.`,2600); refreshMeta(); startSocial(); runNamedQ();};
   const lt=v.querySelector('#oLater'); if(lt) lt.onclick=()=>{PROFILE.skipOnb=todayKey(); saveProfile(); namedQ=[]; v.remove();};
   const ap=v.querySelector('#oApple'); if(ap) ap.onclick=()=>ssoStart('apple',v);
@@ -3456,6 +3461,61 @@ async function claimName(n){
     PROFILE.handle=n; PROFILE.name=n; saveProfile(); renderMe(); return '';
   }catch(e){console.warn(e); return e&&e.code==='permission-denied'?`@${n} is taken. Try another.`:'Couldn’t save that. Try again.';}
 }
+/* ---------- username PIN: win your player back on a new phone or browser ---------- */
+async function srvPin(op,extra){
+  try{ if(!await connect(true)) return {err:'offline'};
+    const t=await FB.auth.currentUser.getIdToken();
+    return await fetch(SRV_URL,{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+t},body:JSON.stringify(Object.assign({act:'pin',op},extra||{}))}).then(r=>r.json());
+  }catch(e){ console.warn(e); return {err:'offline'}; }
+}
+const pinIn=id=>`<input id="${id}" class="nameIn pinIn" inputmode="numeric" pattern="[0-9]*" maxlength="4" placeholder="••••" autocomplete="one-time-code" aria-label="4-digit PIN">`;
+function recoverBox(v,n){
+  const box=v.querySelector('#onb'); box.querySelector('#oHint').classList.remove('bad');
+  box.innerHTML=`<h2>Is @${esc(n)} yours?</h2>
+    <p class="lede">Enter the 4-digit PIN you set for it. Your username, coins and level come right back.</p>
+    <div class="onb-in pin">${pinIn('rPin')}</div><div class="onb-hint" id="rHint">&nbsp;</div>
+    <button class="btn" id="rGo">Get my player back</button><button class="btn ghost" id="rBack">Pick a different name</button>`;
+  const inp=box.querySelector('#rPin'), hint=box.querySelector('#rHint'), go=box.querySelector('#rGo');
+  inp.oninput=()=>{inp.value=inp.value.replace(/\D/g,'').slice(0,4); hint.classList.remove('bad'); hint.innerHTML='&nbsp;'; if(inp.value.length===4) go.click();};
+  box.querySelector('#rBack').onclick=()=>{v.remove(); onboard();};
+  go.onclick=async()=>{ if(inp.value.length!==4){hint.textContent='4 digits'; return;}
+    go.disabled=true; go.textContent='Checking…';
+    const r=await srvPin('claim',{n,pin:inp.value});
+    if(r.ok&&r.token){
+      try{ await FB.U.signInWithCustomToken(FB.auth,r.token); FB.uid=FB.auth.currentUser.uid; }
+      catch(e){ console.warn(e); go.disabled=false; go.textContent='Get my player back'; hint.textContent='Couldn’t finish. Try again.'; hint.classList.add('bad'); return; }
+      await cloudLoad();
+      if(!PROFILE.handle||PROFILE.handle.toLowerCase()!==n.toLowerCase()){ PROFILE.handle=n; PROFILE.name=n; }
+      PROFILE.pinOn=true; saveProfile();
+      v.remove(); chime(true); toast(`Welcome back, @${PROFILE.handle}.`,2800); refreshMeta(); SOC.started=false; startSocial(); runNamedQ(); return; }
+    go.disabled=false; go.textContent='Get my player back'; inp.value=''; hint.classList.add('bad');
+    hint.textContent=r.err==='wrong'?`Wrong PIN. ${r.left} ${r.left===1?'try':'tries'} left before a short lock.`
+      :r.err==='locked'?`Too many tries. Try again in ${fmtDur(r.wait||900e3)}.`:'Couldn’t check that. Try again.';
+  };
+  setTimeout(()=>inp.focus(),250);
+}
+function pinSheet(forced){
+  if(document.getElementById('pinS')) return;
+  const v=sheet(`<div id="pinS"><h2>${PROFILE.pinOn?'Change your PIN':'Protect @'+esc(PROFILE.handle)}</h2>
+    <p class="lede">Set a 4-digit PIN. If you switch phones or browsers, or clear Safari, your username, coins and level come back with it.</p>
+    <div class="onb-in pin">${pinIn('sPin')}</div><div class="onb-in pin">${pinIn('sPin2')}</div>
+    <div class="onb-hint" id="sHint">Type it twice. Don’t use 1234.</div>
+    <button class="btn" id="sGo">Save PIN</button>${forced?'':'<button class="btn ghost" id="sLater">Later</button>'}</div>`,{mid:true,noClose:!!forced});
+  const a=v.querySelector('#sPin'), b=v.querySelector('#sPin2'), hint=v.querySelector('#sHint'), go=v.querySelector('#sGo');
+  [a,b].forEach(x=>x.oninput=()=>{x.value=x.value.replace(/\D/g,'').slice(0,4); hint.classList.remove('bad'); if(x===a&&a.value.length===4) b.focus();});
+  const lt=v.querySelector('#sLater'); if(lt) lt.onclick=()=>{PROFILE.pinAsk=Date.now(); saveProfile(); v.remove();};
+  go.onclick=async()=>{
+    const bad=t=>{hint.textContent=t; hint.classList.add('bad');};
+    if(a.value.length!==4) return bad('Use 4 digits.');
+    if(a.value!==b.value) return bad('Those don’t match.');
+    if(/^(\d)\1{3}$/.test(a.value)||['1234','4321','0123','2580'].includes(a.value)) return bad('Too easy to guess. Pick another.');
+    go.disabled=true; go.textContent='Saving…';
+    const r=await srvPin('set',{pin:a.value});
+    if(!r.ok){ go.disabled=false; go.textContent='Save PIN'; return bad('Couldn’t save. Check your internet.'); }
+    PROFILE.pinOn=true; saveProfile(); cloudSave(true); v.remove(); chime(true); toast('PIN saved. Your player is protected.',2600);
+  };
+  setTimeout(()=>a.focus(),250);
+}
 /* on start: make sure this phone still owns the username, then listen for invites */
 async function startSocial(){
   if(SOC.started||!PROFILE.handle) return; SOC.started=true;
@@ -3467,6 +3527,12 @@ async function startSocial(){
       toast(`@${old} is linked to another phone. Pick a username for this one.`,4200); onboard(); return; }
   }catch(e){console.warn(e);}
   listenInvites(); presence();
+  if(!PROFILE.pinOn) srvPin('has').then(r=>{
+    if(r.has){ PROFILE.pinOn=true; saveProfile(); cloudSave(true); return; }
+    if(r.err||Date.now()-(PROFILE.pinAsk||0)<20*3600e3) return;
+    const ask=()=>{ if(ONL.on||document.querySelector('.veil')) return setTimeout(ask,8000); pinSheet(false); };
+    setTimeout(ask,1500);
+  });
 }
 /* ---------- who's online: each open app checks in once a minute ---------- */
 function presence(){
@@ -3508,14 +3574,14 @@ async function ssoStart(kind,v){
   if(needsName()) onboard(); else {refreshMeta(); startSocial(); runNamedQ();}
 }
 let cloudT=null;
-function cloudSave(){ if(!FB||!PROFILE.linked) return; clearTimeout(cloudT);
-  cloudT=setTimeout(()=>FB.F.setDoc(FB.F.doc(FB.db,'users',FB.uid,'priv','save'),{p:JSON.stringify(PROFILE),at:FB.F.serverTimestamp()}).catch(e=>console.warn(e)),1500); }
+function cloudSave(now){ if(!FB||!(PROFILE.linked||PROFILE.pinOn)) return; clearTimeout(cloudT);
+  cloudT=setTimeout(()=>FB.F.setDoc(FB.F.doc(FB.db,'users',FB.uid,'priv','save'),{p:JSON.stringify(PROFILE),at:FB.F.serverTimestamp()}).catch(e=>console.warn(e)),now?0:1500); }
 async function cloudLoad(){
   try{ const s=await FB.F.getDoc(FB.F.doc(FB.db,'users',FB.uid,'priv','save'));
     if(s.exists()){ const d=JSON.parse(s.data().p||'{}'); PROFILE=Object.assign(JSON.parse(JSON.stringify(DEFAULT_PROFILE)),d); saveProfile(); refreshMeta(); toast('Welcome back. Your coins and level are loaded.',3000);} }
   catch(e){console.warn(e);}
 }
-{const sp=saveProfile; saveProfile=function(){sp(); if(PROFILE.linked) cloudSave();};}
+{const sp=saveProfile; saveProfile=function(){sp(); if(PROFILE.linked||PROFILE.pinOn) cloudSave();};}
 
 /* ---------- friends + invites ---------- */
 function friendsList(){return PROFILE.friends||(PROFILE.friends=[]);}
