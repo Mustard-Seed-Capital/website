@@ -867,6 +867,8 @@ body.realsp #bRen{border-color:#e05a4f;color:#ff8a80}
 .seashop h4{margin-top:0}.item.sea{border-color:var(--brass-dim)}
 .sdeck{position:relative;height:44px;border-radius:8px;display:flex;align-items:center;justify-content:center;gap:8px;font:700 15px var(--f-display);overflow:hidden;border:1px solid rgba(0,0,0,.15)}
 .sdeck i{position:absolute;right:-10px;top:4px;width:26px;height:36px;border-radius:5px;transform:rotate(12deg);border:1px solid rgba(255,255,255,.5)}
+.mc-art .mcglow{position:absolute;inset:0;border-radius:inherit;pointer-events:none;background:radial-gradient(ellipse at 50% 100%, var(--season-tint,transparent), transparent 70%)}
+.mc-art .mcdeco{position:absolute;transform:translate(-50%,-50%) rotate(var(--r));font-size:clamp(20px,6.5vmin,34px);pointer-events:none;filter:drop-shadow(0 3px 5px rgba(0,0,0,.45));z-index:3}
 </style>
 
 <div id="app">
@@ -2741,6 +2743,11 @@ function seasonFx(){
   const lb=document.getElementById('lobby'); if(!lb) return;
   let layer=lb.querySelector('.seafx'); if(layer) layer.remove();
   const shop=lb.querySelector('#dShop'); if(shop&&fx&&(SEASON_ITEMS[st.id]||[]).length&&!shop.querySelector('.sdot')) shop.insertAdjacentHTML('beforeend',`<span class="sdot">${st.deco[1]||st.deco[0]}</span>`);
+  /* each game mode picture gets the holiday's touches too */
+  lb.querySelectorAll('.mc-art').forEach((art,i)=>{ art.querySelectorAll('.mcdeco,.mcglow').forEach(x=>x.remove()); if(!fx) return;
+    const d=st.deco, spots=[[12,16,-14],[88,18,12],[14,84,10],[86,82,-10]];
+    art.insertAdjacentHTML('afterbegin',`<div class="mcglow"></div>`);
+    art.insertAdjacentHTML('beforeend',spots.map(([x,y,r],k)=>`<span class="mcdeco" style="left:${x}%;top:${y}%;--r:${r}deg">${d[(i+k)%d.length]}</span>`).join('')); });
   if(!fx||reduce) return;
   layer=document.createElement('div'); layer.className='seafx'; layer.setAttribute('aria-hidden','true');
   layer.innerHTML=Array.from({length:14},(_,i)=>{ const x=(i*73)%100, d=9+(i*37)%9, dl=-(i*1.7)%12, sz=14+(i*29)%14;
