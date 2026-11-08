@@ -544,6 +544,12 @@ button:focus-visible,input:focus-visible+span{outline:2px solid var(--brass);out
 @keyframes gsIn{from{transform:scale(.2) rotate(-30deg)}}
 @keyframes gsBob{50%{transform:translateY(-4px) rotate(6deg)}}
 @media (prefers-reduced-motion:reduce){.giftstay{animation:none}}
+.mc-weekly{background:radial-gradient(ellipse at 50% 20%,#7a1f1f,#1a0909 80%);border-color:#e05a4f}
+.wk-art{position:absolute;inset:0;display:grid;place-content:center;justify-items:center;gap:4px}.wk-art span{font-size:44px;filter:drop-shadow(0 4px 8px rgba(0,0,0,.5))}.wk-art b{font:800 13px var(--f-ui);letter-spacing:.2em;color:#ffcf9a}
+.tier{display:grid;grid-template-columns:1fr auto;gap:4px 10px;padding:10px 12px;border-radius:14px;border:1px solid var(--panel-line);background:rgba(0,0,0,.2);margin-bottom:8px}
+.tier .tn{font-weight:800}.tier .ts{font-size:12.5px;opacity:.8}.tier .tb{grid-row:span 2;align-self:center;display:flex;gap:6px}
+.tier .tb .btn{width:auto;margin:0;padding:0 12px;height:34px;font-size:13px}.tier.lock{opacity:.55}.tier.in{border-color:var(--brass)}
+.lbrow{display:grid;grid-template-columns:28px 1fr auto;gap:8px;padding:6px 4px;border-bottom:1px solid var(--panel-line);font-size:14px}.lbrow.me{color:var(--brass);font-weight:700}
 .mc-rnd{background:radial-gradient(ellipse at 50% 20%,#1d6b8f,#0b2233 80%)}
 .crew.rnd{opacity:.9}.crew .mini-av.q{display:grid;place-items:center;font:800 20px var(--f-ui);color:#bfe6ff;background:rgba(255,255,255,.08);border-style:dashed}
 .onb-hero{display:grid;place-items:center;margin:-4px auto 6px;width:64px;height:64px;border-radius:18px;background:linear-gradient(160deg,#1f5a3d,#0c2a1c);border:1px solid var(--brass);box-shadow:0 6px 18px rgba(0,0,0,.35)}
@@ -844,6 +850,7 @@ h4.hr{color:#8fd0ff}.hrbtn{margin-top:8px;font-size:13px}
 .grow .gst{opacity:.7;font-size:13px}.grow .gst.in{opacity:1;color:var(--gold,#e8c252);letter-spacing:1px}
 .rbk button{min-width:38px}.rsu button{min-width:0}
 body.realsp #bRen{border-color:#e05a4f;color:#ff8a80}
+.wkb{font-size:12.5px;font-weight:700;color:var(--brass);margin:2px 0}
 </style>
 
 <div id="app">
@@ -1753,7 +1760,7 @@ function playerSheet(after){
   const ch=(k,arr)=>arr.map(([v,l])=>`<button data-v="${v}">${ownsAv(k,v)?l:`🔒 ${l} · ${avCost(k,v).toLocaleString()}`}</button>`).join('');
   const v=sheet(`
     <div class="prof"><div class="big" id="pBig"><div class="pic" id="pPic"></div><span class="lv" id="pLv"></span></div>
-      <div class="who"><div class="hdl">${PROFILE.handle?`<b>@${esc(PROFILE.handle)}</b>`:`<b>${esc(PROFILE.name)}</b>`}<button class="linkb" id="pChg">${PROFILE.handle?'Change':'Pick a username'}</button>${PROFILE.handle?`<button class="linkb" id="pPin">${PROFILE.pinOn?'PIN':'Set PIN'}</button>`:''}</div><div class="ttl" id="pTtl"></div><div class="myrt" id="pRt"></div></div></div>
+      <div class="who"><div class="hdl">${PROFILE.handle?`<b>@${esc(PROFILE.handle)}</b>`:`<b>${esc(PROFILE.name)}</b>`}<button class="linkb" id="pChg">${PROFILE.handle?'Change':'Pick a username'}</button>${PROFILE.handle?`<button class="linkb" id="pPin">${PROFILE.pinOn?'PIN':'Set PIN'}</button>`:''}</div>${PROFILE.wkBadge&&PROFILE.wkBadge.until>Date.now()?`<div class="wkb">🏆 #${PROFILE.wkBadge.place} in ${esc((TOUR_TIERS.find(t=>t.k===PROFILE.wkBadge.tier)||{n:'the Weekend Tournament'}).n)}</div>`:''}<div class="ttl" id="pTtl"></div><div class="myrt" id="pRt"></div></div></div>
     <div class="bar"><i id="pBar"></i></div><div class="xpl" id="pXp"></div>
     <div class="stats"><div><b>${PROFILE.wins}</b><span>Wins</span></div><div><b>${PROFILE.losses}</b><span>Losses</span></div><div><b>${PROFILE.best}</b><span>Best streak</span></div><div><b>${PROFILE.nils}</b><span>Nils made</span></div></div>
     <div class="recs">${[['classic','Classic'],['jjdd','JJDD'],['ffa','Free-for-All'],['cup','Weekend Cup']].map(([k,l])=>{const r=(PROFILE.modeStats||{})[k]||{w:0,l:0};return `<span>${l} <b>${r.w}–${r.l}</b></span>`;}).join('')}${PROFILE.trophies?`<span>🏆 <b>${PROFILE.trophies}</b></span>`:''}</div>
@@ -2702,6 +2709,7 @@ function renderLobby0(){
   cards.push(card('tourney','mc-tourney','Weekend Cup','3 rounds · Lose once, you’re out',[`Entry ${TOUR_FEE}`,'Win 1,500'],'Enter'));
   cards.push(card('random','mc-random','Random','We pick the mode',['Surprise','Any mode'],'Spin'));
   cards.push(card('randoms','mc-rnd','Play Online','Get matched with real players',['Online','Randoms'],ONL.on?'Back to table':'Find'));
+  {const w=typeof tourWeek==='function'?tourWeek():null; cards.push(card('weekly','mc-weekly','Weekend Tournament',w?'Real Spades · open until Sunday night':'Real Spades · Friday to Sunday',['Online','High rollers'],w?'Enter':'Results'));}
   cards.push(`<button class="mc mc-crew" data-m="crew"><div class="mc-art" data-art="crew"></div><div><div class="mc-t">Play with your crew</div><div class="mc-s">Private tables with a code</div><div class="mc-tags"><span>Online</span><span>Room code</span></div></div><div class="mc-cta">${ONL.on?'Back to table':'Play'}</div></button>`);
   el.innerHTML=`
     <header class="lb-bar">
@@ -2732,6 +2740,7 @@ function renderLobby0(){
     if(k==='ffa'){a.innerHTML=`<div class="mini-tab"></div>`+[[50,14,1],[86,50,3],[50,86,0],[14,50,2]].map(([x,y,i])=>`<div class="mini-av" style="left:${x}%;top:${y}%">${avatarSVG(i===0?PROFILE.av:(BOT_AV[i]))}</div>`).join('');}
     if(k==='tourney'){a.innerHTML=`<svg class="trophy" viewBox="0 0 64 64" aria-hidden="true"><path d="M20 10h24v14c0 8-5 14-12 14s-12-6-12-14z" fill="#f2c94c" stroke="#a87a22" stroke-width="1.5"/><path d="M20 14h-7c0 8 3 12 8 13M44 14h7c0 8-3 12-8 13" fill="none" stroke="#f2c94c" stroke-width="3"/><path d="M28 38h8v8h-8z" fill="#d6a83a"/><path d="M20 46h24v6H20z" fill="#5a3a12" stroke="#a87a22"/><path d="M32 16c2 3 5 4.5 5 7 0 1.8-1.5 2.5-2.8 2-.6-.3-1.1-.8-1.5-1.3.1 1.5.6 2.8 1.6 3.8h-4.6c1-1 1.5-2.3 1.6-3.8-.4.5-.9 1-1.5 1.3-1.3.5-2.8-.2-2.8-2 0-2.5 3-4 5-7z" fill="#7a5512"/></svg>`;}
     if(k==='random'){put(null,32,52,-12);put(null,50,48,0);put(null,68,52,12);a.insertAdjacentHTML('beforeend','<div class="q">?</div>');}
+    if(k==='weekly'){a.innerHTML=`<div class="wk-art"><span>🚩</span><b>FRI–SUN</b></div>`;}
     if(k==='randoms'){a.innerHTML=`<div class="crew rnd">${[1,2,3,0].map(i=>i===0?`<div class="mini-av">${avatarSVG(PROFILE.av)}</div>`:'<div class="mini-av q">?</div>').join('')}</div>`;}
     if(k==='crew'){a.innerHTML=`<div class="crew">${[1,2,3,0].map(i=>`<div class="mini-av">${avatarSVG(i===0?PROFILE.av:BOT_AV[i])}</div>`).join('')}</div>`;}
     if(k==='resume'){put({s:'H',r:14,id:'r1'},40,52,-8);put({s:'S',r:14,id:'r2'},60,48,8);}
@@ -2742,6 +2751,7 @@ function renderLobby0(){
     if(m==='resume'){closeLobby();return;}
     if(m==='crew'){if(ONL.on){closeLobby();return;} whenNamed(()=>crewSheet());return;}
     if(m==='randoms'){if(ONL.on){closeLobby();return;} randomsSheet();return;}
+    if(m==='weekly'){if(ONL.on){closeLobby();return;} whenNamed(()=>tourSheet());return;}
     openTable(m);});
   el.querySelector('#lbMe').onclick=()=>playerSheet(renderLobby);
   el.querySelector('#lbNow').onclick=()=>{audio(); if(!MODES[opts.mode]) opts.mode='classic';
@@ -3164,6 +3174,7 @@ function evClock(id,d){
 }
 function onEv(id,d){
   if(id.startsWith('lag.')) return;
+  if(/^\d+\.tp$/.test(id)){ if(!FF){ const me=(d.list||[]).find(x=>x.a===ONL.me); if(me) later(()=>toast(`🚩 Tournament: +${me.p} points${me.bonus?` (incl. +${me.bonus} bonus)`:''}`,4200),2500); } return; }
   { const m=id.match(/^(\d+)\.(\d+)\.(rc\d+|cf)$/); if(m){ if(+m[1]!==ONL.g||!G) return;
       if(m[3]==='cf'){ if(+m[2]===G.handNo) renConfess((d.list||[]).map(r=>({p:toL(r.a),b:r.b,u:r.u}))); return; }
       renShow(toL(d.s),toL(d.t),d.b,d.u,!!d.ok,+m[2],false); return; } }
@@ -3466,7 +3477,8 @@ async function createTable(mode,target,pub,extra){
     let code='';
     for(let i=0;i<6;i++){code=Array.from({length:5},()=>CODE_AB[Math.floor(Math.random()*CODE_AB.length)]).join('');
       if(!(await F.getDoc(F.doc(db,'tables',code))).exists()) break;}
-    const rules=Object.assign(pub?Object.assign({},RND_RULES):{jokers:!!opts.jokers,deuce:!!opts.deuce,nil:!!opts.nil,bags:!!opts.bags,timer:!!opts.timer,blind:!!opts.blind,teamBid:!!opts.teamBid},extra&&extra.real?{real:true}:{});
+    const rules=Object.assign(pub?Object.assign({},RND_RULES):{jokers:!!opts.jokers,deuce:!!opts.deuce,nil:!!opts.nil,bags:!!opts.bags,timer:!!opts.timer,blind:!!opts.blind,teamBid:!!opts.teamBid},
+      extra&&extra.real?{real:true}:{}, extra&&extra.tier?{tier:extra.tier,wk:extra.wk}:{});
     const srv=await srvUp();
     await F.setDoc(F.doc(db,'tables',code),Object.assign({host:FB.uid,status:'lobby',mode,target,rules,g:0,bots:[],created:F.serverTimestamp()},pub?{pub:true,ping:F.serverTimestamp()}:{},srv?{srv:true}:{}));
     if(pub){RND.made=Date.now(); RND.starting=false;}
@@ -3798,7 +3810,7 @@ async function startSocial(){
     else if(s.data().uid!==FB.uid){ const old=PROFILE.handle; PROFILE.handle=null; saveProfile(); SOC.started=false;
       toast(`@${old} is linked to another phone. Pick a username for this one.`,4200); onboard(); return; }
   }catch(e){console.warn(e);}
-  listenInvites(); presence();
+  listenInvites(); presence(); collectInbox();
   if(!PROFILE.looked){ const askL=()=>{ if(PROFILE.looked) return; if(ONL.on||document.querySelector('.veil')) return setTimeout(askL,8000); lookSheet(); }; setTimeout(askL,1200); }
   if(!PROFILE.pinOn) srvPin('has').then(r=>{
     if(r.has){ PROFILE.pinOn=true; saveProfile(); cloudSave(true); return; }
@@ -3949,6 +3961,92 @@ function randomsSheet(){ whenNamed(()=>{
   draw();
 });}
 const okRnd=(m,p)=>p===250?250:(m==='ffa'?100:300);
+/* ---------- Weekend Tournament: Real Spades, online, Friday 12:00 AM to Sunday 11:59 PM Eastern ---------- */
+const TOUR_TIERS=[{k:'open',n:'Weekend Open',buy:1000,lvl:1},{k:'t10',n:'Spade Street',buy:10000,lvl:5},{k:'t25',n:'Back Room',buy:25000,lvl:10},
+  {k:'t50',n:'High Roller',buy:50000,lvl:15},{k:'t100',n:'Penthouse',buy:100000,lvl:20},{k:'t250',n:'Kingpin',buy:250000,lvl:25}];
+function etNow(ms){ const o={}; new Intl.DateTimeFormat('en-CA',{timeZone:'America/New_York',year:'numeric',month:'2-digit',day:'2-digit',weekday:'short',hour:'2-digit',hourCycle:'h23'})
+  .formatToParts(new Date(ms||Date.now())).forEach(x=>o[x.type]=x.value); return {date:`${o.year}-${o.month}-${o.day}`,dow:['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].indexOf(o.weekday),h:+o.hour}; }
+const addDaysS=(d,n)=>{const t=new Date(d+'T12:00:00Z'); t.setUTCDate(t.getUTCDate()+n); return t.toISOString().slice(0,10);};
+function tourWeek(){ const e=etNow(); return e.dow===5?e.date:e.dow===6?addDaysS(e.date,-1):e.dow===0?addDaysS(e.date,-2):null; }
+function lastWeek(){ const e=etNow(); const back={0:2,1:3,2:4,3:5,4:6,5:7,6:8}[e.dow]; return addDaysS(e.date,-back); }
+function payPlanC(n,pot){ const prize=Math.floor(pot*0.9); if(n>=10) return [30,18,12,6,6,3.6,3.6,3.6,3.6,3.6].map(x=>Math.floor(prize*x/90));
+  if(n<=1) return [pot]; const pc=[50,30,20].slice(0,n), t=pc.reduce((a,b)=>a+b,0); return pc.map(x=>Math.floor(prize*x/t)); }
+async function srvTour(b){ try{ if(!await connect()) return {err:'offline'}; const t=await FB.auth.currentUser.getIdToken();
+  return await fetch(SRV_URL,{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+t},body:JSON.stringify(Object.assign({act:'tour'},b))}).then(r=>r.json()); }catch(e){ return {err:'offline'}; } }
+/* tournament winnings land in your inbox; collect them when the app opens */
+async function collectInbox(){
+  if(!FB) return; const {F,db}=FB;
+  try{ const s=await F.getDocs(F.collection(db,'users',FB.uid,'inbox'));
+    s.forEach(d=>{ const x=d.data(), c=Math.max(0,Math.min(5e6,x.coins|0)), T=TOUR_TIERS.find(t=>t.k===x.tier);
+      PROFILE.coins+=c; if(x.place<=3) PROFILE.wkBadge={place:x.place,tier:x.tier,until:Date.now()+7*864e5};
+      saveProfile(); refreshMeta(); chime(true);
+      toast(`🏆 ${T?T.n:'Tournament'}: you finished #${x.place} and won ${fmt(c)} coins!`,4200);
+      F.deleteDoc(d.ref).catch(()=>{}); });
+  }catch(e){ console.warn('inbox',e); }
+}
+function tourSheet(){
+  const week=tourWeek(), L=lvlInfo(PROFILE.xp).L;
+  const v=sheet('<div id="tourS"><h2>🚩 Weekend Tournament</h2><p class="lede">Loading…</p></div>',{mid:true});
+  const box=v.querySelector('#tourS');
+  (async()=>{
+    if(!await connect()){ box.innerHTML='<h2>🚩 Weekend Tournament</h2><p class="lede">Couldn’t reach the server. Check your internet.</p>'; return; }
+    collectInbox();
+    const {F,db}=FB, wkShow=week||lastWeek();
+    if(!week) await Promise.all(TOUR_TIERS.map(t=>srvTour({op:'pay',week:wkShow,tier:t.k})));
+    const docs=await Promise.all(TOUR_TIERS.map(t=>F.getDoc(F.doc(db,'wk',`${wkShow}_${t.k}`)).catch(()=>null)));
+    const mine=await Promise.all(TOUR_TIERS.map(t=>F.getDoc(F.doc(db,'wk',`${wkShow}_${t.k}`,'e',FB.uid)).catch(()=>null)));
+    const draw=()=>{
+      const e=etNow(), days=(5-e.dow+7)%7||7;
+      box.innerHTML=`<h2>🚩 Weekend Tournament</h2>
+        <p class="lede">${week?'Real Spades rules: no coach, no tracker, reneges allowed, call them out. Buy in once per tier. Your <b>best 10 games</b> count: win 200, lose 75, plus 25 for each nil made, renege caught or renege you got away with.'
+          :`Closed right now. The next one opens <b>Friday at 12:00 AM Eastern</b>${days?` (in ${days} day${days>1?'s':''})`:''}. Here’s how last weekend finished.`}</p>
+        ${TOUR_TIERS.map((t,i)=>{ const d=docs[i]&&docs[i].exists()?docs[i].data():{pot:0,n:0}, me=mine[i]&&mine[i].exists()?mine[i].data():null, lock=L<t.lvl;
+          const first=payPlanC(Math.max(d.n,1),d.pot)[0]||0;
+          const btn=!week?`<button class="btn ghost" data-lb="${i}">Results</button>`
+            :me?`<button class="btn" data-play="${i}">Play</button><button class="btn ghost" data-lb="${i}">Board</button>`
+            :lock?`<button class="btn ghost" disabled>Level ${t.lvl}</button>`:`<button class="btn" data-in="${i}">Enter · ${kfmt(t.buy)}</button>`;
+          return `<div class="tier${lock&&!me?' lock':''}${me?' in':''}"><div class="tn">${t.n} <small style="opacity:.7">· ${kfmt(t.buy)} buy-in</small></div><div class="tb">${btn}</div>
+            <div class="ts">Pot ${fmt(d.pot||0)} · ${d.n||0} player${d.n===1?'':'s'}${d.pot?` · 1st gets ${fmt(first)}`:''}${me?` · <b>You: ${me.pts||0} pts, ${(me.games||[]).length} game${(me.games||[]).length===1?'':'s'}</b>`:''}${d.status==='paid'?' · paid out':''}</div></div>`; }).join('')}
+        <p class="fine">The pot is every buy-in. The house keeps 10%. 10+ players: top 10 get paid (1st 30%, 2nd 18%, 3rd 12%…). Fewer: top 3 split it. Coins can’t be cashed out.</p>`;
+      box.querySelectorAll('[data-in]').forEach(b=>b.onclick=()=>tourEnter(TOUR_TIERS[+b.dataset.in],week,()=>{v.remove();tourSheet();}));
+      box.querySelectorAll('[data-play]').forEach(b=>b.onclick=async()=>{ const t=TOUR_TIERS[+b.dataset.play]; b.disabled=true; b.textContent='Finding…';
+        const ok=await findTour(t,week); if(ok) v.remove(); else {b.disabled=false; b.textContent='Play';} });
+      box.querySelectorAll('[data-lb]').forEach(b=>b.onclick=()=>tourBoard(TOUR_TIERS[+b.dataset.lb],wkShow,docs[+b.dataset.lb]));
+    };
+    draw();
+  })();
+}
+function tourEnter(t,week,done){
+  if(PROFILE.coins<t.buy){ toast(`You need ${fmt(t.buy)} coins for ${t.n}.`,2600); return openShop(); }
+  const v=sheet(`<h2>Enter ${esc(t.n)}?</h2><p class="lede">Buy-in <b>${fmt(t.buy)}</b> coins, once for the whole weekend. Play as many games as you want; your best 10 count. You have ${fmt(PROFILE.coins)}.</p>
+    <ul class="notes"><li>Real Spades: no coach, no tracker, any card can be played</li><li>Renege caught: that team loses 100 and its books. Wrong call: your team loses 50</li><li>Leaving a game early counts as a quit</li></ul>
+    <button class="btn" id="teGo">Pay ${fmt(t.buy)} and enter</button><button class="btn ghost" id="teNo">Not now</button>`,{mid:true});
+  v.querySelector('#teNo').onclick=()=>v.remove();
+  v.querySelector('#teGo').onclick=async()=>{ const b=v.querySelector('#teGo'); b.disabled=true; b.textContent='Entering…';
+    PROFILE.coins-=t.buy; saveProfile(); refreshMeta();
+    const r=await srvTour({op:'join',tier:t.k,n:PROFILE.handle||PROFILE.name});
+    if(!r.ok){ if(r.err!=='already'){ PROFILE.coins+=t.buy; saveProfile(); refreshMeta(); }
+      toast(r.err==='already'?'You’re already in this one.':r.err==='closed'?'The tournament is closed until Friday.':'Couldn’t enter. Your coins are back.',3000); v.remove(); done(); return; }
+    v.remove(); chime(true); toast(`You’re in ${t.n}. Good luck! 🚩`,2600); done(); };
+}
+async function tourBoard(t,week,doc){
+  const {F,db}=FB; const d=doc&&doc.exists()?doc.data():{};
+  const v=sheet(`<h2>${esc(t.n)}</h2><p class="lede">Loading…</p>`,{mid:true});
+  try{ const s=await F.getDocs(F.query(F.collection(db,'wk',`${week}_${t.k}`,'e'),F.orderBy('pts','desc'),F.limit(25))); const rows=[]; s.forEach(x=>rows.push(x.data()));
+    const plan=payPlanC(Math.max(d.n||rows.length,1),d.pot||0);
+    v.querySelector('.lede').outerHTML=`<p class="lede">Pot ${fmt(d.pot||0)} · ${d.n||0} players${d.status==='paid'?' · paid out':''}</p>`+
+      (rows.length?rows.map((x,i)=>`<div class="lbrow${x.uid===FB.uid?' me':''}"><b>${i+1}</b><span>${esc(x.n)} <small style="opacity:.6">· ${(x.games||[]).length} games</small></span><span>${x.pts||0} pts${plan[i]?` · ${kfmt(plan[i])}`:''}</span></div>`).join(''):'<p class="lede">Nobody has played yet. Be first.</p>');
+  }catch(e){ v.querySelector('.lede').textContent='Couldn’t load the board.'; }
+}
+async function findTour(t,week){
+  if(!await connect()) return false;
+  const ex={real:true,tier:t.k,wk:week};
+  try{
+    for(const x of await openPub('classic',null,300,t.k)) if(await trySit(x.code)) return true;
+    for(const x of await openLive('classic',300,t.k)) if(await joinLive(x)) return true;
+    return await createTable('classic',300,true,ex);
+  }catch(e){ console.warn(e); toast('Couldn’t find a table. Try again.',2600); return false; }
+}
 async function findMatch(mode,pts){
   pts=pts||okRnd(mode,0);
   if(!await connect()) return false;
@@ -3958,18 +4056,18 @@ async function findMatch(mode,pts){
     return await createTable(mode,pts,true);
   }catch(e){console.warn(e); toast('Couldn’t find a table. Try again.',2600); return false;}
 }
-async function openPub(mode,skip,pts){
+async function openPub(mode,skip,pts,tier){
   const {F,db}=FB, now=Date.now(), out=[];
   const s=await F.getDocs(F.query(F.collection(db,'tables'),F.where('pub','==',true),F.where('status','==','lobby'),F.where('mode','==',mode),F.limit(25)));
   const ms=x=>x&&x.toMillis?x.toMillis():0;
-  s.forEach(d=>{const x=d.data(); if(d.id!==skip&&x.host!==FB.uid&&now-ms(x.ping)<45e3&&(!pts||x.target===pts)) out.push({code:d.id,created:ms(x.created)||now});});
+  s.forEach(d=>{const x=d.data(); if(d.id!==skip&&x.host!==FB.uid&&now-ms(x.ping)<45e3&&(!pts||x.target===pts)&&((x.rules&&x.rules.tier)||'')===(tier||'')) out.push({code:d.id,created:ms(x.created)||now});});
   return out.sort((a,b)=>a.created-b.created||(a.code<b.code?-1:1));
 }
 /* games already being played that still have a bot in them (server-run tables only) */
-async function openLive(mode,pts){
+async function openLive(mode,pts,tier){
   const {F,db}=FB, now=Date.now(), out=[], ms=x=>x&&x.toMillis?x.toMillis():0;
   const s=await F.getDocs(F.query(F.collection(db,'tables'),F.where('pub','==',true),F.where('status','==','playing'),F.where('mode','==',mode),F.limit(25)));
-  s.forEach(d=>{const x=d.data(); if(x.srv&&(x.bots||[]).length&&now-ms(x.act||x.created)<6*60e3&&x.host!==FB.uid&&(!pts||x.target===pts)) out.push({code:d.id,bots:x.bots.slice(),act:ms(x.act)});});
+  s.forEach(d=>{const x=d.data(); if(x.srv&&(x.bots||[]).length&&now-ms(x.act||x.created)<6*60e3&&x.host!==FB.uid&&(!pts||x.target===pts)&&((x.rules&&x.rules.tier)||'')===(tier||'')) out.push({code:d.id,bots:x.bots.slice(),act:ms(x.act)});});
   return out.sort((a,b)=>b.act-a.act);
 }
 async function joinLive(t){
@@ -4018,7 +4116,7 @@ async function mergeCheck(){
   RND.merging=true;
   try{
     const mine=ONL.code, T=ONL.table, mc=T&&T.created&&T.created.toMillis?T.created.toMillis():Date.now();
-    const list=(await openPub(T.mode,mine,T.target)).filter(t=>t.created<mc||(t.created===mc&&t.code<mine));
+    const list=(await openPub(T.mode,mine,T.target,T.rules&&T.rules.tier)).filter(t=>t.created<mc||(t.created===mc&&t.code<mine));
     for(const t of list){
       if(ONL.code!==mine||ONL.seats.filter(Boolean).length>1) break;
       const ok=await trySit(t.code,()=>{FB.F.updateDoc(FB.F.doc(FB.db,'tables',mine),{status:'closed'}).catch(()=>{}); onlineUnsub(); if(ONL.room){ONL.room.remove(); ONL.room=null;}});
