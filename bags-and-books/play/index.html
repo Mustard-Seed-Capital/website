@@ -821,7 +821,7 @@ h4.hr{color:#8fd0ff}.hrbtn{margin-top:8px;font-size:13px}
 .sig.s3 i{background:#4ade80}.sig.s2 i:nth-child(-n+2){background:#facc15}.sig.s1 i:nth-child(1){background:#f87171}
 .onb-in.pin{justify-content:center;margin:8px auto;max-width:180px}
 .pinIn{text-align:center;letter-spacing:.5em;font-size:24px!important;font-weight:800}
-.lkGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:12px 0 14px}
+.lkGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:12px auto 14px;max-width:330px}
 .lkC{aspect-ratio:1;border-radius:16px;border:2px solid var(--panel-line);background:rgba(0,0,0,.22);padding:4px;cursor:pointer}
 .lkpic{position:relative;width:100%;height:100%;border-radius:50%;overflow:hidden;background:radial-gradient(circle at 50% 40%,#2f6b4c,#183d2b)}
 .lkpic svg{display:block;width:100%;height:100%}
@@ -830,6 +830,11 @@ h4.hr{color:#8fd0ff}.hrbtn{margin-top:8px;font-size:13px}
 .buyav{width:96px;height:96px;margin:6px auto 8px}
 .sw8.lockd{position:relative;opacity:.55}.sw8.lockd::after{content:'🔒';position:absolute;inset:0;display:grid;place-items:center;font-size:11px}
 .avnote{font-size:12.5px;opacity:.8;margin:12px 0 2px}
+.chatin{display:flex;gap:8px;margin:10px 0 4px}.chatin input{flex:1;min-width:0;border-radius:12px;border:1px solid var(--panel-line);background:rgba(0,0,0,.25);color:inherit;font:inherit;font-size:16px;padding:10px 12px}
+.chatin .btn{width:auto;margin:0;padding:0 16px}
+.chhint{font-size:12px;opacity:.75;margin-bottom:10px}.chhint.bad{color:#ff8a80;opacity:1}
+.gotr{margin-top:14px}.gotlist{display:grid;gap:6px}.grow{display:flex;justify-content:space-between;align-items:center;font-size:14px}
+.grow .gst{opacity:.7;font-size:13px}.grow .gst.in{opacity:1;color:var(--gold,#e8c252);letter-spacing:1px}
 </style>
 
 <div id="app">
@@ -1091,17 +1096,17 @@ function gameOverCheck(target,floor){
 <script id="player">
 /* ===== Player profile, avatars, levels, themes ===== */
 const SKIN=['#f6d7bf','#e8b894','#c98d5f','#a8693f','#7c4a2a','#55301b'];
-const HAIRC=['#1a1414','#4a2c1a','#c79a4a','#9a9a9a','#9c3e1d'];
+const HAIRC=['#1a1414','#4a2c1a','#c79a4a','#9a9a9a','#9c3e1d','#7a5230','#e6d3a3'];
 const SHIRT=['#c0392b','#2e86de','#27ae60','#f1c40f','#8e44ad','#1d1d22','#e67e22','#ecf0f1'];
-const HAIR=[['fade','Fade'],['waves','Waves'],['afro','Afro'],['locs','Locs'],['long','Long'],['pony','Ponytail'],['curls','Curls'],['bun','Bun'],['braids','Braids'],['cap','Cap'],['bald','Bald']];
+const HAIR=[['side','Side part'],['spiky','Spiky'],['buzz','Buzz cut'],['fade','Fade'],['waves','Waves'],['afro','Afro'],['locs','Locs'],['long','Long'],['bob','Bob'],['pony','Ponytail'],['curls','Curls'],['bun','Bun'],['braids','Braids'],['hijab','Hijab'],['cap','Cap'],['bald','Bald']];
 const FACIAL=[['none','Clean'],['beard','Beard'],['goatee','Goatee'],['stache','Mustache']];
 const ACC=[['none','None'],['shades','Shades'],['glasses','Glasses'],['chain','Chain'],['earrings','Earrings'],['headphones','Headphones'],['crown','Crown']];
 const PREMIUM={headphones:800,crown:2000};
 /* restyling: each style unlocks once with coins, then it's yours to switch back to for free.
    Him/her and skin tone are always free. */
 const AV_COST={hair:300,hc:150,facial:150,shirt:100,acc:{shades:250,glasses:150,chain:400,earrings:200,headphones:800,crown:2000}};
-const STARTERS={m:[{hair:'fade',facial:'beard'},{hair:'waves',facial:'none'},{hair:'locs',facial:'goatee'},{hair:'afro',facial:'none'}],
-  f:[{hair:'long'},{hair:'braids'},{hair:'curls'},{hair:'pony'}]};
+const STARTERS={m:[{hair:'side',hc:1},{hair:'fade',facial:'beard'},{hair:'spiky',hc:2},{hair:'waves'},{hair:'buzz',hc:5,facial:'stache'},{hair:'locs',facial:'goatee'}],
+  f:[{hair:'long',hc:1},{hair:'bob',hc:6},{hair:'curls'},{hair:'pony',hc:4},{hair:'braids'},{hair:'hijab'}]};
 /* rank badge: earned by winning, lost by losing or sitting out */
 const RANKS=[{n:'Bronze',rp:0,c:'#c58550'},{n:'Silver',rp:300,c:'#d3dae2'},{n:'Gold',rp:700,c:'#f0c75e'},{n:'Platinum',rp:1200,c:'#a6eadb'},{n:'Diamond',rp:1800,c:'#86d4ff'},{n:'Ace of Spades',rp:2600,c:'#ff7a97'}];
 function rankOf(rp){let i=0;RANKS.forEach((r,j)=>{if(rp>=r.rp)i=j;});return i;}
@@ -1122,6 +1127,14 @@ function avatarSVG(a){
     case 'afro': back=`<circle cx="32" cy="22" r="18" fill="${hc}"/>`; top=`<path d="${capTop}" fill="${hc}"/>`; break;
     case 'locs': back=`<path d="M16.5 22 C15 34 16 46 19 53 L24.5 53 C22 45 21.5 34 22 25Z M47.5 22 C49 34 48 46 45 53 L39.5 53 C42 45 42.5 34 42 25Z" fill="${hc}"/><path d="M18.5 30v20M21 31v20M43 31v20M45.5 30v20" stroke="rgba(0,0,0,.25)" stroke-width="1"/>`; top=`<path d="${capTop}" fill="${hc}"/><path d="M24 15v6M28 13.5v6M32 13v6M36 13.5v6M40 15v6" stroke="rgba(0,0,0,.25)" stroke-width="1"/>`; break;
     case 'bun': back=`<circle cx="32" cy="9.5" r="6.5" fill="${hc}"/>`; top=`<path d="${capTop}" fill="${hc}"/>`; break;
+    case 'side': top=`<path d="M19.5 27 C19 15 26 12.5 32 12.5 C38 12.5 45 15 44.5 27 C43.5 22 41 19.6 37 19 C31 18.3 24 20 19.5 27Z" fill="${hc}"/><path d="M26 13.9 C29 17.2 33 18.9 38.5 19.3" stroke="rgba(255,255,255,.2)" stroke-width="1" fill="none"/>`; break;
+    case 'spiky': top=`<path d="M19.5 27 C19 19.5 20.5 15.5 23 14 L23.5 8.5 L27 12.6 L29 7 L32 11.8 L35 7 L37 12.6 L40.5 8.5 L41 14 C43.5 15.5 45 19.5 44.5 27 C43 22 39 19.5 32 19.5 C25 19.5 21 22 19.5 27Z" fill="${hc}"/>`; break;
+    case 'buzz': top=`<path d="M19.8 26 C19.5 16 26 13.6 32 13.6 C38 13.6 44.5 16 44.2 26 C42.5 21 38.5 19 32 19 C25.5 19 21.5 21 19.8 26Z" fill="${hc}" opacity=".8"/>`; break;
+    case 'bob': back=`<path d="M17 24 C15.8 33 16.6 40 19 45 L45 45 C47.4 40 48.2 33 47 24 C44.5 13 19.5 13 17 24Z" fill="${hc}"/>`;
+      top=`<path d="M19 28 C19 15 26 12.5 32 12.5 C38 12.5 45 15 45 28 C43 22.5 39.5 20.6 32 20.6 C24.5 20.6 21 22.5 19 28Z" fill="${hc}"/>`; break;
+    case 'hijab': { const wrap='M15 28 C15 12 24 8 32 8 C40 8 49 12 49 28 C49 38 47 44.5 44 48.5 L20 48.5 C17 44.5 15 38 15 28Z';
+      back=`<path d="${wrap}" fill="${sh}"/><path d="${wrap}" fill="rgba(0,0,0,.12)"/><path d="M14.5 52 C17 47 24 45.5 32 45.5 C40 45.5 47 47 49.5 52 L49.5 58 L14.5 58Z" fill="${sh}"/>`;
+      top=`<path fill-rule="evenodd" d="${wrap} M32 16.8 C25.3 16.8 21.6 22.2 21.6 29 C21.6 36.8 26 42.4 32 42.4 C38 42.4 42.4 36.8 42.4 29 C42.4 22.2 38.7 16.8 32 16.8Z" fill="${sh}"/><path fill-rule="evenodd" d="${wrap} M32 16.8 C25.3 16.8 21.6 22.2 21.6 29 C21.6 36.8 26 42.4 32 42.4 C38 42.4 42.4 36.8 42.4 29 C42.4 22.2 38.7 16.8 32 16.8Z" fill="rgba(0,0,0,.1)"/><path d="M22 20.5 C26 15.5 38 15.5 42 20.5" stroke="rgba(255,255,255,.18)" stroke-width="1.1" fill="none"/>`; break; }
     case 'long': back=`<path d="M17.5 24 C15.5 38 16.5 50 20.5 57 L43.5 57 C47.5 50 48.5 38 46.5 24 C44 13 20 13 17.5 24Z" fill="${hc}"/>`;
       top=`<path d="M19.5 28 C19 15 26 12.5 32 12.5 C38 12.5 45 15 44.5 28 C42.5 21 37 17.5 30.5 18.8 C26 19.8 22 23 19.5 28Z" fill="${hc}"/>`; break;
     case 'pony': back=`<path d="M41 15.5 C53 17 54.5 33 47.5 45 C49 34 47.5 25 40.5 21Z" fill="${hc}"/>`;
@@ -1149,14 +1162,14 @@ function avatarSVG(a){
   else if(a.acc==='crown') acc=`<path d="M20.5 14 L22.5 4.5 L27.5 9.5 L32 2.5 L36.5 9.5 L41.5 4.5 L43.5 14Z" fill="#f2c94c" stroke="#a87a22" stroke-width="1" stroke-linejoin="round"/><circle cx="32" cy="9.5" r="1.5" fill="#d6304a"/><circle cx="25.5" cy="11" r="1" fill="#3aa0ff"/><circle cx="38.5" cy="11" r="1" fill="#3aa0ff"/><path d="M21 13.6 H43" stroke="#a87a22" stroke-width="1"/>`;
   return `<svg viewBox="0 0 64 64" aria-hidden="true">${back}
     <path d="M8 64 C10 52 20 47.5 32 47.5 C44 47.5 54 52 56 64Z" fill="${sh}"/>${her?'':'<path d="M27 48 L32 53.5 L37 48" stroke="rgba(0,0,0,.22)" stroke-width="1.4" fill="none"/>'}
-    <rect x="27" y="39" width="10" height="10" fill="${sk}"/><rect x="27" y="39" width="10" height="4" fill="rgba(0,0,0,.15)"/>${her?`<path d="M25 47.6 Q32 56 39 47.6Z" fill="${sk}"/>`:''}
+    <rect x="27" y="39" width="10" height="10" fill="${sk}"/><rect x="27" y="39" width="10" height="4" fill="rgba(0,0,0,.15)"/>${her&&a.hair!=='hijab'?`<path d="M25 47.6 Q32 56 39 47.6Z" fill="${sk}"/>`:''}
     <circle cx="19.5" cy="30" r="3" fill="${sk}"/><circle cx="44.5" cy="30" r="3" fill="${sk}"/>
     <ellipse cx="32" cy="29" rx="12.5" ry="14.5" fill="${sk}"/>
     <ellipse cx="32" cy="36" rx="10" ry="6" fill="rgba(0,0,0,.05)"/>
     ${fac}
     <circle cx="27" cy="29" r="1.7" fill="#1b1414"/><circle cx="37" cy="29" r="1.7" fill="#1b1414"/>
     ${her?'<path d="M25.4 28.2 l-1.6 -1 M26 27.5 l-1 -1.5 M38.6 28.2 l1.6 -1 M38 27.5 l1 -1.5" stroke="#1b1414" stroke-width=".9" stroke-linecap="round"/>':''}
-    <path d="M24 25.3 q3 -1.6 6 0 M34 25.3 q3 -1.6 6 0" stroke="${a.hair==='bald'||a.hair==='cap'?'#3a2a22':hc}" stroke-width="${her?1.1:1.6}" fill="none" stroke-linecap="round"/>
+    <path d="M24 25.3 q3 -1.6 6 0 M34 25.3 q3 -1.6 6 0" stroke="${a.hair==='bald'||a.hair==='cap'||a.hair==='hijab'?'#3a2a22':hc}" stroke-width="${her?1.1:1.6}" fill="none" stroke-linecap="round"/>
     <path d="M32 30.5 q-1.6 3.8 .4 4.3" stroke="rgba(0,0,0,.25)" stroke-width="1.2" fill="none" stroke-linecap="round"/>
     ${her?'<path d="M28.3 37.4 q3.7 3.2 7.4 0 q-3.7 1 -7.4 0z" fill="#b4475a"/>':'<path d="M28.5 37.8 q3.5 2.6 7 0" stroke="#6a2d22" stroke-width="1.6" fill="none" stroke-linecap="round"/>'}
     ${top}${acc}</svg>`;
@@ -1629,6 +1642,9 @@ function userClock(){
   else if(G.phase==='play') startClock(0,()=>{toast("Time's up. Played a card for you.");sel=null;playMine(botChoose(0));},G.trick.length?'Your play':'Your lead',ms);
 }
 const loseAt=()=>opts.target===100?-100:-200;
+/* how far a game goes: partner games 100/250/300/500, free-for-all 100/250 */
+const targetsFor=m=>m==='ffa'?[100,250]:[100,250,300,500];
+const okTarget=(m,t)=>targetsFor(m).includes(t)?t:(m==='ffa'?100:300);
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
 
 /* ---------- your player ---------- */
@@ -2259,13 +2275,84 @@ function markTracker(p){
   const av=document.querySelector(`#seat${p} .av`); if(av&&!av.querySelector('.nerd')){const t=document.createElement('span'); t.className='nerd'; t.textContent='🤓'; t.title='Using the card tracker'; av.appendChild(t);}
 }
 function clearTrackers(){ document.querySelectorAll('.av .nerd').forEach(x=>x.remove()); if(G) G.trackers=new Set(); }
+/* ---------- typed chat: short, friendly, filtered ---------- */
+const CHAT_W=new Set(atob('YXNzIGFyc2UgYXNzZXMgYml0Y2ggYml0Y2hlcyBiYXN0YXJkIGJvbGxvY2tzIGJ1bGxzaGl0IGNvY2sgY29ja3MgY3VtIGN1bnQgZGFtbiBkaWNrIGRpY2tzIGRpbGRvIGRvdWNoZSBmYWcgZmFncyBmdWNrIGZ1Y2tlciBmdWNraW5nIGhvZSBob2VzIGppenogcGlzcyBwb3JuIHB1c3N5IHByaWNrIHNoaXQgc2hpdHMgc2x1dCBzbHV0cyB0aXQgdGl0cyB0aXR0aWVzIHR3YXQgd2FuayB3aG9yZSB3YW5rZXIgcmV0YXJkIHJldGFyZGVkIHNwaWMgc3BpY2sgY2hpbmsgZ29vayBraWtlIGNvb24gamFwIHdvcCBkYWdvIGd5cCBneXBzeSBwYWtpIHJhZ2hlYWQgdG93ZWxoZWFkIHdldGJhY2sgYmVhbmVyIGNyYWNrYSBob25reSB0cmFubnkgZHlrZSBob21vIG5hemkga3lzIG51ZGUgbnVkZXMgc2V4IHNleHkgaG9ybnkgcmFwZSByYXBpc3QgbW9sZXN0IHBlZG8=').split(' ')), CHAT_S=atob('ZnVjayBmdWsgcGh1Y2sgY3VudCBzaGl0IGFzc2hvbGUgbW90aGVyZiBmYWdnb3QgZmFnZyBiaXRjaCB3aG9yZSBzbHV0IHJldGFyZCB3ZXRiYWNrIHRvd2VsaGVhZCByYWdoZWFkIHBlZG9waGlsIGJsb3dqb2IgaGFuZGpvYiBkaWxkbyBwb3JuIGtrayBoaXRsZXIgbmlnZw==').split(' ');
+const LEET={'0':'o','1':'i','!':'i','|':'i','3':'e','4':'a','@':'a','5':'s','$':'s','7':'t','+':'t','8':'b','9':'g','€':'e'};
+function chatNorm(t){ return String(t).toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g,'').replace(/[0-9!|@$+€]/g,c=>LEET[c]||c); }
+/* '' if the message is fine to show, otherwise the reason it isn't */
+function chatBad(t){
+  t=String(t||'').trim();
+  if(!t) return 'empty';
+  if(t.length>60) return 'Keep it under 60 characters.';
+  if(/https?:|www\.|\.(com|net|org|io|gg|ly|co)\b|@\w+\.|\d{3}[\s.-]?\d{3}[\s.-]?\d{4}/i.test(t)) return 'No links, emails or phone numbers.';
+  const n=chatNorm(t);
+  if(/kil+\s*(your|ur|yo)\s*sel(f|ves)/.test(n)) return 'Keep it friendly.';
+  /* whole words, including spaced-out letters like "f u c k" */
+  const words=n.replace(/[^a-z\s]/g,' ').split(/\s+/).filter(Boolean), joined=[]; let run='';
+  words.forEach(w=>{ if(w.length===1) run+=w; else { if(run.length>2) joined.push(run); run=''; joined.push(w); } }); if(run.length>2) joined.push(run);
+  const root=w=>[w,w.replace(/(.)\1+/g,'$1'),w.replace(/(es|s|er|ers|ing|ed|z)$/,''),w.replace(/(.)\1+/g,'$1').replace(/(es|s|er|ers|ing|ed|z)$/,'')];
+  const nword=w=>/^n+i+g+(e+r+|a+h?|u+h+|az)s?$/.test(w);
+  if(joined.some(w=>nword(w)||CHAT_S.some(x=>{ const xc=x.replace(/(.)\1+/g,'$1'); return w.includes(x)||(xc.length>=4&&w.replace(/(.)\1+/g,'$1').includes(xc)); })||root(w).some(r=>CHAT_W.has(r))))
+    return 'Keep it friendly. That word isn’t allowed.';
+  return '';
+}
+const CHAT_RATE=[];
+function chatTooFast(){ const now=Date.now(); while(CHAT_RATE.length&&now-CHAT_RATE[0]>30e3) CHAT_RATE.shift();
+  return CHAT_RATE.length>=5||(CHAT_RATE.length&&now-CHAT_RATE[CHAT_RATE.length-1]<2500); }
+function sendTyped(t){
+  t=String(t||'').replace(/\s+/g,' ').trim();
+  const why=chatBad(t); if(why) return why==='empty'?'Type something first.':why;
+  if(chatTooFast()) return 'Slow down a little.';
+  CHAT_RATE.push(Date.now());
+  if(ONL.on){ if(ONL.spec) return 'Spectators can’t chat.'; post('c.'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),{s:ONL.me,t}); return ''; }
+  say(0,t,2800); botBanter('l'+Date.now(),0,t); return '';
+}
+
+/* ---------- the bots talk back (same reply on every phone: it's picked from the message id) ---------- */
+const BANTER={
+  tauntBack:["Set? Nah, we got this 😤","Count your own books first.","Not today.","We'll see who's set.","Keep talking, I'm counting books.","Big talk from the team with no books.","Y'all are the ones in trouble.","Relax, the hand ain't over."],
+  agree:["Facts! 🔥","Tell 'em!","That's what I'm saying.","Run it up, partner."],
+  thanks:["Appreciate it 🙏","Good game for real.","You too!","Respect."],
+  hello:["What's good! 👋","Yo! Let's run it.","Hey hey. Shuffle up.","Welcome to the table."],
+  partner:["My bad, I got you next hand.","I'm locked in now.","Trust me, partner.","Okay okay, I see you."],
+  laugh:["😂😂","Stop it 😂","Nah that's crazy 😂"],
+  hurry:["I'm thinking! 🤔","Good things take time.","Patience, patience."],
+  misc:["Facts.","Hmm 🤔","Say less.","Okay okay.","We'll see 👀"]
+};
+function hashStr(t){ let h=2166136261; for(let i=0;i<t.length;i++){ h^=t.charCodeAt(i); h=Math.imul(h,16777619); } return h>>>0; }
+let lastBanter=0;
+function botBanter(id,fromA,t){
+  if(FF||!G) return;
+  const L=a=>ONL.on?toL(a):a, isBot=a=>ONL.on?oBot(a):a!==0, team=a=>partnersOn()?a%2:a;
+  const bots=[0,1,2,3].filter(a=>a!==fromA&&isBot(a)); if(!bots.length) return;
+  const h=hashStr(id+'|'+t), r=k=>BANTER[k][h%BANTER[k].length], n=chatNorm(t);
+  const foes=bots.filter(a=>team(a)!==team(fromA)), pals=bots.filter(a=>team(a)===team(fromA));
+  let who=null, line=null;
+  if(/\b(set|losing|lose|lost|trash|wash|washed|easy|ez|beat|cooked|done|weak|bum|scared|boston|bags|running|whoop|smoke|cut)\b/.test(n)){
+    if(foes.length){ who=foes[h%foes.length]; line=r('tauntBack'); } else if(pals.length){ who=pals[0]; line=r('agree'); } }
+  else if(/\b(gg|good game|nice|good (play|job|bid|cut)|great|wow|clean|respect)\b/.test(n)){ who=bots[h%bots.length]; line=r('thanks'); }
+  else if(/^(hi|hey|hello|yo|sup|wassup|whats up|what's up|wsg)\b/.test(n)){ who=bots[h%bots.length]; line=r('hello'); }
+  else if(/\b(partner|pard|focus|pay attention|come on|help|wake up)\b/.test(n)&&pals.length){ who=pals[0]; line=r('partner'); }
+  else if(/\b(lol|lmao|haha|hahaha|dead|crying)\b|😂|🤣/.test(n)){ who=bots[h%bots.length]; line=r('laugh'); }
+  else if(/\b(hurry|slow|come on|today|waiting)\b/.test(n)){ who=bots[h%bots.length]; line=r('hurry'); }
+  else if(h%4===0){ who=bots[h%bots.length]; line=r('misc'); }
+  if(who===null||Date.now()-lastBanter<5000) return;
+  lastBanter=Date.now();
+  setTimeout(()=>{ if(G&&!FF) say(L(who),line,2400,true); },1100+h%900);
+}
+
 function chatSheet(){
   const list=QUICK.concat(owns('talk:cookout')?QUICK_EXTRA:[]);
-  const v=sheet(`<h2>Talk your talk</h2><p class="lede">Quick lines the whole table sees.</p>
+  const v=sheet(`<h2>Talk your talk</h2><p class="lede">Type your own or tap a quick line. The whole table sees it.</p>
+    <div class="chatin"><input id="chT" maxlength="60" placeholder="Say something…" autocomplete="off" enterkeyhint="send" aria-label="Chat message"><button class="btn sm" id="chGo">Send</button></div>
+    <div class="chhint" id="chH">Keep it friendly. Cussing, slurs and links are blocked.</div>
     <div class="phr">${list.map((q,i)=>`<button data-i="${i}">${esc(q)}</button>`).join('')}${owns('talk:cookout')?'':'<button data-shop>🔒 Cookout Talk pack · 600 coins</button>'}</div>
     <div class="voice"><svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>
       <p><b>Live voice chat</b> is coming to online tables: push-to-talk to the whole table or partner-only, plus one-tap mute and report on every player.</p></div>`);
   const sb=v.querySelector('[data-shop]'); if(sb) sb.onclick=()=>{v.remove();openShop();};
+  const ti=v.querySelector('#chT'), th=v.querySelector('#chH');
+  const goT=()=>{ audio(); const why=sendTyped(ti.value); if(why){ th.textContent=why; th.classList.add('bad'); return; } v.remove(); };
+  v.querySelector('#chGo').onclick=goT; ti.onkeydown=e=>{ if(e.key==='Enter') goT(); }; ti.oninput=()=>th.classList.remove('bad');
   v.querySelectorAll('.phr button[data-i]').forEach(b=>b.onclick=()=>{
     audio(); v.remove();
     if(ONL.on){post('c.'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),{s:ONL.me,t:list[+b.dataset.i]});return;}
@@ -2557,7 +2644,7 @@ function renderLobby0(){
     openTable(m);});
   el.querySelector('#lbMe').onclick=()=>playerSheet(renderLobby);
   el.querySelector('#lbNow').onclick=()=>{audio(); if(!MODES[opts.mode]) opts.mode='classic';
-    startTable({mode:opts.mode,target:opts.mode==='ffa'?100:([100,300,500].includes(opts.target)?opts.target:300),stake:0,tour:0});};
+    startTable({mode:opts.mode,target:okTarget(opts.mode,opts.target),stake:0,tour:0});};
   el.querySelector('#lbRank').onclick=badgeSheet; el.querySelector('#dBadge').onclick=badgeSheet;
   el.querySelector('#lbCoins').onclick=openShop; el.querySelector('#dShop').onclick=openShop;
   el.querySelector('#lbSet').onclick=settingsSheet; el.querySelector('#dRules').onclick=helpSheet;
@@ -2570,7 +2657,7 @@ function openTable(m){
   let mode=tour?'classic':m, picked=false;
   if(m==='random'){mode=pick(['classic','jjdd','ffa']);picked=true;}
   const M=MODES[mode];
-  let target=(mode==='ffa'||tour)?100:([100,300,500].includes(opts.target)&&opts.mode===mode?opts.target:300);
+  let target=tour?100:(opts.mode===mode?okTarget(mode,opts.target):okTarget(mode,0));
   let stake=tour?TOUR_FEE:0, high=false;
   const v=sheet('<div id="tbl"></div>',{mid:true});
   const draw=()=>{
@@ -2589,7 +2676,7 @@ function openTable(m){
         <div class="w"><small>Card order (highest first)</small><b>${hier}</b></div>
         <div class="w"><small>Table rules</small><b>${rules}</b></div>
       </div>
-      ${(!tour&&mode!=='ffa')?`<h4>Play to</h4><div class="seg tseg">${[100,300,500].map(t=>`<label><input type="radio" name="ttg" value="${t}" ${t===target?'checked':''}><span>${t}</span></label>`).join('')}</div>`:''}
+      ${!tour?`<h4>Play to</h4><div class="seg tseg">${targetsFor(mode).map(t=>`<label><input type="radio" name="ttg" value="${t}" ${t===target?'checked':''}><span>${t}</span></label>`).join('')}</div>`:''}
       ${tour?`<h4>Prizes</h4><div class="tinfo"><div><small>Champion</small><b>1,500 coins + 🏆</b></div><div><small>Finalist</small><b>300 coins</b></div></div>`
         :`<h4>Table stakes</h4><div class="stakes">${[0,100,500,2500].map(stBtn).join('')}</div>
           ${high||HIGH_STAKES.includes(stake)?`<h4 class="hr">💎 High roller tables</h4><div class="stakes hi">${HIGH_STAKES.map(stBtn).join('')}</div>`
@@ -2978,7 +3065,7 @@ function onEv(id,d){
   if(!FF&&/\.p51$/.test(id)) setTimeout(sendLag,1500);
   if(ONL.host&&typeof d.s==='number'&&ONL.seats[d.s]&&d.by===ONL.seats[d.s].uid) ONL.miss[d.s]=0;
   if(typeof d.s==='number'&&ONL.seats&&ONL.seats[d.s]&&d.by===ONL.seats[d.s].uid&&d.at&&d.at.toMillis){ ONL.heard=ONL.heard||{}; ONL.heard[d.s]=Math.max(ONL.heard[d.s]||0,d.at.toMillis()); }
-  if(id.startsWith('c.')) return chatIn(d);
+  if(id.startsWith('c.')) return chatIn(d,id);
   if(id.startsWith('t.')) return throwIn(d);
   ONL.lastEv=Date.now();
   if(id.startsWith('left.')) return leftIn(d.s,d);
@@ -2999,9 +3086,12 @@ function throwIn(d){
   const f=toL(d.s); if(MUTED.has(f)||(PROFILE.blocked||[]).includes(NAMES[f])) return;
   throwAt(f,toL(d.to),d.k);
 }
-function chatIn(d){
-  const ok=QUICK.concat(QUICK_EXTRA); if(typeof d.s!=='number'||!ok.includes(d.t)) return;
-  say(toL(d.s),d.t,2800,true); if(d.s!==ONL.me) cardTap(0.25);
+function chatIn(d,id){
+  const ok=QUICK.concat(QUICK_EXTRA); if(typeof d.s!=='number'||typeof d.t!=='string') return;
+  if(!ok.includes(d.t)&&chatBad(d.t)) return; /* typed messages are checked again here, so a tampered phone can't get around the filter */
+  const p=toL(d.s); if(MUTED.has(p)||(PROFILE.blocked||[]).includes(NAMES[p])) return;
+  say(p,d.t,2800,true); if(d.s!==ONL.me) cardTap(0.25);
+  if(id&&!FF&&Date.now()-((d.at&&d.at.toMillis)?d.at.toMillis():Date.now())<20e3) botBanter(id,d.s,d.t);
 }
 function leftIn(a,d){
   if(typeof a!=='number') return;
@@ -3236,10 +3326,10 @@ function crewSheet(prefill){
       <div class="joinrow"><input id="cCode" maxlength="5" placeholder="CODE" autocomplete="off" autocapitalize="characters" spellcheck="false" value="${esc(prefill||'')}" aria-label="Table code"><button class="btn" id="cJoin">Join</button></div>
       <h4>Or start a new table</h4>
       <div class="seg tseg">${[['classic','Classic'],['jjdd','JJDD'],['ffa','Free-for-All']].map(([m,l])=>`<label><input type="radio" name="cm" value="${m}" ${m===mode?'checked':''}><span>${l}</span></label>`).join('')}</div>
-      ${mode==='ffa'?'':`<div class="seg tseg" style="margin-top:8px">${[100,300,500].map(t=>`<label><input type="radio" name="ct" value="${t}" ${t===target?'checked':''}><span>To ${t}</span></label>`).join('')}</div>`}
+      <div class="seg tseg" style="margin-top:8px">${targetsFor(mode).map(t=>`<label><input type="radio" name="ct" value="${t}" ${t===target?'checked':''}><span>To ${t}</span></label>`).join('')}</div>
       <button class="btn" id="cNew" style="margin-top:12px">Create table</button>
       <p class="fine">Your house rules from the Rules screen apply. Online tables are free and you still earn XP and coins.</p>`;
-    v.querySelectorAll('input[name="cm"]').forEach(i=>i.onchange=()=>{mode=i.value;draw();});
+    v.querySelectorAll('input[name="cm"]').forEach(i=>i.onchange=()=>{mode=i.value; target=okTarget(mode,target); draw();});
     v.querySelectorAll('input[name="ct"]').forEach(i=>i.onchange=()=>{target=+i.value;});
     const nm=v.querySelector('#cName'); nm.oninput=()=>{nmv=nm.value;};
     const cf=v.querySelector('#cFriends'); if(cf) cf.onclick=()=>friendsSheet(false);
@@ -3248,7 +3338,7 @@ function crewSheet(prefill){
     v.querySelector('#cJoin').onclick=async e=>{const c=code.value.trim(); if(c.length!==5){toast('Codes are 5 letters and numbers.');return;} if(!named()) return;
       e.target.disabled=true; e.target.textContent='Joining…'; const ok=await joinTable(c); if(ok) v.remove(); else {e.target.disabled=false;e.target.textContent='Join';}};
     v.querySelector('#cNew').onclick=async e=>{if(!named()) return; e.target.disabled=true; e.target.textContent='Creating…';
-      const ok=await createTable(mode,mode==='ffa'?100:target); if(ok) v.remove(); else {e.target.disabled=false;e.target.textContent='Create table';}};
+      const ok=await createTable(mode,okTarget(mode,target)); if(ok) v.remove(); else {e.target.disabled=false;e.target.textContent='Create table';}};
   };
   draw();
 }
@@ -3723,7 +3813,7 @@ function invBanner(d){
 
 /* ---------- randoms: matchmaking with real players ---------- */
 function randomsSheet(){ whenNamed(()=>{
-  let mode=PROFILE.rndMode||'classic';
+  let mode=PROFILE.rndMode||'classic', pts=PROFILE.rndPts||0;
   const v=sheet('<div id="rnd"></div>',{mid:true});
   const draw=()=>{
     v.querySelector('#rnd').innerHTML=`
@@ -3731,10 +3821,12 @@ function randomsSheet(){ whenNamed(()=>{
       <p class="lede">Get matched with real players. You’ll be playing in under ${RND_WAIT/1000} seconds: open seats start as bots, and real players who search later take a bot’s seat at the next hand.</p>
       <div class="onl" id="rOnl">${SOC.online!=null?`<i></i>${SOC.online} player${SOC.online===1?'':'s'} online now`:''}</div>
       <div class="seg tseg">${[['classic','Classic'],['jjdd','JJDD'],['ffa','Free-for-All']].map(([m,l])=>`<label><input type="radio" name="rm" value="${m}" ${m===mode?'checked':''}><span>${l}</span></label>`).join('')}</div>
-      <ul class="notes"><li>Standard rules: nil on, 10-bag penalty, 15-second turns</li><li>${mode==='ffa'?'First to 100':'Partners · first to 300'}</li><li>Rate your table after the game. Good play keeps your stars up.</li></ul>
+      <div class="seg tseg" style="margin-top:8px">${[mode==='ffa'?100:300,250].map(t=>`<label><input type="radio" name="rp" value="${t}" ${t===okRnd(mode,pts)?'checked':''}><span>${t===250?'Quick · to 250':'To '+t}</span></label>`).join('')}</div>
+      <ul class="notes"><li>Standard rules: nil on, 10-bag penalty, 15-second turns</li><li>${mode==='ffa'?'Everyone for themselves':'Partners'} · first to ${okRnd(mode,pts)}</li><li>Rate your table after the game. Good play keeps your stars up.</li></ul>
       <div class="myrt" id="rMine"></div>
       <button class="btn" id="rFind">Find a table</button>`;
     v.querySelectorAll('input[name="rm"]').forEach(i=>i.onchange=()=>{mode=i.value;PROFILE.rndMode=mode;saveProfile();draw();});
+    v.querySelectorAll('input[name="rp"]').forEach(i=>i.onchange=()=>{pts=+i.value;PROFILE.rndPts=pts;saveProfile();draw();});
     myRatingLine(v.querySelector('#rMine'));
     const b=v.querySelector('#rFind');
     const gate=r=>{const w=quitWait(r); clearInterval(v._qt); if(!w) {b.disabled=false; b.textContent='Find a table'; return;}
@@ -3743,30 +3835,32 @@ function randomsSheet(){ whenNamed(()=>{
       upd(); v._qt=setInterval(()=>{if(!v.isConnected){clearInterval(v._qt);return;} upd();},1000);};
     gate(null); if(FB) ratingOf(FB.uid).then(gate);
     b.onclick=async()=>{audio(); b.disabled=true; b.textContent='Looking for players…';
-      const ok=await findMatch(mode); if(ok) v.remove(); else {b.disabled=false; b.textContent='Find a table';}};
+      const ok=await findMatch(mode,okRnd(mode,pts)); if(ok) v.remove(); else {b.disabled=false; b.textContent='Find a table';}};
   };
   draw();
 });}
-async function findMatch(mode){
+const okRnd=(m,p)=>p===250?250:(m==='ffa'?100:300);
+async function findMatch(mode,pts){
+  pts=pts||okRnd(mode,0);
   if(!await connect()) return false;
   try{
-    for(const t of await openPub(mode)) if(await trySit(t.code)) return true;
-    for(const t of await openLive(mode)) if(await joinLive(t)) return true;
-    return await createTable(mode,mode==='ffa'?100:300,true);
+    for(const t of await openPub(mode,null,pts)) if(await trySit(t.code)) return true;
+    for(const t of await openLive(mode,pts)) if(await joinLive(t)) return true;
+    return await createTable(mode,pts,true);
   }catch(e){console.warn(e); toast('Couldn’t find a table. Try again.',2600); return false;}
 }
-async function openPub(mode,skip){
+async function openPub(mode,skip,pts){
   const {F,db}=FB, now=Date.now(), out=[];
   const s=await F.getDocs(F.query(F.collection(db,'tables'),F.where('pub','==',true),F.where('status','==','lobby'),F.where('mode','==',mode),F.limit(25)));
   const ms=x=>x&&x.toMillis?x.toMillis():0;
-  s.forEach(d=>{const x=d.data(); if(d.id!==skip&&x.host!==FB.uid&&now-ms(x.ping)<45e3) out.push({code:d.id,created:ms(x.created)||now});});
+  s.forEach(d=>{const x=d.data(); if(d.id!==skip&&x.host!==FB.uid&&now-ms(x.ping)<45e3&&(!pts||x.target===pts)) out.push({code:d.id,created:ms(x.created)||now});});
   return out.sort((a,b)=>a.created-b.created||(a.code<b.code?-1:1));
 }
 /* games already being played that still have a bot in them (server-run tables only) */
-async function openLive(mode){
+async function openLive(mode,pts){
   const {F,db}=FB, now=Date.now(), out=[], ms=x=>x&&x.toMillis?x.toMillis():0;
   const s=await F.getDocs(F.query(F.collection(db,'tables'),F.where('pub','==',true),F.where('status','==','playing'),F.where('mode','==',mode),F.limit(25)));
-  s.forEach(d=>{const x=d.data(); if(x.srv&&(x.bots||[]).length&&now-ms(x.act||x.created)<6*60e3&&x.host!==FB.uid) out.push({code:d.id,bots:x.bots.slice(),act:ms(x.act)});});
+  s.forEach(d=>{const x=d.data(); if(x.srv&&(x.bots||[]).length&&now-ms(x.act||x.created)<6*60e3&&x.host!==FB.uid&&(!pts||x.target===pts)) out.push({code:d.id,bots:x.bots.slice(),act:ms(x.act)});});
   return out.sort((a,b)=>b.act-a.act);
 }
 async function joinLive(t){
@@ -3815,7 +3909,7 @@ async function mergeCheck(){
   RND.merging=true;
   try{
     const mine=ONL.code, T=ONL.table, mc=T&&T.created&&T.created.toMillis?T.created.toMillis():Date.now();
-    const list=(await openPub(T.mode,mine)).filter(t=>t.created<mc||(t.created===mc&&t.code<mine));
+    const list=(await openPub(T.mode,mine,T.target)).filter(t=>t.created<mc||(t.created===mc&&t.code<mine));
     for(const t of list){
       if(ONL.code!==mine||ONL.seats.filter(Boolean).length>1) break;
       const ok=await trySit(t.code,()=>{FB.F.updateDoc(FB.F.doc(FB.db,'tables',mine),{status:'closed'}).catch(()=>{}); onlineUnsub(); if(ONL.room){ONL.room.remove(); ONL.room=null;}});
@@ -3947,12 +4041,14 @@ function rateBlock(v,nx){
   if(!others.length) return;
   const picked={};
   const el=document.createElement('div'); el.className='ratebox';
-  el.innerHTML=`<h4>Rate the table <small>optional · anonymous</small></h4>`+others.map(a=>{const s=ONL.seats[a], fr=friendsList().some(f=>f.uid===s.uid);
+  el.innerHTML=`<h4>Rate the table <small>optional · they’ll see their stars</small></h4>`+others.map(a=>{const s=ONL.seats[a], fr=friendsList().some(f=>f.uid===s.uid);
       return `<div class="rrow" data-a="${a}"><div class="mini">${avatarSVG(s.av)}</div><div class="rn"><b>${esc(s.name)}</b>${ONL.gone.has(a)?(ONL.ev[`${ONL.g}.q${a}`]&&!ONL.ev[`${ONL.g}.q${a}`].drop?'<em>quit</em>':ONL.bye.has(a)?'<em>left</em>':'<em>lost connection</em>'):(partnersOn()&&a%2===ONL.me%2?'<em>partner</em>':'')}</div>
         <div class="stars">${[1,2,3,4,5].map(k=>`<button data-k="${k}" aria-label="${k} star${k>1?'s':''}">★</button>`).join('')}</div>
         ${fr?'':`<button class="addf" data-a="${a}" aria-label="Add ${esc(s.name)} as a friend">＋</button>`}</div>`;}).join('')+
-    `<button class="btn ghost sm" id="rateSend" disabled>Send ratings</button>`;
+    `<button class="btn ghost sm" id="rateSend" disabled>Send ratings</button>`+
+    `<h4 class="gotr">How they rated you</h4><div class="gotlist" id="gotR">${others.filter(a=>!ONL.gone.has(a)).map(a=>`<div class="grow" data-a="${a}"><b>${esc(ONL.seats[a].name)}</b><span class="gst">waiting…</span></div>`).join('')||'<small>Nobody else is still at the table.</small>'}</div>`;
   const top=v.querySelector('.sheet .lede'); if(top) top.after(el); else nx.before(el);
+  watchMyRates(el);
   el.querySelectorAll('.rrow').forEach(r=>r.querySelectorAll('.stars button').forEach(b=>b.onclick=()=>{
     const a=+r.dataset.a, k=+b.dataset.k; picked[a]=k; audio(); snap(0.2,800+k*250);
     r.querySelectorAll('.stars button').forEach(x=>x.classList.toggle('on',+x.dataset.k<=k));
@@ -3963,6 +4059,23 @@ function rateBlock(v,nx){
     const res=await Promise.all(Object.entries(picked).map(([a,k])=>sendRate(+a,k)));
     el.querySelectorAll('.stars button').forEach(b=>b.disabled=true);
     send.textContent=res.every(Boolean)?'Thanks. Ratings sent ✓':'Some ratings didn’t send';};
+}
+/* after a game: see the stars the other players gave you, as they come in */
+let myRatesOff=null;
+function watchMyRates(box){
+  if(!FB||!ONL.code) return; if(myRatesOff){ try{myRatesOff();}catch(e){} myRatesOff=null; }
+  const {F,db}=FB, code=ONL.code, g=ONL.g, seats=ONL.seats.slice(), seen=new Set();
+  const q=F.query(F.collection(db,'users',FB.uid,'rates'),F.where('code','==',code),F.where('g','==',g));
+  const off=F.onSnapshot(q,snap=>{
+    snap.forEach(d=>{ if(d.id.startsWith('q_')||seen.has(d.id)) return; seen.add(d.id);
+      const x=d.data(), a=x.fs, s=seats[a]; if(!s||!Number.isInteger(x.stars)) return;
+      const row=box&&box.isConnected&&box.querySelector(`.grow[data-a="${a}"] .gst`);
+      if(row){ row.innerHTML=starRow(x.stars); row.classList.add('in'); }
+      else toast(`${s.name} rated you ${'★'.repeat(x.stars)}${'☆'.repeat(5-x.stars)}`,3200);
+      delete RCACHE[FB.uid];
+    });
+  },e=>console.warn(e));
+  myRatesOff=off; setTimeout(()=>{ if(myRatesOff===off){ off(); myRatesOff=null; } },5*60e3);
 }
 async function sendRate(a,k){
   const s=ONL.seats[a]; if(!s||!FB) return false; const {F,db}=FB;
