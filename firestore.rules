@@ -2,30 +2,44 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     function signedIn() { return request.auth != null; }
+    function seatUid(code, s) { return get(/databases/$(database)/documents/tables/$(code)/seats/$(s)).data.uid; }
 
     match /tables/{code} {
       function tbl() { return get(/databases/$(database)/documents/tables/$(code)).data; }
       function isHost() { return signedIn() && tbl().host == request.auth.uid; }
+      function srvOn() { return tbl().get('srv', false) == true; }
+      // a played card must be in the hand that player was dealt
+      function ownsCard(id) {
+        let parts = id.split('[.]');
+        return !('c' in request.resource.data)
+          || get(/databases/$(database)/documents/tables/$(code)/hands/$(parts[0] + '-' + parts[1] + '-' + string(request.resource.data.s))).data.cards.hasAny([request.resource.data.c]);
+      }
       function seated(s) {
         let p = /databases/$(database)/documents/tables/$(code)/seats/$(s);
         return exists(p) && get(p).data.uid == request.auth.uid;
       }
 
       allow get: if signedIn();
-      allow list, delete: if false;
+      allow list: if signedIn() && resource.data.pub == true;
+      allow delete: if false;
       allow create: if signedIn() && code.size() == 5
         && request.resource.data.host == request.auth.uid
         && request.resource.data.status == 'lobby'
-        && request.resource.data.keys().hasOnly(['host','status','mode','target','rules','g','bots','created']);
+        && request.resource.data.keys().hasOnly(['host','status','mode','target','rules','g','bots','created','series','pub','ping','srv']);
       allow update: if signedIn() && resource.data.host == request.auth.uid
-        && request.resource.data.host == resource.data.host;
+        && (request.resource.data.host == resource.data.host
+          || (request.resource.data.hs is int
+              && seatUid(code, string(request.resource.data.hs)) == request.resource.data.host));
 
       match /seats/{s} {
         allow read: if signedIn();
         allow create: if signedIn() && s in ['0','1','2','3']
           && request.resource.data.uid == request.auth.uid
           && request.resource.data.name is string && request.resource.data.name.size() <= 14
-          && tbl().status == 'lobby';
+          && (tbl().status == 'lobby'
+              // a game in progress on a public server table: take a bot's seat from the next hand
+              || (tbl().status == 'playing' && tbl().get('pub', false) == true && srvOn()
+                  && int(s) in tbl().get('bots', []) && request.resource.data.get('join', false) == true));
         allow delete: if signedIn() && (resource.data.uid == request.auth.uid || isHost());
         allow update: if false;
       }
@@ -35,13 +49,112 @@ service cloud.firestore {
         allow create: if signedIn() && id.size() <= 40
           && request.resource.data.by == request.auth.uid
           && request.resource.data.s is int
-          && (isHost() || seated(string(request.resource.data.s)));
+          && ((seated(string(request.resource.data.s)) && !(srvOn() && request.resource.data.s in tbl().get('bots', [])))
+              || (isHost() && !srvOn()))
+          && ownsCard(id);
         allow update, delete: if false;
       }
 
       match /hands/{id} {
         allow read: if signedIn() && resource.data.uid == request.auth.uid;
-        allow create: if isHost();
+        allow create: if isHost() && !srvOn();
+        allow update, delete: if false;
+      }
+    }
+
+    // who's online: each open app checks in about once a minute
+    match /presence/{uid} {
+      allow read: if signedIn();
+      allow create, update: if signedIn() && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['at','n'])
+        && request.resource.data.at == request.time;
+      allow delete: if false;
+    }
+
+    // weekend tournament pots and leaderboards: anyone signed in can read, only the table server writes
+    match /wk/{id} {
+      allow read: if signedIn();
+      allow write: if false;
+      match /e/{u} {
+        allow read: if signedIn();
+        allow write: if false;
+      }
+    }
+
+    // PIN hashes: server only
+    match /pins/{u} {
+      allow read, write: if false;
+    }
+
+    // profile stats: anyone signed in can read, only the table server writes
+    match /stats/{u} {
+      allow read: if signedIn();
+      allow write: if false;
+    }
+
+    // the table server's private copy of every hand: no phone can read it
+    match /srv/{code} {
+      allow read, write: if false;
+    }
+
+    // usernames: one owner per name, lowercase id
+    match /names/{n} {
+      allow get: if signedIn();
+      allow list, update: if false;
+      allow create: if signedIn() && n.matches('^[a-z0-9_]{3,14}$')
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.n is string && request.resource.data.n.lower() == n
+        && request.resource.data.keys().hasOnly(['uid','n','at']);
+      allow delete: if signedIn() && resource.data.uid == request.auth.uid;
+    }
+
+    match /users/{uid} {
+      allow get: if signedIn();
+      allow list, delete: if false;
+      allow create, update: if signedIn() && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['n','av','at']);
+
+      // cloud save for players who sign in with Apple or Facebook
+      match /priv/{d} {
+        allow read, write: if signedIn() && request.auth.uid == uid;
+      }
+
+      // tournament winnings waiting to be collected: the server writes, you read and clear
+      match /inbox/{id} {
+        allow read, delete: if signedIn() && request.auth.uid == uid;
+        allow create, update: if false;
+      }
+
+      // table invites from friends
+      match /inv/{id} {
+        allow read, delete: if signedIn() && request.auth.uid == uid;
+        allow create: if signedIn() && request.auth.uid != uid
+          && request.resource.data.from == request.auth.uid
+          && request.resource.data.keys().hasOnly(['from','n','code','at'])
+          && request.resource.data.n is string && request.resource.data.n.size() <= 14
+          && request.resource.data.code is string && request.resource.data.code.size() == 5
+          && request.resource.data.at == request.time;
+        allow update: if false;
+      }
+
+      // 1-5 star ratings: one per rater per game, only from someone who sat at that table with this player.
+      // q_<code>_<g> is the automatic 1-star for quitting, filed once by anyone still at the table
+      match /rates/{rid} {
+        allow read: if signedIn();
+        allow create: if signedIn() && request.auth.uid != uid
+          && request.resource.data.keys().hasOnly(['from','stars','at','code','g','fs','ts'])
+          && (rid == request.auth.uid + '_' + request.resource.data.code + '_' + string(request.resource.data.g)
+              || (rid == 'q_' + request.resource.data.code + '_' + string(request.resource.data.g)
+                  && request.resource.data.stars == 1
+                  && exists(/databases/$(database)/documents/tables/$(request.resource.data.code)/ev/$(string(request.resource.data.g) + '.q' + string(request.resource.data.ts)))))
+          && request.resource.data.from == request.auth.uid
+          && request.resource.data.stars is int && request.resource.data.stars >= 1 && request.resource.data.stars <= 5
+          && request.resource.data.at == request.time
+          && request.resource.data.code is string && request.resource.data.code.size() == 5
+          && request.resource.data.g is int
+          && request.resource.data.fs is int && request.resource.data.ts is int
+          && seatUid(request.resource.data.code, string(request.resource.data.fs)) == request.auth.uid
+          && seatUid(request.resource.data.code, string(request.resource.data.ts)) == uid;
         allow update, delete: if false;
       }
     }

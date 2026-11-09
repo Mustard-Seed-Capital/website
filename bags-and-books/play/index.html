@@ -899,6 +899,14 @@ body.realsp #bRen{border-color:#e05a4f;color:#ff8a80}
   .hero-art{width:84px;height:70px}.hero-art .card{--cw:36px}.home{gap:8px;margin-top:4px}
   .hero-txt b{font-size:28px}
 }
+.sttabs{margin:10px 0 6px}.sttabs span{font-size:12.5px;padding-inline:6px}
+.wl{display:flex;gap:4px;justify-content:center;margin:8px 0}.wl i{width:24px;height:24px;border-radius:6px;display:grid;place-items:center;font:800 12px var(--f-ui);font-style:normal;color:#fff}
+.wl i.w{background:#1f8a4c}.wl i.l{background:#9b2c2c}.wl.sm i{width:18px;height:18px;font-size:10px}
+.sgrid4{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}.sgrid4>div{display:grid;justify-items:center;gap:2px;padding:8px 4px;border-radius:12px;background:rgba(0,0,0,.22);border:1px solid var(--panel-line);text-align:center}
+.sgrid4 b{font:800 18px var(--f-ui);font-variant-numeric:tabular-nums}.sgrid4 span{font-size:10.5px;opacity:.75;line-height:1.15}
+.srows{display:grid;gap:4px}.srows>div{display:flex;justify-content:space-between;gap:10px;padding:7px 10px;border-radius:10px;background:rgba(0,0,0,.18);font-size:13.5px}.srows b{text-align:right}
+.coll{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}.coll span{padding:5px 10px;border-radius:999px;background:rgba(255,255,255,.07);font-size:12.5px}
+.qstats{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;justify-content:center;margin:8px 0 2px;font-size:12.5px;opacity:.9}.qstats b{font-size:14px}.qstats .wl{margin:0}
 </style>
 
 <div id="app">
@@ -1831,7 +1839,7 @@ function playerSheet(after){
     <div class="prof"><div class="big" id="pBig"><div class="pic" id="pPic"></div><span class="lv" id="pLv"></span></div>
       <div class="who"><div class="hdl">${PROFILE.handle?`<b>@${esc(PROFILE.handle)}</b>`:`<b>${esc(PROFILE.name)}</b>`}<button class="linkb" id="pChg">${PROFILE.handle?'Change':'Pick a username'}</button>${PROFILE.handle?`<button class="linkb" id="pPin">${PROFILE.pinOn?'PIN':'Set PIN'}</button>`:''}</div>${PROFILE.wkBadge&&PROFILE.wkBadge.until>Date.now()?`<div class="wkb">🏆 #${PROFILE.wkBadge.place} in ${esc((TOUR_TIERS.find(t=>t.k===PROFILE.wkBadge.tier)||{n:'the Weekend Tournament'}).n)}</div>`:''}<div class="ttl" id="pTtl"></div><div class="myrt" id="pRt"></div></div></div>
     <div class="bar"><i id="pBar"></i></div><div class="xpl" id="pXp"></div>
-    <div class="stats"><div><b>${PROFILE.wins}</b><span>Wins</span></div><div><b>${PROFILE.losses}</b><span>Losses</span></div><div><b>${PROFILE.best}</b><span>Best streak</span></div><div><b>${PROFILE.nils}</b><span>Nils made</span></div></div>
+    <button class="btn" id="pStats" style="margin:10px 0 4px">📊 My stats</button>
     <div class="recs">${[['classic','Classic'],['jjdd','JJDD'],['ffa','Free-for-All'],['cup','Weekend Cup']].map(([k,l])=>{const r=(PROFILE.modeStats||{})[k]||{w:0,l:0};return `<span>${l} <b>${r.w}–${r.l}</b></span>`;}).join('')}${PROFILE.trophies?`<span>🏆 <b>${PROFILE.trophies}</b></span>`:''}</div>
     <p class="avnote">Him/her and skin tone are free. Styles unlock once with coins, then they’re yours. You have <b id="pCoins">${PROFILE.coins.toLocaleString()}</b> coins.</p>
     <h4>Look</h4><div class="pk" data-k="look"><button data-v="m">Him</button><button data-v="f">Her</button></div>
@@ -1881,6 +1889,7 @@ function playerSheet(after){
     if(ownsAv(k,x)) return wear();
     buyStyle(k,x,l=>{ if(l) wear(); else {v.remove(); openShop();} });}));
   v.querySelector('#pChg').onclick=()=>{v.remove(); onboard(true);};
+  v.querySelector('#pStats').onclick=()=>{ v.remove(); statsSheet(FB&&FB.uid,PROFILE.handle||PROFILE.name,PROFILE.av,true); };
   {const pp=v.querySelector('#pPin'); if(pp) pp.onclick=()=>{v.remove(); pinSheet(false);};}
   myRatingLine(v.querySelector('#pRt'));
   v.querySelector('#pDone').onclick=()=>{v.remove(); if(after) after();};
@@ -3026,12 +3035,76 @@ function settingsSheet(){
   v.querySelector('#sHelp').onclick=()=>{v.remove();helpSheet();};
 }
 /* tap a player: mute, block, report */
+/* ---------- profile stats: recorded by the game server for online games ---------- */
+const ST_TABS=[['partners','Partners'],['solo','Solo'],['tour','Tournament'],['real','Real Spades']];
+const pct=(a,b)=>b?Math.round(a/b*100)+'%':'—';
+async function loadStats(uid){ if(!uid||!FB) return null; try{ const d=await FB.F.getDoc(FB.F.doc(FB.db,'stats',uid)); return d.exists()?d.data():{}; }catch(e){ return null; } }
+function bestOf(m,key){ let b=null; Object.values(m||{}).forEach(x=>{ if(x.g>=2&&(!b||x[key]>b[key]||(x[key]===b[key]&&x.g>b.g))) b=x; }); return b&&b[key]>0?b:null; }
+function statsBody(B,tab,me){
+  if(!B||!B.g) return `<p class="lede" style="text-align:center;margin:18px 0">No ${ST_TABS.find(t=>t[0]===tab)[1]} games online yet.${me?' Play one and your stats start here.':''}</p>`;
+  const chips=(B.last||'').split('').map(c=>`<i class="${c==='W'?'w':'l'}">${c}</i>`).join('');
+  const cur=B.cur>0?`🔥 ${B.cur} W`:B.cur<0?`❄️ ${-B.cur} L`:'—', mate=bestOf(B.p,'w'), foe=bestOf(B.f,'l');
+  const tile=(v,l)=>`<div><b>${v}</b><span>${l}</span></div>`;
+  return `<div class="wl">${chips}</div>
+    <div class="sgrid4">${tile(B.g,'Games')}${tile(pct(B.w,B.g),'Win rate')}${tile(cur,'Streak')}${tile(B.best||0,'Best streak')}</div>
+    <h4>Bidding</h4><div class="sgrid4">${tile(pct(B.ex,B.bd),'Bid exactly')}${tile(pct(B.set,B.h),'Got set')}${tile(B.h?(B.bg/B.h).toFixed(1):'—','Bags / hand')}${tile(B.h?(B.bk/B.h).toFixed(1):'—','Books / hand')}</div>
+    <h4>Nil</h4><div class="sgrid4">${tile(B.nt,'Nils')}${tile(pct(B.nm,B.nt),'Nil success')}${tile(B.bt,'Blind nils')}${tile(pct(B.bm,B.bt),'Blind success')}</div>
+    ${tab==='real'?`<h4>Reneges</h4><div class="sgrid4">${tile(B.cr,'Caught others')}${tile(B.wr,'Wrong calls')}${tile(B.sn,'Got away with')}${tile(B.ct,'Got caught')}</div>`:''}
+    <h4>At the table</h4><div class="srows">
+      ${tab!=='solo'?`<div><span>🤝 Best partner</span><b>${mate?`${esc(mate.n)} · ${mate.w}–${mate.g-mate.w}`:'Play more with someone'}</b></div>`:''}
+      <div><span>😈 Nemesis</span><b>${foe?`${esc(foe.n)} · beat you ${foe.l}×`:'Nobody yet'}</b></div>
+      <div><span>🚪 Quit rate</span><b>${pct(B.q||0,B.g)}</b></div></div>`;
+}
+async function statsSheet(uid,name,av,me){
+  let tab='partners';
+  const v=sheet(`<div id="stS"><div class="prof"><div class="big"><div class="pic">${avatarSVG(av||BOT_AV[1])}</div></div>
+      <div class="who"><div style="font:700 24px var(--f-display)">${esc(name||'Player')}</div>${uid?`<div class="myrt">${rtTag(uid,true)}</div>`:''}
+      ${me&&PROFILE.wkBadge&&PROFILE.wkBadge.until>Date.now()?`<div class="wkb">🏆 #${PROFILE.wkBadge.place} in ${esc((TOUR_TIERS.find(t=>t.k===PROFILE.wkBadge.tier)||{n:''}).n)}</div>`:''}</div></div>
+    <div class="seg tseg sttabs">${ST_TABS.map(([k,l])=>`<label><input type="radio" name="stt" value="${k}" ${k===tab?'checked':''}><span>${l}</span></label>`).join('')}</div>
+    <div id="stB"><p class="lede">Loading…</p></div>
+    ${me?`<h4>Practice vs bots</h4><div class="srows"><div><span>Games</span><b>${PROFILE.wins+PROFILE.losses}</b></div><div><span>Record</span><b>${PROFILE.wins}–${PROFILE.losses}</b></div><div><span>Nils made</span><b>${PROFILE.nils}</b></div></div>
+      <h4>Collection</h4><div class="coll">${collection()}</div>
+      <button class="btn" id="stShare">📤 Share my stats</button>`:''}</div>`,{mid:true});
+  const S=uid?await loadStats(uid):null;
+  const draw=()=>{ const b=v.querySelector('#stB'); if(!b) return; b.innerHTML=S===null?'<p class="lede">Stats need an internet connection.</p>':statsBody(S[tab],tab,me); };
+  v.querySelectorAll('input[name="stt"]').forEach(i=>i.onchange=()=>{tab=i.value; draw();});
+  draw();
+  const sh=v.querySelector('#stShare'); if(sh) sh.onclick=()=>shareStats(S||{},name,av);
+}
+function collection(){
+  const o=PROFILE.owned||[], items=[];
+  if(PROFILE.trophies) items.push(`🏆 ${PROFILE.trophies} cup${PROFILE.trophies>1?'s':''}`);
+  if(PROFILE.wkBadge) items.push('🚩 Tournament finisher');
+  ACC.filter(([k])=>k!=='none'&&o.includes('av:acc:'+k)||o.includes('acc:'+k)).forEach(([k,l])=>items.push(`🎩 ${l}`));
+  DECKS.filter(d=>d.cost&&o.includes('deck:'+d.id)).forEach(d=>items.push(`🃏 ${d.name}`));
+  THEMES.filter(t=>o.includes('theme:'+t.id)).forEach(t=>items.push(`🟩 ${t.name}`));
+  return items.length?items.map(x=>`<span>${x}</span>`).join(''):'<small style="opacity:.7">Win cups, finish tournaments and grab holiday items to fill this up.</small>';
+}
+/* a picture of your stats to post or text */
+async function shareStats(S,name,av){
+  const B=S.partners||{}, c=document.createElement('canvas'); c.width=1080; c.height=1350; const x=c.getContext('2d');
+  const g=x.createLinearGradient(0,0,0,1350); g.addColorStop(0,'#1d4d36'); g.addColorStop(1,'#0c2419'); x.fillStyle=g; x.fillRect(0,0,1080,1350);
+  const img=new Image(); img.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(avatarSVG(av).replace('<svg','<svg xmlns="http://www.w3.org/2000/svg" width="360" height="360"'));
+  await new Promise(r=>{img.onload=r; img.onerror=r;});
+  x.save(); x.beginPath(); x.arc(540,300,180,0,Math.PI*2); x.fillStyle='#2f6b4c'; x.fill(); x.clip(); try{x.drawImage(img,360,120,360,360);}catch(e){} x.restore();
+  x.strokeStyle='#e8c252'; x.lineWidth=10; x.beginPath(); x.arc(540,300,180,0,Math.PI*2); x.stroke();
+  x.textAlign='center'; x.fillStyle='#fff'; x.font='800 76px Georgia,serif'; x.fillText(name||'Player',540,580);
+  x.fillStyle='#e8c252'; x.font='700 36px system-ui,sans-serif'; x.fillText('BAGS & BOOKS · SPADES',540,640);
+  const cell=(v,l,cx,cy)=>{ x.fillStyle='#fff'; x.font='800 88px system-ui,sans-serif'; x.fillText(v,cx,cy); x.fillStyle='rgba(255,255,255,.7)'; x.font='600 32px system-ui,sans-serif'; x.fillText(l,cx,cy+50); };
+  cell(String(B.g||0),'games',290,800); cell(pct(B.w||0,B.g||0),'win rate',790,800);
+  cell(pct(B.ex||0,B.bd||0),'bid exactly',290,1010); cell(pct(B.nm||0,B.nt||0),'nil success',790,1010);
+  x.fillStyle='#e8c252'; x.font='700 34px system-ui,sans-serif'; x.fillText('Think you can beat me? mcombizz.com/bags-and-books/play',540,1230);
+  const blob=await new Promise(r=>c.toBlob(r,'image/png')), file=new File([blob],'my-spades-stats.png',{type:'image/png'});
+  try{ if(navigator.canShare&&navigator.canShare({files:[file]})){ await navigator.share({files:[file],text:'My Bags & Books stats ♠'}); return; } }catch(e){ if(e&&e.name==='AbortError') return; }
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='my-spades-stats.png'; a.click(); toast('Saved your stats picture.',2200);
+}
 function playerActions(p){
   const os=ONL.on?ONL.seats[toA(p)]:null;
   const name=NAMES[p], info=os?[os.lvl,RANKS[os.rk]?RANKS[os.rk].n:'Bronze']:(BOT_INFO[name]||[10,'Silver']), blocked=(PROFILE.blocked||[]).includes(name), muted=MUTED.has(p);
   const avSrc=os?os.av:((OPP_SETS.flat().find(o=>o.n===name)||{}).av||BOT_AV[p]);
   const v=sheet(`<div class="prof"><div class="big" style="--tier:${RANKS.find(r=>r.n===info[1]).c}"><div class="pic">${avatarSVG(avSrc)}</div><span class="lv">${info[0]}</span></div>
       <div class="who"><div style="font:700 24px var(--f-display)">${esc(name)}</div><div class="ttl">Level ${info[0]} · ${info[1]} badge${isPartner(p)?' · Your partner':''}</div>${os?`<div class="myrt">${rtTag(os.uid,true)}</div>`:''}</div></div>
+    ${os&&os.uid?`<div class="qstats" id="qSt">Loading stats…</div><button class="btn ghost sm" id="pFull" style="margin-top:6px">📊 Full profile</button>`:''}
     ${G&&!ONL.spec?`<h4>Throw something <span class="thrc">${coinIcon()}${fmt(PROFILE.coins)}</span></h4>
     ${giftGrids()}`:''}
     <div class="pa">
@@ -3047,6 +3120,9 @@ function playerActions(p){
     </div>`,{mid:true});
   v.querySelectorAll('.thr button').forEach(b=>b.onclick=()=>doThrow(p,b.dataset.k,v));
   const af=v.querySelector('#pAddF'); if(af) af.onclick=()=>{addFriendSeat(os); af.textContent='✓ Friends'; af.disabled=true;};
+  if(os&&os.uid){ v.querySelector('#pFull').onclick=()=>{ v.remove(); statsSheet(os.uid,name,avSrc,false); };
+    loadStats(os.uid).then(S=>{ const el=v.querySelector('#qSt'); if(!el) return; const B=(S&&(S[opts.real?'real':opts.mode==='ffa'?'solo':'partners']))||null;
+      el.innerHTML=!B||!B.g?'New here: no online games yet.':`<span><b>${B.g}</b> games</span><span><b>${pct(B.w,B.g)}</b> wins</span><span><b>${pct(B.ex,B.bd)}</b> bid exact</span><span><b>${pct(B.nm,B.nt)}</b> nil</span><span class="wl sm">${(B.last||'').slice(0,5).split('').map(c=>`<i class="${c==='W'?'w':'l'}">${c}</i>`).join('')}</span>`; }); }
   v.querySelector('#pMute').onclick=()=>{if(muted)MUTED.delete(p);else MUTED.add(p);toast(muted?`${name} unmuted`:`${name} muted. You won’t see their chat.`);v.remove();};
   v.querySelector('#pBlock').onclick=()=>{let b=PROFILE.blocked||[]; b=blocked?b.filter(n=>n!==name):b.concat(name); PROFILE.blocked=b; saveProfile();
     toast(blocked?`${name} unblocked`:`${name} blocked. You won’t be seated with them online.`);v.remove();};
